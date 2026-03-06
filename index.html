@@ -184,6 +184,69 @@ footer{border-top:1px solid var(--border);padding:14px 28px;text-align:center;fo
 footer a{color:var(--gold);text-decoration:none}
 .ft-hosts{margin-top:3px;color:var(--muted);font-size:13px}
 .ft-hosts .fs{color:var(--stojr)}.ft-hosts .fn{color:var(--nick)}
+
+/* ─── LIGHT MODE ─── */
+body.light{
+  --bg:#f0f2f8;--surface:#ffffff;--surface2:#e8eaf2;--surface3:#dde0ee;
+  --border:#c8cad8;--border2:#b0b3c8;--text:#1a1a2e;--muted:#555577;--dimtext:#888899;
+}
+body.light::before{background-image:radial-gradient(circle,#00000009 1px,transparent 1px)}
+
+/* ─── THEME TOGGLE ─── */
+.theme-toggle{padding:5px 11px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;height:30px;align-self:flex-start;margin-top:6px}
+.theme-toggle:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:24px;right:24px;z-index:1000;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 18px;font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;color:var(--green);pointer-events:none;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ─── PROGRESS BARS ─── */
+.card-prog{margin-top:5px}
+.prog-pct{font-family:var(--cf);font-size:10px;color:var(--muted);letter-spacing:1px}
+.prog-bar-track{width:100%;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:3px}
+.prog-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.card.cs .prog-bar-fill{background:var(--stojr)}
+.card.cn .prog-bar-fill{background:var(--nick)}
+
+/* ─── STICKY THEAD ─── */
+thead th{position:sticky;top:44px;z-index:5;background:var(--surface2)}
+
+/* ─── ROW EXPAND ─── */
+tbody tr.data-row{cursor:pointer}
+tr.expanded td{border-bottom:none}
+tr.expand-detail{background:var(--surface2) !important;cursor:default}
+tr.expand-detail td{padding:10px 16px;border-bottom:1px solid var(--border)}
+.expand-content{display:flex;flex-wrap:wrap;gap:16px;font-size:13px}
+.expand-field{display:flex;flex-direction:column;gap:2px}
+.expand-label{font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.expand-value{color:var(--text)}
+
+/* ─── TBD / NEW BADGES ─── */
+.date-tbd{font-family:var(--cf);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;background:#181810;color:#777;border:1px solid #2e2e20;letter-spacing:.5px}
+.date-new{font-family:var(--cf);font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;background:#0a2012;color:var(--green);border:1px solid #1a4828;letter-spacing:.5px;margin-left:4px}
+
+/* ─── CONFIDENCE LEFT BORDER ─── */
+tbody tr.conf-verified td:first-child{border-left:3px solid var(--green)}
+tbody tr.conf-sourced td:first-child{border-left:3px solid var(--orange)}
+tbody tr.conf-est td:first-child{border-left:3px solid var(--dim)}
+
+/* ─── LICENSED ROW TINT ─── */
+tbody tr.licensed-row{background:rgba(255,210,52,.03)}
+tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
+.lic-icon{font-size:10px;margin-left:3px;opacity:.65;vertical-align:middle}
+
+/* ─── CHART TOGGLE ─── */
+.chart-controls{display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.ctbtn{padding:3px 10px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.ctbtn.on{background:var(--surface3);border-color:var(--gold);color:var(--gold)}
+.chart-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.bar-legend{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.bl-item{display:flex;align-items:center;gap:5px;font-family:var(--cf);font-size:11px;color:var(--muted)}
+.bl-dot{width:8px;height:8px;border-radius:1px;flex-shrink:0}
+
+/* ─── BOTH OWN PILL ─── */
+.own-filter-pill.both{color:#a8dfff;border-color:#a8dfff}
+.own-filter-pill.both.on{background:#a8dfff;color:#000}
 </style>
 </head>
 <body>
@@ -213,6 +276,7 @@ footer a{color:var(--gold);text-decoration:none}
       <div class="hdr-vbar2"></div>
       <div class="hdr-stat"><div class="hdr-stat-n" id="hTotalDC">65</div><div class="hdr-stat-l">DC Finest</div></div>
     </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" style="margin-left:14px">◑ Dark</button>
   </div>
 </header>
 
@@ -257,6 +321,7 @@ footer a{color:var(--gold);text-decoration:none}
       <div class="owner-filters">
         <span class="own-filter-pill stojr" id="pfStojr" onclick="toggleOwnerFilter('stojr')">stojr owns</span>
         <span class="own-filter-pill nick"  id="pfNick"  onclick="toggleOwnerFilter('nick')">Nick owns</span>
+        <span class="own-filter-pill both" id="pfBoth"  onclick="toggleOwnerFilter('both')">Both own</span>
       </div>
     </div>
     <div class="fspacer"></div>
@@ -276,15 +341,33 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="card cd"><div class="card-n" id="cDC">–</div><div class="card-l">DC Finest</div><div class="card-s">filtered</div></div>
     <div class="card cg"><div class="card-n" id="cUniq">–</div><div class="card-l">Unique</div><div class="card-s">no reprints</div></div>
     <div class="card cx"><div class="card-n" id="cTotal">–</div><div class="card-l">Total</div><div class="card-s">shown</div></div>
-    <div class="card cs"><div class="card-n" id="cStojr">–</div><div class="card-l">stojr owns</div><div class="card-s">in collection</div></div>
-    <div class="card cn"><div class="card-n" id="cNick">–</div><div class="card-l">Nick owns</div><div class="card-s">in collection</div></div>
+    <div class="card cs"><div class="card-n" id="cStojr">–</div><div class="card-l">stojr owns</div><div class="card-prog"><div class="prog-pct" id="stojrPct"></div><div class="prog-bar-track"><div class="prog-bar-fill" id="stojrFill" style="width:0%"></div></div></div></div>
+    <div class="card cn"><div class="card-n" id="cNick">–</div><div class="card-l">Nick owns</div><div class="card-prog"><div class="prog-pct" id="nickPct"></div><div class="prog-bar-track"><div class="prog-bar-fill" id="nickFill" style="width:0%"></div></div></div></div>
   </div>
 
   <!-- Charts -->
   <div class="charts">
     <div class="cpanel">
       <div class="ctitle" id="barChartTitle">Releases Per Year</div>
-      <div class="barchart" id="barChart"></div>
+      <div class="chart-controls">
+        <button class="ctbtn on" data-chart-mode onclick="setChartMode('bar',this)">▮ Bar</button>
+        <button class="ctbtn" data-chart-mode onclick="setChartMode('line',this)">↗ Line</button>
+        <span class="chart-sep"></span>
+        <span id="barModeToggle" style="display:flex;gap:4px">
+          <button class="ctbtn on" data-chart="bar" onclick="setBarMode('normal',this)">Releases</button>
+          <button class="ctbtn" data-chart="bar" onclick="setBarMode('owned',this)">Ownership</button>
+        </span>
+      </div>
+      <div id="barChartWrap">
+        <div class="bar-legend" id="barLegend">
+          <div class="bl-item"><div class="bl-dot" style="background:var(--red)"></div>Marvel</div>
+          <div class="bl-item"><div class="bl-dot" style="background:var(--blue)"></div>DC</div>
+        </div>
+        <div class="barchart" id="barChart"></div>
+      </div>
+      <div id="lineChartWrap" style="display:none">
+        <canvas id="lineChart" style="width:100%"></canvas>
+      </div>
     </div>
     <div class="cpanel">
       <div class="ctitle">Composition</div>
@@ -1032,11 +1115,34 @@ const ALL_DATA = [
 
 // ── STORAGE (persistent ownership) ──────────
 const STORAGE_KEY = 'bce_ownership_v1';
+const CURRENT_YEAR = new Date().getFullYear().toString();
 let ownership = {};
 try { ownership = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){}
 
+// ── TOAST ─────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('saveToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ── THEME ─────────────────────────────────────
+function toggleTheme() {
+  const light = document.body.classList.toggle('light');
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = light ? '☀ Light' : '◑ Dark';
+  try { localStorage.setItem('bce_theme', light ? 'light' : 'dark'); } catch(e){}
+  buildDonut(currentFiltered);
+}
+
+// ── OWNERSHIP ─────────────────────────────────
 function saveOwnership() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ownership)); } catch(e){}
+  showToast('✓ Saved');
 }
 
 function getKey(d) {
@@ -1052,10 +1158,8 @@ function toggleOwn(id, who) {
   if (!ownership[k]) ownership[k] = {};
   ownership[k][who] = !ownership[k][who];
   saveOwnership();
-  // update button
   const btn = document.querySelector(`.ob[data-id="${id}"][data-who="${who}"]`);
   if (btn) btn.classList.toggle('on', !!ownership[k][who]);
-  // refresh cards/charts (counts changed)
   buildCards(currentFiltered);
   buildDonut(currentFiltered);
 }
@@ -1065,26 +1169,95 @@ function isOwned(d, who) {
   return !!(ownership[k] && ownership[k][who]);
 }
 
-// ── STATE ────────────────────────────────────
+// ── STATE ─────────────────────────────────────
 let activePub = 'all';
 let sortCol = 'date', sortDir = 1;
 let page = 1, pageSize = 100;
 let currentFiltered = [];
-let ownerFilters = { stojr: false, nick: false };
+let ownerFilters = { stojr: false, nick: false, both: false };
+let barMode = 'normal';
+let chartMode = 'bar';
 
-// ── INIT ─────────────────────────────────────
+// ── INIT ──────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (localStorage.getItem('bce_theme') === 'light') {
+      document.body.classList.add('light');
+      const btn = document.getElementById('themeToggle');
+      if (btn) btn.textContent = '☀ Light';
+    }
+  } catch(e){}
+
   populateYearFilter();
+  readURLFilters();
   applyFilters();
+
+  // / key focuses search
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
+      e.preventDefault();
+      const s = document.getElementById('fSearch');
+      s.focus(); s.select();
+    }
+    if (e.key === 'Escape' && document.activeElement === document.getElementById('fSearch')) {
+      document.getElementById('fSearch').blur();
+    }
+  });
 });
 
+// ── URL SYNC ──────────────────────────────────
+function readURLFilters() {
+  const p = new URLSearchParams(location.search);
+  if (p.has('search')) document.getElementById('fSearch').value = p.get('search');
+  if (p.has('year'))   document.getElementById('fYear').value   = p.get('year');
+  if (p.has('type'))   document.getElementById('fType').value   = p.get('type');
+  if (p.has('lic'))    document.getElementById('fLic').value    = p.get('lic');
+  if (p.has('rep'))    document.getElementById('fRep').value    = p.get('rep');
+  if (p.has('pub'))    activePub = p.get('pub');
+  if (p.has('owns')) {
+    p.get('owns').split(',').forEach(o => {
+      if (ownerFilters.hasOwnProperty(o)) {
+        ownerFilters[o] = true;
+        const ids = { stojr:'pfStojr', nick:'pfNick', both:'pfBoth' };
+        const el = document.getElementById(ids[o]);
+        if (el) el.classList.add('on');
+      }
+    });
+  }
+  if (activePub !== 'all') {
+    document.querySelectorAll('.ptab').forEach(t => { t.className = 'ptab ' + t.classList[1]; });
+    const tabEl = document.querySelector(`.ptab.${activePub}`);
+    if (tabEl) tabEl.classList.add('on');
+  }
+}
+
+function writeURLFilters() {
+  const p = new URLSearchParams();
+  const search = document.getElementById('fSearch').value.trim();
+  const year   = document.getElementById('fYear').value;
+  const type   = document.getElementById('fType').value;
+  const lic    = document.getElementById('fLic').value;
+  const rep    = document.getElementById('fRep').value;
+  if (search) p.set('search', search);
+  if (year)   p.set('year', year);
+  if (type)   p.set('type', type);
+  if (lic)    p.set('lic', lic);
+  if (rep)    p.set('rep', rep);
+  if (activePub !== 'all') p.set('pub', activePub);
+  const owns = ['stojr','nick','both'].filter(k => ownerFilters[k]);
+  if (owns.length) p.set('owns', owns.join(','));
+  const newURL = p.toString() ? `${location.pathname}?${p.toString()}` : location.pathname;
+  history.replaceState(null, '', newURL);
+}
+
+// ── YEAR FILTER ───────────────────────────────
 function populateYearFilter() {
   const years = [...new Set(ALL_DATA.map(d => d.date ? d.date.slice(0,4) : null).filter(Boolean))].sort();
   const sel = document.getElementById('fYear');
   years.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; sel.appendChild(o); });
 }
 
-// ── PUBLISHER TABS ───────────────────────────
+// ── PUBLISHER TABS ────────────────────────────
 function setPub(pub, el) {
   activePub = pub;
   document.querySelectorAll('.ptab').forEach(t => { t.className = 'ptab ' + t.classList[1]; });
@@ -1092,10 +1265,11 @@ function setPub(pub, el) {
   applyFilters();
 }
 
-// ── FILTERS ──────────────────────────────────
+// ── FILTERS ───────────────────────────────────
 function toggleOwnerFilter(who) {
   ownerFilters[who] = !ownerFilters[who];
-  document.getElementById('pf' + (who === 'stojr' ? 'Stojr' : 'Nick')).classList.toggle('on', ownerFilters[who]);
+  const ids = { stojr:'pfStojr', nick:'pfNick', both:'pfBoth' };
+  document.getElementById(ids[who]).classList.toggle('on', ownerFilters[who]);
   applyFilters();
 }
 
@@ -1106,7 +1280,7 @@ function applyFilters() {
   const lic    = document.getElementById('fLic').value;
   const rep    = document.getElementById('fRep').value;
   const isFiltered = search || year || type || lic || rep || activePub !== 'all'
-                   || ownerFilters.stojr || ownerFilters.nick;
+                   || ownerFilters.stojr || ownerFilters.nick || ownerFilters.both;
 
   let filtered = ALL_DATA.filter(d => {
     if (activePub === 'marvel' && d.pub !== 'Marvel') return false;
@@ -1121,14 +1295,14 @@ function applyFilters() {
     }
     if (ownerFilters.stojr && !isOwned(d, 'stojr')) return false;
     if (ownerFilters.nick  && !isOwned(d, 'nick'))  return false;
+    if (ownerFilters.both  && !(isOwned(d,'stojr') && isOwned(d,'nick'))) return false;
     return true;
   });
 
-  // sort
   filtered.sort((a,b) => {
     let av = a[sortCol], bv = b[sortCol];
     if (sortCol === 'vol') { av = av||0; bv = bv||0; return (av-bv)*sortDir; }
-    if (sortCol === 'date') { av = av||''; bv = bv||''; }
+    if (sortCol === 'date') { av = av||'zzz'; bv = bv||'zzz'; }
     av = (av||'').toString().toLowerCase();
     bv = (bv||'').toString().toLowerCase();
     return av < bv ? -sortDir : av > bv ? sortDir : 0;
@@ -1137,7 +1311,6 @@ function applyFilters() {
   currentFiltered = filtered;
   page = 1;
 
-  // banner
   const banner = document.getElementById('activeBanner');
   if (isFiltered) {
     banner.classList.add('show');
@@ -1146,11 +1319,11 @@ function applyFilters() {
     banner.classList.remove('show');
   }
 
-  // update tab counts
   document.getElementById('tabAllCnt').textContent = ALL_DATA.length;
   document.getElementById('tabMrvCnt').textContent = ALL_DATA.filter(d=>d.pub==='Marvel').length;
   document.getElementById('tabDCCnt').textContent  = ALL_DATA.filter(d=>d.pub==='DC').length;
 
+  writeURLFilters();
   buildCards(filtered);
   buildBarChart(filtered);
   buildDonut(filtered);
@@ -1159,10 +1332,10 @@ function applyFilters() {
 
 // ── CARDS ─────────────────────────────────────
 function buildCards(filtered) {
-  const mrv   = filtered.filter(d => d.pub === 'Marvel').length;
-  const dc    = filtered.filter(d => d.pub === 'DC').length;
-  const uniq  = filtered.filter(d => d.reprint === 'No').length;
-  const total = filtered.length;
+  const mrv        = filtered.filter(d => d.pub === 'Marvel').length;
+  const dc         = filtered.filter(d => d.pub === 'DC').length;
+  const uniq       = filtered.filter(d => d.reprint === 'No').length;
+  const total      = filtered.length;
   const stojrCount = filtered.filter(d => isOwned(d,'stojr')).length;
   const nickCount  = filtered.filter(d => isOwned(d,'nick')).length;
   document.getElementById('cMrv').textContent   = mrv;
@@ -1173,26 +1346,94 @@ function buildCards(filtered) {
   document.getElementById('cNick').textContent  = nickCount;
   document.getElementById('hTotalMarvl').textContent = ALL_DATA.filter(d=>d.pub==='Marvel').length;
   document.getElementById('hTotalDC').textContent    = ALL_DATA.filter(d=>d.pub==='DC').length;
+  // progress bars
+  const sPct = total ? Math.round(stojrCount/total*100) : 0;
+  const nPct = total ? Math.round(nickCount/total*100)  : 0;
+  const sPctEl = document.getElementById('stojrPct');
+  const nPctEl = document.getElementById('nickPct');
+  const sFill  = document.getElementById('stojrFill');
+  const nFill  = document.getElementById('nickFill');
+  if (sPctEl) sPctEl.textContent = `${sPct}% of shown`;
+  if (nPctEl) nPctEl.textContent = `${nPct}% of shown`;
+  if (sFill)  sFill.style.width  = `${sPct}%`;
+  if (nFill)  nFill.style.width  = `${nPct}%`;
 }
 
 // ── BAR CHART ─────────────────────────────────
+function setBarMode(mode, el) {
+  barMode = mode;
+  document.querySelectorAll('.ctbtn[data-chart="bar"]').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  buildBarChart(currentFiltered);
+}
+
+function setChartMode(mode, el) {
+  chartMode = mode;
+  document.querySelectorAll('.ctbtn[data-chart-mode]').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('barChartWrap').style.display  = mode === 'bar'  ? '' : 'none';
+  document.getElementById('lineChartWrap').style.display = mode === 'line' ? '' : 'none';
+  document.getElementById('barModeToggle').style.display = mode === 'bar'  ? 'flex' : 'none';
+  buildBarChart(currentFiltered);
+}
+
+function filterByYear(year) {
+  document.getElementById('fYear').value = year;
+  applyFilters();
+}
+
 function buildBarChart(filtered) {
+  if (chartMode === 'line') { buildLineChart(filtered); return; }
+
   const yearMap = {};
   filtered.forEach(d => {
     if (!d.date) return;
     const y = d.date.slice(0,4);
-    if (!yearMap[y]) yearMap[y] = {m:0,d:0};
-    if (d.pub === 'Marvel') yearMap[y].m++;
-    else yearMap[y].d++;
+    if (!yearMap[y]) yearMap[y] = {m:0,d:0,stojr:0,nick:0,both:0,none:0};
+    yearMap[y].m += d.pub === 'Marvel' ? 1 : 0;
+    yearMap[y].d += d.pub === 'DC'     ? 1 : 0;
+    const s = isOwned(d,'stojr'), n = isOwned(d,'nick');
+    if (s && n) yearMap[y].both++;
+    else if (s) yearMap[y].stojr++;
+    else if (n) yearMap[y].nick++;
+    else        yearMap[y].none++;
   });
   const years = Object.keys(yearMap).sort();
   const maxVal = Math.max(...years.map(y => yearMap[y].m + yearMap[y].d), 1);
   const container = document.getElementById('barChart');
+
+  // update legend
+  const legEl = document.getElementById('barLegend');
+  if (legEl) {
+    legEl.innerHTML = barMode === 'owned'
+      ? `<div class="bl-item"><div class="bl-dot" style="background:#a8dfff"></div>Both</div>
+         <div class="bl-item"><div class="bl-dot" style="background:var(--stojr)"></div>stojr</div>
+         <div class="bl-item"><div class="bl-dot" style="background:var(--nick)"></div>Nick</div>
+         <div class="bl-item"><div class="bl-dot" style="background:var(--dim)"></div>Neither</div>`
+      : `<div class="bl-item"><div class="bl-dot" style="background:var(--red)"></div>Marvel</div>
+         <div class="bl-item"><div class="bl-dot" style="background:var(--blue)"></div>DC</div>`;
+  }
+
   container.innerHTML = years.map(y => {
     const mv = yearMap[y].m, dc = yearMap[y].d, tot = mv + dc;
+    if (barMode === 'owned') {
+      const b = yearMap[y].both, s = yearMap[y].stojr, n = yearMap[y].nick, none = yearMap[y].none;
+      const bPct = (b/maxVal*100).toFixed(1), sPct = (s/maxVal*100).toFixed(1);
+      const nPct = (n/maxVal*100).toFixed(1), xPct = (none/maxVal*100).toFixed(1);
+      return `<div class="brow" onclick="filterByYear('${y}')" style="cursor:pointer" title="Filter to ${y}">
+        <div class="byr">${y}</div>
+        <div class="btrack">
+          <div class="bfm" style="width:${bPct}%;background:#a8dfff" title="Both: ${b}"></div>
+          <div class="bfm" style="width:${sPct}%;background:var(--stojr)" title="stojr only: ${s}"></div>
+          <div class="bfm" style="width:${nPct}%;background:var(--nick)" title="Nick only: ${n}"></div>
+          <div class="bfm" style="width:${xPct}%;background:var(--dim);opacity:.4" title="Neither: ${none}"></div>
+        </div>
+        <div class="bcnt"><b>${tot}</b></div>
+      </div>`;
+    }
     const mPct = (mv/maxVal*100).toFixed(1);
     const dPct = (dc/maxVal*100).toFixed(1);
-    return `<div class="brow">
+    return `<div class="brow" onclick="filterByYear('${y}')" style="cursor:pointer" title="Click to filter to ${y}">
       <div class="byr">${y}</div>
       <div class="btrack">
         <div class="bfm" style="width:${mPct}%"></div>
@@ -1205,7 +1446,56 @@ function buildBarChart(filtered) {
     ? `Releases Per Year (filtered)` : `Releases Per Year`;
 }
 
-// ── DONUT ─────────────────────────────────────
+function buildLineChart(filtered) {
+  const canvas = document.getElementById('lineChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth || 420;
+  const H = 180;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+
+  const yearMap = {};
+  filtered.forEach(d => { if (d.date) yearMap[d.date.slice(0,4)] = (yearMap[d.date.slice(0,4)]||0)+1; });
+  const years = Object.keys(yearMap).sort();
+  if (!years.length) return;
+
+  let cum = 0;
+  const points = years.map(y => { cum += yearMap[y]; return cum; });
+  const maxCum = points[points.length-1] || 1;
+  const pad = {l:36,r:12,t:12,b:24};
+  const iW = W - pad.l - pad.r, iH = H - pad.t - pad.b;
+
+  ctx.strokeStyle = '#2e2e3e'; ctx.lineWidth = 1;
+  [.25,.5,.75,1].forEach(f => {
+    const gy = pad.t + iH*(1-f);
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(W-pad.r,gy); ctx.stroke();
+    ctx.fillStyle = '#6a6a88'; ctx.font = '10px Barlow Condensed,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxCum*f), pad.l-4, gy+3);
+  });
+
+  ctx.beginPath(); ctx.strokeStyle = '#ffd234'; ctx.lineWidth = 2;
+  points.forEach((v,i) => {
+    const x = pad.l + (i/(years.length-1||1))*iW;
+    const y = pad.t + iH*(1 - v/maxCum);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  const lastX = pad.l + iW, lastY = pad.t + iH*(1 - points[points.length-1]/maxCum);
+  ctx.lineTo(lastX, H-pad.b); ctx.lineTo(pad.l, H-pad.b); ctx.closePath();
+  ctx.fillStyle = 'rgba(255,210,52,.08)'; ctx.fill();
+
+  ctx.fillStyle = '#6a6a88'; ctx.font = '9px Barlow Condensed,sans-serif'; ctx.textAlign = 'center';
+  years.forEach((y,i) => {
+    if (years.length <= 10 || i % Math.ceil(years.length/8) === 0) {
+      ctx.fillText(y, pad.l + (i/(years.length-1||1))*iW, H-pad.b+12);
+    }
+  });
+  document.getElementById('barChartTitle').textContent = filtered.length < ALL_DATA.length
+    ? `Cumulative Releases (filtered)` : `Cumulative Releases`;
+}
+
+// ── DONUT ──────────────────────────────────────
 function buildDonut(filtered) {
   const canvas = document.getElementById('donut');
   const ctx = canvas.getContext('2d');
@@ -1226,30 +1516,19 @@ function buildDonut(filtered) {
   labels.forEach((lbl,i) => {
     if (!vals[i]) return;
     const slice = (vals[i]/total)*Math.PI*2;
-    ctx.beginPath();
-    ctx.moveTo(cx,cy);
+    ctx.beginPath(); ctx.moveTo(cx,cy);
     ctx.arc(cx,cy,r,startAngle,startAngle+slice);
-    ctx.closePath();
-    ctx.fillStyle = COLORS[i];
-    ctx.fill();
+    ctx.closePath(); ctx.fillStyle = COLORS[i]; ctx.fill();
     startAngle += slice;
   });
-  // inner hole
-  ctx.beginPath();
-  ctx.arc(cx,cy,ir,0,Math.PI*2);
+  ctx.beginPath(); ctx.arc(cx,cy,ir,0,Math.PI*2);
   ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#131318';
   ctx.fill();
-  // center text
-  ctx.fillStyle = '#dde0f0';
-  ctx.font = `bold 22px 'Bebas Neue', impact, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#dde0f0'; ctx.font = `bold 22px 'Bebas Neue',impact,sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(total, cx, cy-7);
-  ctx.font = `10px 'Barlow Condensed', sans-serif`;
-  ctx.fillStyle = '#6a6a8a';
+  ctx.font = `10px 'Barlow Condensed',sans-serif`; ctx.fillStyle = '#6a6a8a';
   ctx.fillText('UNIQUE', cx, cy+10);
-
-  // legend
   const leg = document.getElementById('donutLeg');
   leg.innerHTML = labels.map((l,i) => `
     <div class="dleg-item">
@@ -1259,16 +1538,14 @@ function buildDonut(filtered) {
     </div>`).join('');
 }
 
-// ── TABLE ─────────────────────────────────────
+// ── TABLE ──────────────────────────────────────
 let sortArrows = {};
 function sortBy(col) {
   if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
   document.querySelectorAll('thead th').forEach(th => {
-    const id = th.id;
-    if (!id) return;
-    const c = id.replace('th-','');
+    const id = th.id; if (!id) return;
     const arrow = th.querySelector('.sort-arrow');
-    if (arrow) arrow.textContent = c === sortCol ? (sortDir===1?' ▼':' ▲') : '';
+    if (arrow) arrow.textContent = id.replace('th-','') === sortCol ? (sortDir===1?' ▼':' ▲') : '';
   });
   applyFilters();
 }
@@ -1285,94 +1562,162 @@ function changePage(dir) {
 }
 
 function typeBadge(d) {
-  const cls = d.type === 'Epic' ? 'tb-epic'
-    : d.type === 'Modern'   ? 'tb-modern'
-    : d.type === 'Ultimate' ? 'tb-ultimate'
-    : 'tb-dcfinest';
-  const lbl = d.type === 'DC Finest' ? 'DC Finest'
-    : d.type === 'Epic' ? 'Classic' : d.type;
+  const cls = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern'
+    : d.type === 'Ultimate' ? 'tb-ultimate' : 'tb-dcfinest';
+  const lbl = d.type === 'DC Finest' ? 'DC Finest' : d.type === 'Epic' ? 'Classic' : d.type;
   return `<span class="type-badge ${cls}">${lbl}</span>`;
 }
+
+// ── ROW EXPAND ────────────────────────────────
+let expandedRow = null;
+function toggleExpand(id, cols) {
+  if (expandedRow === id) {
+    expandedRow = null;
+    document.querySelectorAll('tr[data-row-id]').forEach(r => r.classList.remove('expanded'));
+    document.querySelectorAll('tr.expand-detail').forEach(r => r.remove());
+    return;
+  }
+  document.querySelectorAll('tr.expand-detail').forEach(r => r.remove());
+  document.querySelectorAll('tr[data-row-id]').forEach(r => r.classList.remove('expanded'));
+  expandedRow = id;
+  const d = ALL_DATA[id];
+  if (!d) return;
+  const row = document.querySelector(`tr[data-row-id="${id}"]`);
+  if (!row) return;
+  row.classList.add('expanded');
+  const det = document.createElement('tr');
+  det.className = 'expand-detail';
+  det.innerHTML = `<td colspan="${cols}"><div class="expand-content">
+    <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages ? d.pages+' pages' : 'Unknown'}</span></div>
+    <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
+    <div class="expand-field"><span class="expand-label">Full Subtitle</span><span class="expand-value">${d.subtitle||'–'}</span></div>
+    <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
+    <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
+    ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
+  </div></td>`;
+  row.after(det);
+}
+
+// ── VIRTUAL SCROLL ────────────────────────────
+let _virtScroll = null;
+const VIRT_ROW_H = 37;
 
 function buildTable(filtered) {
   const start = (page-1)*pageSize, end = Math.min(start+pageSize, filtered.length);
   const rows = filtered.slice(start, end);
   const maxPage = Math.ceil(filtered.length/pageSize)||1;
-
+  const COLS = 11;
   document.getElementById('tableCount').textContent = `${filtered.length} entries`;
   document.getElementById('pgInfo').textContent = `Page ${page} of ${maxPage} · ${start+1}–${end} of ${filtered.length}`;
   document.getElementById('pgPrev').disabled = page <= 1;
   document.getElementById('pgNext').disabled = page >= maxPage;
 
-  const tbody = document.getElementById('tBody');
-  tbody.innerHTML = rows.map(d => {
-    const rowClass = d.conf === 'estimated' ? 'est' : d.conf === 'sourced' ? 'src' : '';
-    const confDot = d.conf === 'verified'
-      ? `<div class="ck-dot v" style="display:inline-block"></div>`
-      : d.conf === 'sourced'
-      ? `<div class="ck-dot s" style="display:inline-block"></div>`
-      : `<div class="ck-dot e" style="display:inline-block"></div>`;
-    const volTxt = d.pub === 'Marvel' && d.vol != null ? `Vol. ${d.vol}` : (d.years || '–');
-    const subTxt = d.subtitle || '–';
-    const pubBadge = d.pub === 'Marvel'
-      ? `<span class="pub-badge m">Marvel</span>`
-      : `<span class="pub-badge d">DC</span>`;
-    const stojrOwned = isOwned(d, 'stojr');
-    const nickOwned  = isOwned(d, 'nick');
-    return `<tr class="${rowClass}">
-      <td class="td-date">${d.date || '–'}</td>
-      <td>${pubBadge}</td>
-      <td class="td-series">${d.series || '–'}</td>
-      <td class="td-vol">${volTxt}</td>
-      <td class="td-sub" title="${subTxt}">${subTxt}</td>
-      <td>${typeBadge(d)}</td>
-      <td class="td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
-      <td class="td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
-      <td class="td-conf">${confDot}</td>
-      <td><button class="ob os${stojrOwned?' on':''}" data-id="${d.id}" data-who="stojr" onclick="toggleOwn(${d.id},'stojr')" title="stojr owns">S</button></td>
-      <td><button class="ob on2${nickOwned?' on':''}" data-id="${d.id}" data-who="nick"  onclick="toggleOwn(${d.id},'nick')"  title="Nick owns">N</button></td>
-    </tr>`;
-  }).join('');
+  expandedRow = null;
+  const tscroll = document.querySelector('.tscroll');
+  if (rows.length > 150) {
+    tscroll.style.maxHeight = '560px';
+    tscroll.style.overflowY = 'auto';
+    setupVirtScroll(rows, tscroll, COLS);
+  } else {
+    tscroll.style.maxHeight = '';
+    tscroll.style.overflowY = '';
+    if (_virtScroll) { tscroll.removeEventListener('scroll', _virtScroll); _virtScroll = null; }
+    const tbody = document.getElementById('tBody');
+    const frag = document.createDocumentFragment();
+    rows.forEach(d => frag.appendChild(buildRowEl(d, COLS)));
+    tbody.innerHTML = '';
+    tbody.appendChild(frag);
+  }
+}
+
+function setupVirtScroll(rows, container, cols) {
+  if (_virtScroll) container.removeEventListener('scroll', _virtScroll);
+  function render() {
+    const scrollTop = container.scrollTop;
+    const viewH = container.clientHeight;
+    const startIdx = Math.max(0, Math.floor(scrollTop / VIRT_ROW_H) - 15);
+    const endIdx = Math.min(rows.length, startIdx + Math.ceil(viewH / VIRT_ROW_H) + 30);
+    const topPad = startIdx * VIRT_ROW_H;
+    const botPad = (rows.length - endIdx) * VIRT_ROW_H;
+    const tbody = document.getElementById('tBody');
+    const frag = document.createDocumentFragment();
+    const topTr = document.createElement('tr');
+    const topTd = document.createElement('td');
+    topTd.colSpan = cols; topTd.style.cssText = `height:${topPad}px;padding:0`;
+    topTr.appendChild(topTd); frag.appendChild(topTr);
+    rows.slice(startIdx, endIdx).forEach(d => frag.appendChild(buildRowEl(d, cols)));
+    const botTr = document.createElement('tr');
+    const botTd = document.createElement('td');
+    botTd.colSpan = cols; botTd.style.cssText = `height:${botPad}px;padding:0`;
+    botTr.appendChild(botTd); frag.appendChild(botTr);
+    tbody.innerHTML = '';
+    tbody.appendChild(frag);
+  }
+  _virtScroll = render;
+  container.addEventListener('scroll', render);
+  render();
+}
+
+function buildRowEl(d, cols) {
+  const confClass = d.conf === 'verified' ? 'conf-verified' : d.conf === 'sourced' ? 'conf-sourced' : 'conf-est';
+  const licClass  = d.licensed === 'Yes' ? 'licensed-row' : '';
+  const tr = document.createElement('tr');
+  tr.className = ['data-row', confClass, licClass].filter(Boolean).join(' ');
+  tr.dataset.rowId = d.id;
+  tr.onclick = () => toggleExpand(d.id, cols);
+
+  const isNew = d.date && d.date.startsWith(CURRENT_YEAR);
+  const dateHtml = d.date
+    ? `${d.date}${isNew ? ' <span class="date-new">NEW</span>' : ''}`
+    : `<span class="date-tbd">TBD</span>`;
+
+  const pubBadge = d.pub === 'Marvel'
+    ? `<span class="pub-badge m">Marvel</span>`
+    : `<span class="pub-badge d">DC</span>`;
+  const confDot = d.conf === 'verified'
+    ? `<div class="ck-dot v" style="display:inline-block"></div>`
+    : d.conf === 'sourced'
+    ? `<div class="ck-dot s" style="display:inline-block"></div>`
+    : `<div class="ck-dot e" style="display:inline-block"></div>`;
+  const volTxt   = d.pub === 'Marvel' && d.vol != null ? `Vol. ${d.vol}` : (d.years || '–');
+  const subTxt   = d.subtitle || '–';
+  const licIcon  = d.licensed === 'Yes' ? ' <span class="lic-icon" title="Licensed IP">™</span>' : '';
+  const stojrOwned = isOwned(d,'stojr'), nickOwned = isOwned(d,'nick');
+
+  tr.innerHTML = `
+    <td class="td-date">${dateHtml}</td>
+    <td>${pubBadge}</td>
+    <td class="td-series">${d.series||'–'}${licIcon}</td>
+    <td class="td-vol">${volTxt}</td>
+    <td class="td-sub" title="${subTxt}">${subTxt}</td>
+    <td>${typeBadge(d)}</td>
+    <td class="td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
+    <td class="td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
+    <td class="td-conf">${confDot}</td>
+    <td><button class="ob os${stojrOwned?' on':''}" data-id="${d.id}" data-who="stojr" onclick="event.stopPropagation();toggleOwn(${d.id},'stojr')" title="stojr owns">S</button></td>
+    <td><button class="ob on2${nickOwned?' on':''}" data-id="${d.id}" data-who="nick"  onclick="event.stopPropagation();toggleOwn(${d.id},'nick')"  title="Nick owns">N</button></td>`;
+  return tr;
 }
 
 function exportCSV(all) {
   const rows = all ? ALL_DATA : currentFiltered;
-  const headers = [
-    'id','pub','date','series','vol','subtitle','years','type',
-    'licensed','reprint','pages','conf','stojr_owns','nick_owns'
-  ];
+  const headers = ['id','pub','date','series','vol','subtitle','years','type','licensed','reprint','pages','conf','stojr_owns','nick_owns'];
   const escape = v => {
     if (v === null || v === undefined) return '';
     const s = String(v);
-    if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
-    return s;
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g,'""') + '"' : s;
   };
   const csvRows = [headers.join(',')];
-  rows.forEach(d => {
-    csvRows.push([
-      escape(d.id),
-      escape(d.pub),
-      escape(d.date),
-      escape(d.series),
-      escape(d.vol),
-      escape(d.subtitle),
-      escape(d.years),
-      escape(d.type),
-      escape(d.licensed),
-      escape(d.reprint),
-      escape(d.pages),
-      escape(d.conf),
-      escape(isOwned(d,'stojr') ? 'Yes' : 'No'),
-      escape(isOwned(d,'nick')  ? 'Yes' : 'No'),
-    ].join(','));
-  });
+  rows.forEach(d => csvRows.push([
+    escape(d.id),escape(d.pub),escape(d.date),escape(d.series),escape(d.vol),
+    escape(d.subtitle),escape(d.years),escape(d.type),escape(d.licensed),escape(d.reprint),
+    escape(d.pages),escape(d.conf),escape(isOwned(d,'stojr')?'Yes':'No'),escape(isOwned(d,'nick')?'Yes':'No'),
+  ].join(',')));
   const blob = new Blob([csvRows.join('\n')], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const label = all ? 'all' : 'filtered';
-  const date = new Date().toISOString().slice(0,10);
-  a.download = `bce_epic_database_${label}_${date}.csv`;
+  a.download = `bce_epic_database_${all?'all':'filtered'}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1383,9 +1728,8 @@ function resetAll() {
   document.getElementById('fType').value   = '';
   document.getElementById('fLic').value    = '';
   document.getElementById('fRep').value    = '';
-  ownerFilters = { stojr: false, nick: false };
-  document.getElementById('pfStojr').classList.remove('on');
-  document.getElementById('pfNick').classList.remove('on');
+  ownerFilters = { stojr: false, nick: false, both: false };
+  ['pfStojr','pfNick','pfBoth'].forEach(id => document.getElementById(id).classList.remove('on'));
   document.querySelectorAll('.ptab').forEach(t => { t.className = 'ptab ' + t.classList[1]; });
   document.querySelector('.ptab.all').classList.add('on');
   activePub = 'all';
@@ -1393,8 +1737,11 @@ function resetAll() {
   document.querySelectorAll('thead th .sort-arrow').forEach(a => a.textContent='');
   const th = document.getElementById('th-date');
   if (th) { const a = th.querySelector('.sort-arrow'); if(a) a.textContent=' ▼'; }
+  history.replaceState(null, '', location.pathname);
   applyFilters();
 }
 </script>
+
+<div class="toast" id="saveToast"></div>
 </body>
 </html>
