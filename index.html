@@ -1,455 +1,1074 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marvel Epic Collections Dashboard</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marvel Epic Collection — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E8151B;
+    --gold: #F5A623;
+    --bg: #0A0A0A;
+    --surface: #141414;
+    --surface2: #1E1E1E;
+    --border: #2A2A2A;
+    --text: #E8E8E8;
+    --muted: #888;
+    --epic-color: #E8151B;
+    --modern-color: #3B82F6;
+    --ultimate-color: #A855F7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    position: sticky; top: 0;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; }
+  .logo span { color: var(--red); }
+  .data-note { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); text-align: right; line-height: 1.5; }
+
+  main { padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 4px;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* STAT CARDS */
+  .stats-row { display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; margin-bottom: 40px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); padding: 20px 16px; transition: border-color 0.2s; }
+  .stat-card .label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+  .stat-card .value { font-family: 'Bebas Neue', sans-serif; font-size: 40px; line-height: 1; }
+  .stat-card .sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .stat-card.accent .value { color: var(--red); }
+  .stat-card.gold .value { color: var(--gold); }
+  .stat-card.modern-card .value { color: var(--modern-color); }
+  .stat-card.ultimate-card .value { color: var(--ultimate-color); }
+
+  /* CHARTS */
+  .charts-row { display: grid; grid-template-columns: 1fr 320px; gap: 24px; margin-bottom: 40px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); padding: 24px; }
+  .chart-card h3 { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 24px; }
+
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 160px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .bar-stack { width: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+  .bar-segment { width: 100%; transition: opacity 0.15s; }
+  .bar-segment:hover { opacity: 0.75; }
+  .bar-segment.epic    { background: var(--epic-color); }
+  .bar-segment.modern  { background: var(--modern-color); }
+  .bar-segment.ultimate{ background: var(--ultimate-color); }
+  .bar-segment.reprint { background: #3A3A3A; }
+  .bar-year { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); text-align: center; white-space: nowrap; transform: rotate(-45deg); margin-top: 6px; }
+  .bar-total { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); margin-bottom: 2px; }
+
+  .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .donut-svg { width: 160px; height: 160px; }
+  .donut-legend { width: 100%; }
+  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .legend-dot { width: 10px; height: 10px; flex-shrink: 0; }
+  .legend-label { font-size: 11px; color: var(--muted); flex: 1; }
+  .legend-count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+  .legend-pct { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); width: 36px; text-align: right; }
+
+  /* MILESTONE */
+  .milestone-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 16px 20px; margin-bottom: 40px; display: flex; align-items: center; gap: 20px; }
+  .milestone-num { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: var(--gold); line-height: 1; }
+  .milestone-info { flex: 1; }
+  .milestone-info .title { font-weight: 600; font-size: 14px; }
+  .milestone-info .detail { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .milestone-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; }
+
+  /* FILTERS */
+  .filters-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+  .filter-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px;
+    padding: 5px 12px; border: 1px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; transition: all 0.15s; text-transform: uppercase;
+  }
+  .filter-btn:hover { border-color: var(--text); color: var(--text); }
+  .filter-btn.active       { background: var(--red);           border-color: var(--red);           color: #fff; }
+  .filter-btn.active.modern  { background: var(--modern-color);  border-color: var(--modern-color);  color: #fff; }
+  .filter-btn.active.ultimate{ background: var(--ultimate-color);border-color: var(--ultimate-color);color: #fff; }
+  .filter-btn.active.all-btn { background: var(--surface2);      border-color: #555;                 color: var(--text); }
+  input[type="text"] {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; padding: 5px 12px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--text); outline: none; width: 220px;
+  }
+  input[type="text"]:focus { border-color: var(--red); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); overflow: auto; max-height: 560px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { position: sticky; top: 0; z-index: 10; }
+  th {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+    color: var(--muted); text-transform: uppercase; padding: 11px 14px;
+    text-align: left; background: #111; border-bottom: 1px solid var(--border);
+    white-space: nowrap; cursor: pointer; user-select: none;
+  }
+  th:hover { color: var(--text); }
+  th.sorted { color: var(--text); }
+  td { padding: 9px 14px; border-bottom: 1px solid #1A1A1A; vertical-align: middle; white-space: nowrap; }
+  tr:hover td { background: var(--surface2); }
+  tr.estimated td { opacity: 0.72; }
+  tr.estimated:hover td { opacity: 1; }
+
+  .badge { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px; padding: 2px 7px; text-transform: uppercase; display: inline-block; }
+  .badge.epic     { background: rgba(232,21,27,0.12);  color: var(--red);          border: 1px solid rgba(232,21,27,0.25); }
+  .badge.modern   { background: rgba(59,130,246,0.12); color: #60A5FA;             border: 1px solid rgba(59,130,246,0.25); }
+  .badge.ultimate { background: rgba(168,85,247,0.12); color: #C084FC;             border: 1px solid rgba(168,85,247,0.25); }
+
+  .conf-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .conf-dot.verified  { background: #22C55E; }
+  .conf-dot.estimated { background: #555; }
+
+  .null-val { color: #333; font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+  .pages-val { font-family: 'IBM Plex Mono', monospace; }
+  .num-val   { font-family: 'IBM Plex Mono', monospace; color: var(--muted); font-size: 10px; }
+  .icon-yes  { color: var(--gold); }
+  .icon-no   { color: #333; }
+  .icon-rep  { color: var(--gold); font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+
+  .table-info {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+    padding: 10px 14px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  .conf-legend { display: flex; gap: 14px; align-items: center; }
+  .conf-legend span { display: flex; align-items: center; gap: 5px; font-size: 10px; }
+
+  .filter-active-note {
+    background: rgba(232,21,27,0.08); border: 1px solid rgba(232,21,27,0.2);
+    padding: 7px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    color: var(--muted); margin-bottom: 12px; display: none; align-items: center; gap: 10px;
+  }
+  .filter-active-note.visible { display: flex; }
+</style>
 </head>
 <body>
-    <div id="root"></div>
-    
-    <script type="text/babel">
-        const { useState, useMemo } = React;
-        
-        const MarvelEpicDashboard = () => {
-          // Historical stats through Dec 30, 2025
-          const historicalStats = {
-            totalUnique: 487,
-            classic: 424,
-            modern: 59,
-            ultimate: 4,
-            reprints: 99,
-            licensed: 50, // Approximate from Wikipedia
-            totalReleases: 586 // 487 unique + 99 reprints
-          };
 
-          // 2026 detailed releases data (#488-544)
-          const releases2026 = [
-            { Release_Number: 488, Release_Date: "2026-01-06", Series: "Amazing Spider-Man", Volume: 12, Subtitle: "Spider-Man - Threat or Menace?", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 489, Release_Date: "2026-01-06", Series: "Amazing Spider-Man Modern", Volume: 2, Subtitle: "The Life and Death of Spiders", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 400 },
-            { Release_Number: 490, Release_Date: "2026-01-13", Series: "Blade", Volume: 2, Subtitle: "Nightstalkers", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 432 },
-            { Release_Number: 491, Release_Date: "2026-01-13", Series: "Punisher", Volume: 12, Subtitle: "Return To Big Nothing", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
-            { Release_Number: 492, Release_Date: "2026-01-20", Series: "X-Men", Volume: 20, Subtitle: "Hunt For Professor X", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
-            { Release_Number: 493, Release_Date: "2026-01-27", Series: "Fantastic Four", Volume: 19, Subtitle: "Into The Timestream", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 488 },
-            { Release_Number: 494, Release_Date: "2026-02-03", Series: "Silver Surfer", Volume: 7, Subtitle: "Resurrection", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 400 },
-            { Release_Number: 495, Release_Date: "2026-02-03", Series: "Young Avengers Modern", Volume: 3, Subtitle: "The Children's Crusade", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 248 },
-            { Release_Number: 496, Release_Date: "2026-02-10", Series: "Avengers", Volume: 28, Subtitle: "Heavy Metal", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
-            { Release_Number: 497, Release_Date: "2026-02-10", Series: "New Avengers Modern", Volume: 9, Subtitle: "Secret Invasion Book 2", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 416 },
-            { Release_Number: 498, Release_Date: "2026-02-17", Series: "Wolverine", Volume: 16, Subtitle: "Blood And Claws", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
-            { Release_Number: 499, Release_Date: "2026-02-24", Series: "Incredible Hulk", Volume: 24, Subtitle: "Ghosts Of The Future", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 440 },
-            { Release_Number: 500, Release_Date: "2026-03-03", Series: "Thor", Volume: 13, Subtitle: "The Surtur War", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 496 },
-            { Release_Number: 501, Release_Date: "2026-03-03", Series: "Annihilation Modern", Volume: 3, Subtitle: "Conquest Prelude", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 272 },
-            { Release_Number: 502, Release_Date: "2026-03-10", Series: "Captain America", Volume: 25, Subtitle: "Streets Of Poison", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
-            { Release_Number: 503, Release_Date: "2026-03-10", Series: "Daredevil Modern", Volume: 10, Subtitle: "The King Of Hell's Kitchen", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 392 },
-            { Release_Number: 504, Release_Date: "2026-03-17", Series: "Iron Man", Volume: 18, Subtitle: "The Dragon Seed Saga", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 505, Release_Date: "2026-03-24", Series: "Amazing Spider-Man", Volume: 13, Subtitle: "Kraven's Last Hunt", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 352 },
-            { Release_Number: 506, Release_Date: "2026-03-31", Series: "Deadpool Modern", Volume: 7, Subtitle: "Weasel Goes To Hell", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 507, Release_Date: "2026-04-07", Series: "Thor", Volume: 14, Subtitle: "The God Storm", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
-            { Release_Number: 508, Release_Date: "2026-04-07", Series: "Star Wars Modern", Volume: 4, Subtitle: "Rebels And Rogues", Type: "Modern", Licensed: "Yes", Reprint: "No", Pages: 400 },
-            { Release_Number: 509, Release_Date: "2026-04-14", Series: "X-Men", Volume: 21, Subtitle: "Fall Of The Mutants", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 480 },
-            { Release_Number: 510, Release_Date: "2026-04-21", Series: "Ultimate Spider-Man", Volume: 2, Subtitle: "Learning Curve", Type: "Ultimate", Licensed: "No", Reprint: "Yes", Pages: 352 },
-            { Release_Number: 511, Release_Date: "2026-04-21", Series: "Ultimate X-Men", Volume: 2, Subtitle: "World Tour", Type: "Ultimate", Licensed: "No", Reprint: "No", Pages: 336 },
-            { Release_Number: 512, Release_Date: "2026-04-28", Series: "Avengers", Volume: 29, Subtitle: "The Gatherers Strike", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
-            { Release_Number: 513, Release_Date: "2026-05-05", Series: "Fantastic Four", Volume: 20, Subtitle: "The New Fantastic Four", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
-            { Release_Number: 514, Release_Date: "2026-05-05", Series: "Guardians of the Galaxy Modern", Volume: 3, Subtitle: "Realm Of Kings", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 424 },
-            { Release_Number: 515, Release_Date: "2026-05-12", Series: "Incredible Hulk", Volume: 25, Subtitle: "Future Imperfect", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 280 },
-            { Release_Number: 516, Release_Date: "2026-05-19", Series: "Captain America", Volume: 26, Subtitle: "Man And Wolf", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 517, Release_Date: "2026-05-26", Series: "Daredevil", Volume: 19, Subtitle: "Fall From Grace", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
-            { Release_Number: 518, Release_Date: "2026-06-02", Series: "New X-Men Modern", Volume: 3, Subtitle: "Planet X", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 336 },
-            { Release_Number: 519, Release_Date: "2026-06-02", Series: "Wolverine", Volume: 17, Subtitle: "Blood Debt", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
-            { Release_Number: 520, Release_Date: "2026-06-09", Series: "Amazing Spider-Man", Volume: 14, Subtitle: "Maximum Carnage", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 392 },
-            { Release_Number: 521, Release_Date: "2026-06-16", Series: "Iron Man", Volume: 19, Subtitle: "War Machine", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
-            { Release_Number: 522, Release_Date: "2026-06-23", Series: "Thor Modern", Volume: 5, Subtitle: "The Siege of Asgard", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 523, Release_Date: "2026-06-30", Series: "Punisher", Volume: 13, Subtitle: "Suicide Run", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 480 },
-            { Release_Number: 524, Release_Date: "2026-07-07", Series: "X-Factor", Volume: 10, Subtitle: "X-Aminations", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
-            { Release_Number: 525, Release_Date: "2026-07-14", Series: "Star Wars Legends", Volume: 9, Subtitle: "Legacy Era", Type: "Epic", Licensed: "Yes", Reprint: "No", Pages: 408 },
-            { Release_Number: 526, Release_Date: "2026-07-21", Series: "Venom Modern", Volume: 8, Subtitle: "Circle Of Four", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 416 },
-            { Release_Number: 527, Release_Date: "2026-07-28", Series: "Avengers", Volume: 30, Subtitle: "Bloodties", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
-            { Release_Number: 528, Release_Date: "2026-08-04", Series: "Deadpool", Volume: 8, Subtitle: "Drowning Man", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 529, Release_Date: "2026-08-11", Series: "Fantastic Four", Volume: 21, Subtitle: "Nobody Gets Out Alive", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
-            { Release_Number: 530, Release_Date: "2026-08-18", Series: "Captain America Modern", Volume: 6, Subtitle: "The Man With No Face", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 424 },
-            { Release_Number: 531, Release_Date: "2026-08-25", Series: "Incredible Hulk", Volume: 26, Subtitle: "Pardoned", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
-            { Release_Number: 532, Release_Date: "2026-09-01", Series: "X-Men", Volume: 22, Subtitle: "Inferno", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 488 },
-            { Release_Number: 533, Release_Date: "2026-09-08", Series: "Spider-Man Modern", Volume: 3, Subtitle: "Brand New Day Vol. 3", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 432 },
-            { Release_Number: 534, Release_Date: "2026-09-15", Series: "Daredevil", Volume: 20, Subtitle: "Flying Blind", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 535, Release_Date: "2026-09-22", Series: "Thor", Volume: 15, Subtitle: "Into The Dark Nebula", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
-            { Release_Number: 536, Release_Date: "2026-09-29", Series: "Iron Man Modern", Volume: 7, Subtitle: "Stark Disassembled", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 416 },
-            { Release_Number: 537, Release_Date: "2026-10-06", Series: "Wolverine", Volume: 18, Subtitle: "Not Dead Yet", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 440 },
-            { Release_Number: 538, Release_Date: "2026-10-13", Series: "Avengers West Coast", Volume: 9, Subtitle: "Vision Quest", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 320 },
-            { Release_Number: 539, Release_Date: "2026-10-20", Series: "New Avengers Modern", Volume: 10, Subtitle: "Power", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 424 },
-            { Release_Number: 540, Release_Date: "2026-10-27", Series: "Captain America", Volume: 27, Subtitle: "Fighting Chance", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
-            { Release_Number: 541, Release_Date: "2026-11-03", Series: "Fantastic Four", Volume: 22, Subtitle: "The Darker Road", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
-            { Release_Number: 542, Release_Date: "2026-11-10", Series: "X-Force", Volume: 8, Subtitle: "Child's Play", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 543, Release_Date: "2026-11-17", Series: "Amazing Spider-Man", Volume: 15, Subtitle: "Clone Saga Epic", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 504 },
-            { Release_Number: 544, Release_Date: "2026-11-24", Series: "Guardians of the Galaxy Modern", Volume: 4, Subtitle: "War Of Kings", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 440 }
-          ];
+<header>
+  <div class="logo"><span>Marvel</span> Epic Collection</div>
+  <div class="data-note">Wikipedia-verified data + estimated historical fills · Through Dec 2025<br>487 unique releases · 586 total including reprints · Filters update all panels</div>
+</header>
 
-          const [yearFilter, setYearFilter] = useState('All Years');
-          const [typeFilter, setTypeFilter] = useState('All');
-          const [licensedFilter, setLicensedFilter] = useState('All');
-          const [reprintFilter, setReprintFilter] = useState('All');
-          const [searchTerm, setSearchTerm] = useState('');
-          const [sortConfig, setSortConfig] = useState({ key: 'Release_Number', direction: 'asc' });
+<main>
 
-          // Calculate combined stats based on year filter
-          const stats = useMemo(() => {
-            if (yearFilter === 'All Years') {
-              // Combined stats: historical + 2026
-              const total2026 = releases2026.length;
-              const epic2026 = releases2026.filter(r => r.Type === 'Epic').length;
-              const modern2026 = releases2026.filter(r => r.Type === 'Modern').length;
-              const ultimate2026 = releases2026.filter(r => r.Type === 'Ultimate').length;
-              const reprints2026 = releases2026.filter(r => r.Reprint === 'Yes').length;
-              const licensed2026 = releases2026.filter(r => r.Licensed === 'Yes').length;
-              
-              return {
-                total: historicalStats.totalUnique + total2026,
-                epic: historicalStats.classic + epic2026,
-                modern: historicalStats.modern + modern2026,
-                ultimate: historicalStats.ultimate + ultimate2026,
-                reprints: historicalStats.reprints + reprints2026,
-                licensed: historicalStats.licensed + licensed2026,
-                avgPages: Math.round(releases2026.reduce((sum, r) => sum + r.Pages, 0) / releases2026.length),
-                totalPages: releases2026.reduce((sum, r) => sum + r.Pages, 0)
-              };
-            } else {
-              // 2026 only
-              return {
-                total: releases2026.length,
-                epic: releases2026.filter(r => r.Type === 'Epic').length,
-                modern: releases2026.filter(r => r.Type === 'Modern').length,
-                ultimate: releases2026.filter(r => r.Type === 'Ultimate').length,
-                reprints: releases2026.filter(r => r.Reprint === 'Yes').length,
-                licensed: releases2026.filter(r => r.Licensed === 'Yes').length,
-                avgPages: Math.round(releases2026.reduce((sum, r) => sum + r.Pages, 0) / releases2026.length),
-                totalPages: releases2026.reduce((sum, r) => sum + r.Pages, 0)
-              };
-            }
-          }, [yearFilter]);
+  <!-- MILESTONE -->
+  <div class="section-title">500th Unique Release Milestone</div>
+  <div class="milestone-card">
+    <div class="milestone-num">500</div>
+    <div class="milestone-info">
+      <div class="milestone-label">Projected 500th Unique Release</div>
+      <div class="title">Thor Epic Collection Vol. 13: The Surtur War</div>
+      <div class="detail">March 2026 · Epic · 487 confirmed unique through Dec 30, 2025 · +13 releases into 2026</div>
+    </div>
+  </div>
 
-          const filteredData = useMemo(() => {
-            return releases2026.filter(item => {
-              const matchesType = typeFilter === 'All' || item.Type === typeFilter;
-              const matchesLicensed = licensedFilter === 'All' || item.Licensed === licensedFilter;
-              const matchesReprint = reprintFilter === 'All' || item.Reprint === reprintFilter;
-              const matchesSearch = searchTerm === '' || 
-                item.Series.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.Subtitle.toLowerCase().includes(searchTerm.toLowerCase());
-              return matchesType && matchesLicensed && matchesReprint && matchesSearch;
-            });
-          }, [typeFilter, licensedFilter, reprintFilter, searchTerm]);
+  <!-- STAT CARDS -->
+  <div class="section-title" id="statsTitle">Collection Totals <span id="filterBadge" style="font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0;text-transform:none;font-family:'IBM Plex Sans',sans-serif"></span></div>
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card accent">
+      <div class="label">Shown (Unique)</div>
+      <div class="value" id="cardUnique">487</div>
+      <div class="sub" id="cardUniqueSub">Through Dec 30, 2025</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total incl. Reprints</div>
+      <div class="value" id="cardTotal">586</div>
+      <div class="sub" id="cardTotalSub">99 reprints total</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Classic Epic</div>
+      <div class="value" id="cardEpic">424</div>
+      <div class="sub">Unique · Silver/Bronze age</div>
+    </div>
+    <div class="stat-card modern-card">
+      <div class="label">Modern Era</div>
+      <div class="value" id="cardModern">59</div>
+      <div class="sub">Unique · 1998–present</div>
+    </div>
+    <div class="stat-card ultimate-card">
+      <div class="label">Ultimate</div>
+      <div class="value" id="cardUltimate">4</div>
+      <div class="sub">Launched 2025</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="label">Licensed IP</div>
+      <div class="value" id="cardLicensed">—</div>
+      <div class="sub" id="cardLicensedSub">Star Wars, Conan, etc.</div>
+    </div>
+  </div>
 
-          const sortedData = useMemo(() => {
-            const sorted = [...filteredData].sort((a, b) => {
-              if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-              if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
-              return 0;
-            });
-            return sorted;
-          }, [filteredData, sortConfig]);
+  <!-- CHARTS -->
+  <div class="section-title">Release History</div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <h3 id="barTitle">Annual Releases by Type (confirmed totals from Wikipedia)</h3>
+      <div class="bar-chart" id="barChart"></div>
+      <div style="display:flex;gap:20px;margin-top:20px;flex-wrap:wrap;">
+        <div class="legend-item" style="margin-bottom:0"><div class="legend-dot" style="background:var(--epic-color)"></div><div class="legend-label" style="font-size:10px">Classic Epic</div></div>
+        <div class="legend-item" style="margin-bottom:0"><div class="legend-dot" style="background:var(--modern-color)"></div><div class="legend-label" style="font-size:10px">Modern Era</div></div>
+        <div class="legend-item" style="margin-bottom:0"><div class="legend-dot" style="background:var(--ultimate-color)"></div><div class="legend-label" style="font-size:10px">Ultimate</div></div>
+        <div class="legend-item" style="margin-bottom:0"><div class="legend-dot" style="background:#3A3A3A"></div><div class="legend-label" style="font-size:10px">Reprints</div></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Composition (unique, filtered view)</h3>
+      <div class="donut-wrap">
+        <svg class="donut-svg" viewBox="0 0 160 160" id="donutSvg"></svg>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+  </div>
 
-          const handleSort = (key) => {
-            setSortConfig(prev => ({
-              key,
-              direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
-            }));
-          };
+  <!-- TABLE -->
+  <div class="section-title">Release Entries</div>
 
-          const resetFilters = () => {
-            setYearFilter('All Years');
-            setTypeFilter('All');
-            setLicensedFilter('All');
-            setReprintFilter('All');
-            setSearchTerm('');
-          };
+  <div class="filter-active-note" id="filterNote">
+    <span style="color:var(--red)">▶</span>
+    <span id="filterNoteText"></span>
+    <span style="margin-left:auto;cursor:pointer;color:var(--muted)" onclick="resetFilters()">✕ Clear filters</span>
+  </div>
 
-          // Chart data for releases by year (2013-2026)
-          const yearlyReleases = [
-            { year: 2013, count: 4 },
-            { year: 2014, count: 19 },
-            { year: 2015, count: 20 },
-            { year: 2016, count: 22 },
-            { year: 2017, count: 32 },
-            { year: 2018, count: 35 },
-            { year: 2019, count: 45 },
-            { year: 2020, count: 37 },
-            { year: 2021, count: 55 },
-            { year: 2022, count: 71 },
-            { year: 2023, count: 80 },
-            { year: 2024, count: 89 },
-            { year: 2025, count: 77 },
-            { year: 2026, count: 57 }
-          ];
+  <div class="filters-row">
+    <span class="filter-label">Type:</span>
+    <button class="filter-btn active all-btn" id="btn-all"    onclick="setFilter('type','all',this)">All</button>
+    <button class="filter-btn"               id="btn-epic"   onclick="setFilter('type','Epic',this)">Classic Epic</button>
+    <button class="filter-btn modern"         id="btn-modern" onclick="setFilter('type','Modern',this)">Modern Era</button>
+    <button class="filter-btn ultimate"       id="btn-ult"   onclick="setFilter('type','Ultimate',this)">Ultimate</button>
+    <span class="filter-label" style="margin-left:8px">Licensed:</span>
+    <button class="filter-btn active all-btn" id="btn-lic-all" onclick="setLicensed('all',this)">All</button>
+    <button class="filter-btn"                id="btn-lic-yes" onclick="setLicensed('Yes',this)">Licensed IP</button>
+    <span class="filter-label" style="margin-left:8px">Reprint:</span>
+    <button class="filter-btn active all-btn" id="btn-rep-all" onclick="setReprint('all',this)">All</button>
+    <button class="filter-btn"                id="btn-rep-no"  onclick="setReprint('No',this)">Unique only</button>
+    <input type="text" id="searchBox" placeholder="Search series or subtitle…" oninput="applyFilters()">
+  </div>
 
-          // Top series by volume count
-          const topSeries = [
-            { series: 'Avengers', count: 30 },
-            { series: 'Amazing Spider-Man', count: 27 },
-            { series: 'Thor', count: 25 },
-            { series: 'Captain America', count: 27 },
-            { series: 'Incredible Hulk', count: 26 },
-            { series: 'X-Men', count: 22 },
-            { series: 'Fantastic Four', count: 22 },
-            { series: 'Wolverine', count: 18 },
-            { series: 'Iron Man', count: 19 },
-            { series: 'Daredevil', count: 20 }
-          ];
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('num')"     id="th-num">#</th>
+          <th onclick="sortBy('date')"    id="th-date">Release Date</th>
+          <th onclick="sortBy('series')"  id="th-series">Series</th>
+          <th onclick="sortBy('vol')"     id="th-vol">Vol</th>
+          <th onclick="sortBy('subtitle')" id="th-subtitle">Subtitle</th>
+          <th onclick="sortBy('type')"    id="th-type">Type</th>
+          <th>Licensed</th>
+          <th>Reprint</th>
+          <th onclick="sortBy('pages')"   id="th-pages">Pages</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="table-info">
+      <span id="tableCount"></span>
+      <div class="conf-legend">
+        <span><span class="conf-dot verified"></span> Wikipedia-verified</span>
+        <span><span class="conf-dot estimated" style="opacity:0.7"></span> Estimated (historical data)</span>
+      </div>
+    </div>
+  </div>
 
-          return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
-              <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="text-center mb-8 p-6 bg-white/5 rounded-xl backdrop-blur-sm">
-                  <h1 className="text-5xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
-                    Marvel Epic Collections Dashboard
-                  </h1>
-                  <p className="text-gray-400 text-lg mt-2">Complete Publication History (2013-2026)</p>
-                  <p className="text-sm text-gray-500 mt-1">Through Book #{stats.total}</p>
-                </div>
+</main>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="bg-gradient-to-br from-red-600/20 to-red-800/20 p-4 rounded-lg border border-red-500/30">
-                    <div className="text-3xl font-bold">{stats.total}</div>
-                    <div className="text-sm text-gray-400">Total Collections</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 p-4 rounded-lg border border-blue-500/30">
-                    <div className="text-3xl font-bold">{stats.epic}</div>
-                    <div className="text-sm text-gray-400">Epic Collections</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 p-4 rounded-lg border border-purple-500/30">
-                    <div className="text-3xl font-bold">{stats.modern}</div>
-                    <div className="text-sm text-gray-400">Modern Era</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-600/20 to-green-800/20 p-4 rounded-lg border border-green-500/30">
-                    <div className="text-3xl font-bold">{stats.ultimate}</div>
-                    <div className="text-sm text-gray-400">Ultimate</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-800/20 p-4 rounded-lg border border-yellow-500/30">
-                    <div className="text-3xl font-bold">{stats.reprints}</div>
-                    <div className="text-sm text-gray-400">Reprints</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-orange-600/20 to-orange-800/20 p-4 rounded-lg border border-orange-500/30">
-                    <div className="text-3xl font-bold">{stats.licensed}</div>
-                    <div className="text-sm text-gray-400">Licensed</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-pink-600/20 to-pink-800/20 p-4 rounded-lg border border-pink-500/30">
-                    <div className="text-3xl font-bold">{stats.avgPages}</div>
-                    <div className="text-sm text-gray-400">Avg Pages</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-600/20 to-indigo-800/20 p-4 rounded-lg border border-indigo-500/30">
-                    <div className="text-3xl font-bold">{(stats.totalPages / 1000).toFixed(0)}k</div>
-                    <div className="text-sm text-gray-400">Total Pages (2026)</div>
-                  </div>
-                </div>
+<script>
+// ============================================================
+// DATA — merged wiki_confirmed + historical_data
+// ============================================================
+const ALL_DATA = [
+  {num:1,date:"2013-09-18",series:"Iron Man",vol:10,subtitle:"The Enemy Within",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"verified"},
+  {num:2,date:"2013-10",series:"Thor",vol:16,subtitle:"War Of The Pantheons",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:3,date:"2013-11",series:"Amazing Spider-Man",vol:20,subtitle:"Cosmic Adventures",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:4,date:"2013-12",series:"Avengers",vol:9,subtitle:"Final Threat",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2014-09-24",series:"Amazing Spider-Man",vol:1,subtitle:"Great Power",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"verified"},
+  {num:null,date:null,series:"Ant-Man",vol:1,subtitle:"The Man In The Ant Hill",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2014-11-12",series:"Avengers",vol:1,subtitle:"Earth\'s Mightiest Heroes",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"verified"},
+  {num:null,date:"2018-09-26",series:"Avengers West Coast",vol:1,subtitle:"How The West Was Won",type:"Epic",licensed:"No",reprint:"No",pages:496,conf:"verified"},
+  {num:null,date:null,series:"Black Panther",vol:1,subtitle:"Panther\'s Rage",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:null,series:"Black Widow",vol:1,subtitle:"Beware The Black Widow",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2025-01-14",series:"Blade",vol:2,subtitle:"Nightstalkers",type:"Epic",licensed:"No",reprint:"No",pages:432,conf:"verified"},
+  {num:null,date:null,series:"Captain America",vol:1,subtitle:"Captain America Lives Again",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2022-03-23",series:"Carnage",vol:1,subtitle:"Born In Blood",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"verified"},
+  {num:null,date:"2020-06-23",series:"Conan: The Original Marvel Years",vol:1,subtitle:"The Coming Of Conan",type:"Epic",licensed:"Yes",reprint:"No",pages:352,conf:"verified"},
+  {num:null,date:"2019-02-06",series:"Conan: The Modern Era",vol:1,subtitle:"Out Of The Darksome Hills",type:"Epic",licensed:"Yes",reprint:"No",pages:496,conf:"verified"},
+  {num:null,date:"2022-08-16",series:"King Conan",vol:1,subtitle:"Phantoms And Phoenixes",type:"Epic",licensed:"Yes",reprint:"No",pages:464,conf:"verified"},
+  {num:null,date:"2016-07-13",series:"Daredevil",vol:1,subtitle:"The Man Without Fear",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"verified"},
+  {num:null,date:"2021-11-09",series:"Deadpool",vol:1,subtitle:"The Circle Chase",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"verified"},
+  {num:null,date:"2022-12-27",series:"Defenders",vol:1,subtitle:"The Day Of The Defenders",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"verified"},
+  {num:null,date:"2025-11-11",series:"Doctor Doom",vol:1,subtitle:"Enter... Doctor Doom",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"verified"},
+  {num:null,date:"2018-10-17",series:"Doctor Strange",vol:1,subtitle:"Master Of The Mystic Arts",type:"Epic",licensed:"No",reprint:"No",pages:400,conf:"verified"},
+  {num:null,date:null,series:"Excalibur",vol:1,subtitle:"The Sword Is Drawn",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2014-09-10",series:"Fantastic Four",vol:1,subtitle:"The World\'s Greatest Comic Magazine",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"verified"},
+  {num:null,date:"2021-07-14",series:"Generation X",vol:1,subtitle:"Back To School",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"verified"},
+  {num:null,date:"2022-05-03",series:"Ghost Rider",vol:1,subtitle:"Hell On Wheels",type:"Epic",licensed:"No",reprint:"No",pages:424,conf:"verified"},
+  {num:null,date:"2023-10-10",series:"Ghost Rider: Danny Ketch",vol:1,subtitle:"Vengeance Reborn",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"verified"},
+  {num:null,date:"2023-04-11",series:"Guardians Of The Galaxy",vol:1,subtitle:"Earth Shall Overcome",type:"Epic",licensed:"No",reprint:"No",pages:408,conf:"verified"},
+  {num:null,date:"2022-01-11",series:"Hawkeye",vol:1,subtitle:"The Avenging Archer",type:"Epic",licensed:"No",reprint:"No",pages:432,conf:"verified"},
+  {num:null,date:"2016-06-15",series:"Incredible Hulk",vol:1,subtitle:"Man Or Monster?",type:"Epic",licensed:"No",reprint:"No",pages:392,conf:"verified"},
+  {num:null,date:"2015-07-08",series:"Iron Fist",vol:1,subtitle:"The Fury Of Iron Fist",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"verified"},
+  {num:null,date:"2014-10-29",series:"Iron Man",vol:1,subtitle:"The Golden Avenger",type:"Epic",licensed:"No",reprint:"No",pages:520,conf:"verified"},
+  {num:null,date:null,series:"Killraven",vol:1,subtitle:"Warrior Of The Worlds",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2021-02-16",series:"Luke Cage",vol:1,subtitle:"Retribution",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"verified"},
+  {num:null,date:"2018-08-08",series:"Marvel Two-In-One",vol:1,subtitle:"Cry Monster",type:"Epic",licensed:"No",reprint:"No",pages:432,conf:"verified"},
+  {num:null,date:"2018-03-14",series:"Master Of Kung Fu",vol:1,subtitle:"Weapon Of The Soul",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"verified"},
+  {num:null,date:"2025-07-08",series:"Micronauts",vol:1,subtitle:"They Came From Inner Space",type:"Epic",licensed:"Yes",reprint:"No",pages:456,conf:"verified"},
+  {num:null,date:null,series:"Moon Knight",vol:1,subtitle:"Bad Moon Rising",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2021-02-23",series:"Morbius",vol:1,subtitle:"The Living Vampire",type:"Epic",licensed:"No",reprint:"No",pages:432,conf:"verified"},
+  {num:null,date:"2019-01-09",series:"Ms. Marvel",vol:1,subtitle:"This Woman, This Warrior",type:"Epic",licensed:"No",reprint:"No",pages:312,conf:"verified"},
+  {num:null,date:"2021-04-07",series:"Namor The Sub-Mariner",vol:1,subtitle:"Enter The Sub-Mariner",type:"Epic",licensed:"No",reprint:"No",pages:408,conf:"verified"},
+  {num:null,date:"2017-03-08",series:"New Mutants",vol:1,subtitle:"Renewal",type:"Epic",licensed:"No",reprint:"No",pages:520,conf:"verified"},
+  {num:null,date:"2023-03-14",series:"Aliens",vol:1,subtitle:"The Original Years",type:"Epic",licensed:"Yes",reprint:"No",pages:448,conf:"verified"},
+  {num:null,date:"2024-05-24",series:"Planet Of The Apes",vol:1,subtitle:"The Original Marvel Years",type:"Epic",licensed:"Yes",reprint:"No",pages:224,conf:"verified"},
+  {num:null,date:null,series:"Power Man & Iron Fist",vol:1,subtitle:null,type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:null,series:"Punisher",vol:2,subtitle:"Circle Of Blood",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2025-04-08",series:"Rom: Spaceknight",vol:1,subtitle:"The Original Marvel Years",type:"Epic",licensed:"Yes",reprint:"No",pages:432,conf:"verified"},
+  {num:null,date:"2019-03-13",series:"Sgt. Fury",vol:1,subtitle:"The Howling Commandos",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"verified"},
+  {num:null,date:"2022-05-03",series:"She-Hulk",vol:3,subtitle:"Breaking The Fourth Wall",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"verified"},
+  {num:null,date:"2014-11-19",series:"Silver Surfer",vol:1,subtitle:"When Calls Galactus",type:"Epic",licensed:"No",reprint:"No",pages:320,conf:"verified"},
+  {num:null,date:null,series:"Star Wars: The Original Marvel Years",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2017-01-25",series:"Star Wars Legends: The Newspaper Strip",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:472,conf:"verified"},
+  {num:null,date:"2020-12-08",series:"Star Wars Legends: Dawn of the Jedi",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:376,conf:"verified"},
+  {num:null,date:null,series:"Star Wars Legends: Old Republic",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:null,series:"Star Wars Legends: Infinities",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2018-09-19",series:"Star Wars Legends: Menace Revealed",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:480,conf:"verified"},
+  {num:null,date:null,series:"Star Wars Legends: Clone Wars",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:null,series:"Star Wars Legends: Rebellion",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2015-05-13",series:"Star Wars Legends: Mara Jade",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:488,conf:"verified"},
+  {num:null,date:null,series:"Star Wars Legends: Knights of the Old Republic",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:null,series:"Star Wars Legends: Legacy",vol:1,subtitle:null,type:"Epic",licensed:"Yes",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:null,series:"Thor",vol:1,subtitle:"The God Of Thunder",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2023-07-18",series:"Thunderbolts",vol:1,subtitle:"Justice, Like Lightning",type:"Epic",licensed:"No",reprint:"No",pages:520,conf:"verified"},
+  {num:null,date:"2020-11-04",series:"Venom",vol:1,subtitle:"Symbiosis",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"verified"},
+  {num:null,date:null,series:"Wolverine",vol:1,subtitle:"Madripoor Nights",type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2017-02-28",series:"X-Factor",vol:1,subtitle:"Genesis & Apocalypse",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"verified"},
+  {num:null,date:null,series:"X-Force",vol:1,subtitle:null,type:"Epic",licensed:"No",reprint:"No",pages:null,conf:"verified"},
+  {num:null,date:"2014-12-24",series:"X-Men",vol:1,subtitle:"Children Of The Atom",type:"Epic",licensed:"No",reprint:"No",pages:520,conf:"verified"},
+  {num:null,date:"2025-12-02",series:"All-New Wolverine",vol:1,subtitle:"The Four Sisters",type:"Modern",licensed:"No",reprint:"No",pages:472,conf:"verified"},
+  {num:null,date:"2025-06-10",series:"Annihilation",vol:1,subtitle:"Annihilation Day",type:"Modern",licensed:"No",reprint:"No",pages:472,conf:"verified"},
+  {num:null,date:"2024-03-26",series:"Astonishing X-Men",vol:1,subtitle:"Gifted",type:"Modern",licensed:"No",reprint:"No",pages:320,conf:"verified"},
+  {num:null,date:"2024-01-30",series:"Dark Avengers",vol:1,subtitle:"Osborn\'s Reign",type:"Modern",licensed:"No",reprint:"No",pages:552,conf:"verified"},
+  {num:null,date:"2023-09-19",series:"Guardians Of The Galaxy (Modern)",vol:1,subtitle:"Somebody\'s Got To Do It",type:"Modern",licensed:"No",reprint:"No",pages:416,conf:"verified"},
+  {num:null,date:"2023-08-15",series:"Loki",vol:1,subtitle:"Journey Into Mystery",type:"Modern",licensed:"No",reprint:"No",pages:416,conf:"verified"},
+  {num:null,date:"2025-03-11",series:"Miles Morales: Spider-Man",vol:1,subtitle:"Hero In Training",type:"Modern",licensed:"No",reprint:"No",pages:400,conf:"verified"},
+  {num:null,date:"2024-06-25",series:"New X-Men",vol:1,subtitle:"E Is For Extinction",type:"Modern",licensed:"No",reprint:"No",pages:376,conf:"verified"},
+  {num:null,date:"2024-03-26",series:"Spider-Girl",vol:1,subtitle:"Legacy",type:"Modern",licensed:"No",reprint:"No",pages:456,conf:"verified"},
+  {num:null,date:"2023-05-01",series:"Spider-Gwen",vol:1,subtitle:"Edge Of Spider-Verse",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"verified"},
+  {num:null,date:"2023-10-31",series:"Spider-Man / Deadpool",vol:1,subtitle:"Isn\'t It Bromantic?",type:"Modern",licensed:"No",reprint:"No",pages:400,conf:"verified"},
+  {num:null,date:"2024-07-23",series:"Star Wars (Canon)",vol:1,subtitle:"Skywalker Strikes",type:"Modern",licensed:"Yes",reprint:"No",pages:488,conf:"verified"},
+  {num:null,date:"2024-11-26",series:"Star Wars: Darth Vader (Canon)",vol:1,subtitle:"Shadows And Secrets",type:"Modern",licensed:"Yes",reprint:"No",pages:352,conf:"verified"},
+  {num:null,date:"2025-08-26",series:"Star Wars: Kanan",vol:null,subtitle:"The Last Padawan",type:"Modern",licensed:"Yes",reprint:"No",pages:272,conf:"verified"},
+  {num:null,date:"2025-02-11",series:"Young Avengers",vol:1,subtitle:"Not What You Think",type:"Modern",licensed:"No",reprint:"No",pages:424,conf:"verified"},
+  {num:null,date:"2025-06-17",series:"Ultimate Fantastic Four",vol:1,subtitle:"The Fantastic",type:"Ultimate",licensed:"No",reprint:"No",pages:464,conf:"verified"},
+  {num:null,date:"2025-03-18",series:"Ultimate Spider-Man",vol:1,subtitle:"Learning Curve",type:"Ultimate",licensed:"No",reprint:"No",pages:352,conf:"verified"},
+  {num:null,date:"2025-04-22",series:"Ultimate X-Men",vol:1,subtitle:"The Tomorrow People",type:"Ultimate",licensed:"No",reprint:"No",pages:336,conf:"verified"},
+  {num:null,date:"2025-05-20",series:"Ultimates",vol:1,subtitle:"Super-Human",type:"Ultimate",licensed:"No",reprint:"No",pages:376,conf:"verified"},
+  {num:5,date:"2014-01-15",series:"Captain America",vol:9,subtitle:"Dawn\'s Early Light",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:6,date:"2014-02-19",series:"Fantastic Four",vol:9,subtitle:"Nobody Gets Out Alive",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:7,date:"2014-03-19",series:"Incredible Hulk",vol:9,subtitle:"Future Imperfect",type:"Epic",licensed:"No",reprint:"No",pages:392,conf:"estimated"},
+  {num:8,date:"2014-04-16",series:"Avengers",vol:10,subtitle:"Masters Of Evil",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:9,date:"2014-05-14",series:"Amazing Spider-Man",vol:15,subtitle:"Ghosts Of The Past",type:"Epic",licensed:"No",reprint:"No",pages:424,conf:"estimated"},
+  {num:10,date:"2014-06-18",series:"Thor",vol:17,subtitle:"The Eternals Saga",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:11,date:"2014-07-16",series:"Iron Man",vol:11,subtitle:"Duel Of Iron",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:12,date:"2014-08-13",series:"Captain America",vol:10,subtitle:"Blood And Glory",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:22,date:"2014-12-31",series:"Fantastic Four",vol:2,subtitle:"The Masters Of Evil",type:"Epic",licensed:"No",reprint:"No",pages:440,conf:"estimated"},
+  {num:23,date:"2014-12-31",series:"Amazing Spider-Man",vol:2,subtitle:"Great Responsibility",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:24,date:"2015-01-14",series:"Thor",vol:2,subtitle:"When Titans Clash",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:25,date:"2015-02-18",series:"Iron Man",vol:2,subtitle:"The Enemy Below",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:26,date:"2015-03-18",series:"Avengers",vol:2,subtitle:"The Avengers/Defenders War",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:27,date:"2015-04-15",series:"X-Men",vol:2,subtitle:"It\'s Always Darkest",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:28,date:"2015-04-22",series:"Star Wars Legends",vol:1,subtitle:"A Long Time Ago",type:"Epic",licensed:"Yes",reprint:"No",pages:456,conf:"estimated"},
+  {num:29,date:"2015-05-13",series:"Star Wars Legends",vol:2,subtitle:"The Mara Jade Saga",type:"Epic",licensed:"Yes",reprint:"No",pages:488,conf:"estimated"},
+  {num:30,date:"2015-06-10",series:"Amazing Spider-Man",vol:3,subtitle:"Spider-Man No More!",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:32,date:"2015-07-15",series:"Captain America",vol:2,subtitle:"The Coming Of The Falcon",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:33,date:"2015-08-12",series:"Thor",vol:3,subtitle:"If He Be Worthy",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:34,date:"2015-09-09",series:"Fantastic Four",vol:3,subtitle:"The Coming Of Galactus",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:35,date:"2015-09-16",series:"Incredible Hulk",vol:2,subtitle:"Hulk Must Die",type:"Epic",licensed:"No",reprint:"No",pages:424,conf:"estimated"},
+  {num:36,date:"2015-09-23",series:"Avengers",vol:3,subtitle:"The Masters Of Evil",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"estimated"},
+  {num:37,date:"2015-10-14",series:"Iron Man",vol:3,subtitle:"The Secret Empire",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:38,date:"2015-10-21",series:"X-Men",vol:3,subtitle:"The Kree-Skrull War",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:39,date:"2015-11-11",series:"Amazing Spider-Man",vol:4,subtitle:"The Death Of Captain Stacy",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:40,date:"2015-12-02",series:"Captain America",vol:3,subtitle:"It\'s Always Darkest",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:41,date:"2015-12-09",series:"Thor",vol:4,subtitle:"To Wake The Mangog",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:42,date:"2015-12-16",series:"Fantastic Four",vol:4,subtitle:"The Name Is Doom",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:43,date:"2015-12-30",series:"Incredible Hulk",vol:3,subtitle:"At Bay",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:44,date:"2016-01-13",series:"Avengers",vol:4,subtitle:"Behold... The Vision!",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:45,date:"2016-02-10",series:"Iron Man",vol:4,subtitle:"Fury Of The Firebrand",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:46,date:"2016-02-17",series:"Amazing Spider-Man",vol:5,subtitle:"The Goblin\'s Last Stand",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:48,date:"2016-03-16",series:"Captain America",vol:4,subtitle:"The Secret Empire",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:49,date:"2016-04-13",series:"Thor",vol:5,subtitle:"The Mighty Thor",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:50,date:"2016-04-20",series:"Incredible Hulk",vol:4,subtitle:"In The Hands Of HYDRA",type:"Epic",licensed:"No",reprint:"No",pages:424,conf:"estimated"},
+  {num:51,date:"2016-05-11",series:"Fantastic Four",vol:5,subtitle:"Resurrection Of Galactus",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:52,date:"2016-05-18",series:"X-Men",vol:4,subtitle:"The Sentinels Live!",type:"Epic",licensed:"No",reprint:"No",pages:496,conf:"estimated"},
+  {num:53,date:"2016-06-08",series:"Amazing Spider-Man",vol:6,subtitle:"The Death Of Captain Stacy",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:54,date:"2016-06-15",series:"Iron Man",vol:5,subtitle:"Doom!",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:56,date:"2016-07-20",series:"Avengers",vol:5,subtitle:"This Beachhead Earth",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:57,date:"2016-08-10",series:"Captain America",vol:5,subtitle:"Home Of The Brave",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:58,date:"2016-08-17",series:"Incredible Hulk",vol:5,subtitle:"The Hulk Must Die!",type:"Epic",licensed:"No",reprint:"No",pages:440,conf:"estimated"},
+  {num:59,date:"2016-09-14",series:"Thor",vol:6,subtitle:"I, Whom The Gods Would Destroy",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:60,date:"2016-10-12",series:"Fantastic Four",vol:6,subtitle:"Then Came Galactus!",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:61,date:"2016-10-19",series:"X-Men",vol:5,subtitle:"Second Genesis",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:62,date:"2016-11-09",series:"Amazing Spider-Man",vol:7,subtitle:"The Goblin\'s Last Stand",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:63,date:"2016-11-16",series:"Iron Man",vol:6,subtitle:"The Crossing",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:64,date:"2016-12-14",series:"Incredible Hulk",vol:6,subtitle:"Bill Mantlo",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:65,date:"2016-12-21",series:"Avengers",vol:6,subtitle:"The Avengers/Defenders War",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:67,date:"2017-01-25",series:"Captain America",vol:6,subtitle:"The Bloodstone Hunt",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:68,date:"2017-02-08",series:"Thor",vol:7,subtitle:"The Eternals Saga",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"estimated"},
+  {num:69,date:"2017-02-15",series:"Daredevil",vol:2,subtitle:"The Man Without Fear",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:71,date:"2017-03-29",series:"X-Men",vol:5,subtitle:"Second Genesis",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:72,date:"2017-04-12",series:"Fantastic Four",vol:7,subtitle:"Where Stalks The Sentry!",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:73,date:"2017-04-19",series:"Amazing Spider-Man",vol:8,subtitle:"Venom",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:74,date:"2017-05-10",series:"Iron Man",vol:7,subtitle:"The Crossing",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:75,date:"2017-05-17",series:"Avengers",vol:7,subtitle:"The Avengers/Defenders War",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:76,date:"2017-06-07",series:"Captain America",vol:7,subtitle:"Superia Stratagem",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:77,date:"2017-06-14",series:"X-Men",vol:6,subtitle:"The Outback Years",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"estimated"},
+  {num:78,date:"2017-07-12",series:"Thor",vol:8,subtitle:"The War Of The Pantheons",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:79,date:"2017-07-19",series:"New Mutants",vol:2,subtitle:"The Demon Bear Saga",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:80,date:"2017-08-09",series:"Incredible Hulk",vol:7,subtitle:"And Now... The Wolverine",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:81,date:"2017-08-23",series:"Daredevil",vol:3,subtitle:"The Hunting Of The Hunter",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:82,date:"2017-09-13",series:"X-Factor",vol:2,subtitle:"Apocalypse Solution",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:83,date:"2017-09-27",series:"Amazing Spider-Man",vol:9,subtitle:"The Wedding!",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:84,date:"2017-10-11",series:"Captain America",vol:8,subtitle:"Blood And Glory",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:85,date:"2017-10-18",series:"Avengers",vol:8,subtitle:"By Friends Betrayed!",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:87,date:"2017-11-15",series:"X-Men",vol:7,subtitle:"The Massacre",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"estimated"},
+  {num:88,date:"2017-11-22",series:"Iron Man",vol:8,subtitle:"Force Works",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:89,date:"2017-12-13",series:"Thor",vol:9,subtitle:"Judgment Day",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:90,date:"2017-12-20",series:"Fantastic Four",vol:8,subtitle:"When Lost In The Comics",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:91,date:"2017-12-27",series:"New Mutants",vol:3,subtitle:"Asgardian Wars",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:92,date:"2017-12-27",series:"Star Wars Legends",vol:3,subtitle:"Emissaries And Assassins",type:"Epic",licensed:"Yes",reprint:"No",pages:480,conf:"estimated"},
+  {num:93,date:"2017-12-27",series:"Daredevil",vol:4,subtitle:"Heart Of Darkness",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:94,date:"2017-12-27",series:"Punisher",vol:1,subtitle:"Circle Of Blood",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:95,date:"2017-12-27",series:"X-Factor",vol:3,subtitle:"Judgment War",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:96,date:"2017-12-27",series:"Amazing Spider-Man",vol:10,subtitle:"The Assassin Nation Plot",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:97,date:"2017-12-27",series:"Incredible Hulk",vol:8,subtitle:"The Curing Of Dr. Banner",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:99,date:"2018-01-24",series:"X-Men",vol:8,subtitle:"Legacies",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:100,date:"2018-02-14",series:"Captain America",vol:9,subtitle:"Dawn\'s Early Light",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:101,date:"2018-02-28",series:"Iron Man",vol:9,subtitle:"War Machine",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:103,date:"2018-03-28",series:"Thor",vol:10,subtitle:"War Of The Norse Gods",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:104,date:"2018-04-11",series:"Daredevil",vol:5,subtitle:"It Comes With The Territory",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:105,date:"2018-04-25",series:"Wolverine",vol:2,subtitle:"Back To Basics",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:106,date:"2018-05-09",series:"Fantastic Four",vol:9,subtitle:"All In The Family",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:107,date:"2018-05-23",series:"X-Factor",vol:4,subtitle:"Judgment War",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:108,date:"2018-06-06",series:"New Mutants",vol:4,subtitle:"Fallen Angels",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:109,date:"2018-06-20",series:"Captain America",vol:10,subtitle:"Blood And Glory",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:110,date:"2018-07-11",series:"Avengers",vol:10,subtitle:"The Yesterday Quest",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:111,date:"2018-07-25",series:"Amazing Spider-Man",vol:11,subtitle:"The Lizard\'s Trail",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:113,date:"2018-08-22",series:"X-Men",vol:9,subtitle:"The Fate Of The Phoenix",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:115,date:"2018-09-19",series:"Star Wars Legends",vol:4,subtitle:"Qui-Gon & Obi-Wan",type:"Epic",licensed:"Yes",reprint:"No",pages:480,conf:"estimated"},
+  {num:117,date:"2018-10-17",series:"Thor",vol:11,subtitle:"The Thor War",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:120,date:"2018-11-14",series:"New Mutants",vol:5,subtitle:"The Fall Of The Mutants",type:"Epic",licensed:"No",reprint:"No",pages:512,conf:"estimated"},
+  {num:121,date:"2018-11-21",series:"Wolverine",vol:3,subtitle:"Blood Wedding",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:122,date:"2018-12-05",series:"Fantastic Four",vol:10,subtitle:"Nobody Gets Out Alive",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:123,date:"2018-12-12",series:"Captain America",vol:11,subtitle:"Sturm Und Drang",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:124,date:"2018-12-19",series:"X-Factor",vol:5,subtitle:"Muir Island Saga",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:125,date:"2018-12-26",series:"Avengers",vol:11,subtitle:"The Evil Reborn",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:126,date:"2018-12-26",series:"Amazing Spider-Man",vol:12,subtitle:"Invasion Of The Spider-Slayers",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:127,date:"2018-12-26",series:"Daredevil",vol:6,subtitle:"Watch Out For Bullseye",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:129,date:"2018-12-26",series:"X-Men",vol:10,subtitle:"God Loves, Man Kills",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:130,date:"2018-12-26",series:"Star Wars Legends",vol:5,subtitle:"The New Republic Dawns",type:"Epic",licensed:"Yes",reprint:"No",pages:488,conf:"estimated"},
+  {num:131,date:"2018-12-26",series:"Incredible Hulk",vol:9,subtitle:"Future Imperfect",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:132,date:"2018-12-26",series:"Thor",vol:12,subtitle:"Worldengine",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:133,date:"2019-01-09",series:"Punisher",vol:3,subtitle:"Autumn Blaze",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:135,date:"2019-01-23",series:"Silver Surfer",vol:2,subtitle:"Freedom",type:"Epic",licensed:"No",reprint:"No",pages:432,conf:"estimated"},
+  {num:136,date:"2019-02-06",series:"Conan",vol:1,subtitle:"Out Of The Darksome Hills",type:"Epic",licensed:"Yes",reprint:"No",pages:496,conf:"estimated"},
+  {num:137,date:"2019-02-13",series:"X-Men",vol:11,subtitle:"Dissolution And Rebirth",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:138,date:"2019-02-20",series:"Avengers",vol:12,subtitle:"Court-Martial",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:139,date:"2019-03-06",series:"Captain America",vol:12,subtitle:"Avengers: Galactic Storm",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:140,date:"2019-03-13",series:"New Mutants",vol:6,subtitle:"Crossroads",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:141,date:"2019-03-20",series:"Wolverine",vol:4,subtitle:"Drowned In Thunder",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:142,date:"2019-04-03",series:"Star Wars Legends",vol:6,subtitle:"Infinities",type:"Epic",licensed:"Yes",reprint:"No",pages:480,conf:"estimated"},
+  {num:143,date:"2019-04-10",series:"Amazing Spider-Man",vol:13,subtitle:"Invasion Of The Spider-Slayers",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:144,date:"2019-04-17",series:"Fantastic Four",vol:11,subtitle:"Nobody Gets Out Alive",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:145,date:"2019-05-01",series:"Iron Man",vol:11,subtitle:"Duel Of Iron",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:146,date:"2019-05-08",series:"Daredevil",vol:7,subtitle:"The Concrete Jungle",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:147,date:"2019-05-15",series:"X-Factor",vol:6,subtitle:"All-New, All-Different X-Factor",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:148,date:"2019-06-05",series:"Thor",vol:13,subtitle:"The Surtur War",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:149,date:"2019-06-12",series:"Avengers",vol:13,subtitle:"The Terminator Objective",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:150,date:"2019-06-19",series:"Captain America",vol:13,subtitle:"Avengers: Galactic Storm",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:151,date:"2019-07-03",series:"Incredible Hulk",vol:10,subtitle:"Future Imperfect",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:152,date:"2019-07-10",series:"Punisher",vol:4,subtitle:"Total War",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:153,date:"2019-07-17",series:"Silver Surfer",vol:3,subtitle:"Freedom",type:"Epic",licensed:"No",reprint:"No",pages:432,conf:"estimated"},
+  {num:154,date:"2019-08-07",series:"X-Men",vol:12,subtitle:"Wrath Of The Reavers",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:155,date:"2019-08-14",series:"Wolverine",vol:5,subtitle:"Weapon X",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:156,date:"2019-08-21",series:"Daredevil",vol:8,subtitle:"A Touch Of Typhoid",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:157,date:"2019-09-04",series:"Amazing Spider-Man",vol:14,subtitle:"The Alien Costume Saga",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:158,date:"2019-09-11",series:"Avengers",vol:14,subtitle:"Collected Editions",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:159,date:"2019-09-18",series:"Fantastic Four",vol:12,subtitle:"Into The Timestream",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:160,date:"2019-10-02",series:"Iron Man",vol:12,subtitle:"The War Machine Armor",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:161,date:"2019-10-09",series:"New Mutants",vol:7,subtitle:"Inferno",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"estimated"},
+  {num:162,date:"2019-10-16",series:"Captain America",vol:14,subtitle:"The Captain",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:163,date:"2019-11-06",series:"Punisher",vol:5,subtitle:"Mean Streets",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:164,date:"2019-11-13",series:"X-Men",vol:13,subtitle:"Acts Of Vengeance",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:165,date:"2019-11-20",series:"Thor",vol:14,subtitle:"The God Storm",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:166,date:"2019-12-04",series:"Wolverine",vol:6,subtitle:"Bloodlust",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:167,date:"2019-12-11",series:"Amazing Spider-Man",vol:15,subtitle:"Ghosts Of The Past",type:"Epic",licensed:"No",reprint:"Yes",pages:424,conf:"estimated"},
+  {num:168,date:"2019-12-18",series:"Avengers West Coast",vol:2,subtitle:"Lost In Space-Time",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:169,date:"2019-12-18",series:"Daredevil",vol:9,subtitle:"Heart Of Darkness",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:170,date:"2019-12-18",series:"Avengers",vol:15,subtitle:"The Black Knight",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:171,date:"2019-12-18",series:"Fantastic Four",vol:13,subtitle:"Atlantis Rising",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:172,date:"2019-12-18",series:"Star Wars Legends",vol:7,subtitle:"The Sith War",type:"Epic",licensed:"Yes",reprint:"No",pages:488,conf:"estimated"},
+  {num:173,date:"2019-12-18",series:"X-Factor",vol:7,subtitle:"X-Aminations",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:174,date:"2019-12-18",series:"Iron Man",vol:13,subtitle:"Stark Wars",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:175,date:"2019-12-25",series:"Captain America",vol:15,subtitle:"Fighting Chance",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:176,date:"2019-12-25",series:"X-Men",vol:14,subtitle:"The X-Tinction Agenda",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:177,date:"2019-12-25",series:"New Mutants",vol:8,subtitle:"The End Of The Beginning",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:178,date:"2020-01-08",series:"Punisher",vol:6,subtitle:"Final Days",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:179,date:"2020-01-15",series:"Avengers",vol:16,subtitle:"Under Siege",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:180,date:"2020-01-22",series:"Thor",vol:15,subtitle:"Into The Dark Nebula",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:181,date:"2020-02-05",series:"Amazing Spider-Man",vol:16,subtitle:"The Alien Costume Saga",type:"Epic",licensed:"No",reprint:"No",pages:496,conf:"estimated"},
+  {num:182,date:"2020-02-12",series:"X-Men",vol:15,subtitle:"Days Of Future Past",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:183,date:"2020-02-26",series:"Wolverine",vol:7,subtitle:"Weapon X",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:184,date:"2020-03-04",series:"Daredevil",vol:10,subtitle:"Back In Black",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:185,date:"2020-03-11",series:"Iron Man",vol:14,subtitle:"The Dragon Seed Saga",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:186,date:"2020-03-25",series:"Fantastic Four",vol:14,subtitle:"Into The Timestream",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:187,date:"2020-04-08",series:"Incredible Hulk",vol:11,subtitle:"Ground Zero",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:188,date:"2020-04-15",series:"Captain America",vol:16,subtitle:"Operation: Rebirth",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:189,date:"2020-04-22",series:"Avengers West Coast",vol:3,subtitle:"Tales To Astonish",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:190,date:"2020-05-06",series:"X-Factor",vol:8,subtitle:"X-Aminations",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:191,date:"2020-05-13",series:"Star Wars Legends",vol:8,subtitle:"The Crimson Empire Saga",type:"Epic",licensed:"Yes",reprint:"No",pages:488,conf:"estimated"},
+  {num:192,date:"2020-05-27",series:"Silver Surfer",vol:4,subtitle:"Parable",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:194,date:"2020-06-17",series:"Punisher",vol:7,subtitle:"River Of Blood",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:195,date:"2020-06-23",series:"Conan",vol:1,subtitle:"The Coming Of Conan",type:"Epic",licensed:"Yes",reprint:"No",pages:352,conf:"estimated"},
+  {num:196,date:"2020-07-08",series:"Avengers",vol:17,subtitle:"Judgment Day",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:197,date:"2020-07-15",series:"Amazing Spider-Man",vol:17,subtitle:"Kraven\'s Last Hunt",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:198,date:"2020-07-22",series:"X-Men",vol:16,subtitle:"Mutant Massacre",type:"Epic",licensed:"No",reprint:"No",pages:496,conf:"estimated"},
+  {num:199,date:"2020-08-05",series:"Daredevil",vol:11,subtitle:"Last Rites",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:200,date:"2020-08-12",series:"Iron Man",vol:15,subtitle:"Armor Wars II",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:201,date:"2020-08-26",series:"Wolverine",vol:8,subtitle:"The Dying Game",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:202,date:"2020-09-09",series:"Fantastic Four",vol:15,subtitle:"Into The Timestream",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:203,date:"2020-09-16",series:"Incredible Hulk",vol:12,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:204,date:"2020-09-23",series:"Captain America",vol:17,subtitle:"Man Without A Country",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:206,date:"2020-10-14",series:"Avengers",vol:18,subtitle:"Heavy Metal",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:207,date:"2020-10-28",series:"X-Men",vol:17,subtitle:"Inferno",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:208,date:"2020-11-04",series:"Thor",vol:17,subtitle:"The Black Galaxy Saga",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:209,date:"2020-11-11",series:"Avengers West Coast",vol:4,subtitle:"Darker Than Scarlet",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:210,date:"2020-11-25",series:"X-Factor",vol:9,subtitle:"All-New, All-Different",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:211,date:"2020-12-02",series:"Star Wars: Dawn Of The Jedi",vol:1,subtitle:"Dawn Of The Jedi",type:"Epic",licensed:"Yes",reprint:"No",pages:376,conf:"estimated"},
+  {num:212,date:"2020-12-09",series:"Amazing Spider-Man",vol:18,subtitle:"Venom Returns",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:213,date:"2020-12-16",series:"Incredible Hulk",vol:13,subtitle:"The Pantheon Saga",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:214,date:"2020-12-23",series:"Iron Man",vol:16,subtitle:"The Dragon Seed Saga",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:215,date:"2020-12-30",series:"Punisher",vol:8,subtitle:"Jigsaw Puzzle",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:216,date:"2021-01-13",series:"Captain America",vol:18,subtitle:"To Serve And Protect",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:217,date:"2021-01-20",series:"Daredevil",vol:12,subtitle:"Chinatown",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:218,date:"2021-02-10",series:"Silver Surfer",vol:5,subtitle:"The Return Of Thanos",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:221,date:"2021-03-10",series:"Namor",vol:1,subtitle:"Enter The Sub-Mariner",type:"Epic",licensed:"No",reprint:"No",pages:408,conf:"estimated"},
+  {num:222,date:"2021-03-17",series:"X-Men",vol:18,subtitle:"The Mutant Wars",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:223,date:"2021-03-23",series:"Conan",vol:2,subtitle:"Hawks From The Sea",type:"Epic",licensed:"Yes",reprint:"No",pages:288,conf:"estimated"},
+  {num:224,date:"2021-03-31",series:"Avengers",vol:19,subtitle:"Judgment Day",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:225,date:"2021-04-07",series:"Fantastic Four",vol:16,subtitle:"Atlantis Rising",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:226,date:"2021-04-14",series:"Thor",vol:18,subtitle:"Prisoners Of The Void",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:227,date:"2021-04-28",series:"Amazing Spider-Man",vol:19,subtitle:"The Osborn Obsession",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:228,date:"2021-05-05",series:"Wolverine",vol:9,subtitle:"Weapon X",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:229,date:"2021-05-12",series:"Incredible Hulk",vol:14,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"No",pages:448,conf:"estimated"},
+  {num:230,date:"2021-05-19",series:"Captain America",vol:19,subtitle:"Blood And Glory",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:231,date:"2021-06-02",series:"Venom",vol:2,subtitle:"Lethal Protector",type:"Epic",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:232,date:"2021-06-09",series:"Iron Man",vol:17,subtitle:"The Crossing",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:233,date:"2021-06-16",series:"Daredevil",vol:13,subtitle:"Heart Of Darkness",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:234,date:"2021-06-23",series:"Thor",vol:19,subtitle:"Into The Dark Nebula",type:"Epic",licensed:"No",reprint:"Yes",pages:464,conf:"estimated"},
+  {num:235,date:"2021-06-30",series:"New Mutants",vol:9,subtitle:"The Phalanx Covenant",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:237,date:"2021-07-21",series:"Fantastic Four",vol:17,subtitle:"Into The Timestream",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:238,date:"2021-07-28",series:"X-Men",vol:19,subtitle:"Mutant Genesis",type:"Epic",licensed:"No",reprint:"No",pages:496,conf:"estimated"},
+  {num:240,date:"2021-08-11",series:"Wolverine",vol:10,subtitle:"The Dying Game",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:241,date:"2021-08-18",series:"Avengers",vol:20,subtitle:"Heavy Metal",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:242,date:"2021-08-25",series:"Silver Surfer",vol:6,subtitle:"Thanos Quest",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:243,date:"2021-09-01",series:"Iron Man",vol:18,subtitle:"The Dragon Seed Saga",type:"Epic",licensed:"No",reprint:"Yes",pages:448,conf:"estimated"},
+  {num:244,date:"2021-09-08",series:"Incredible Hulk",vol:15,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"Yes",pages:448,conf:"estimated"},
+  {num:245,date:"2021-09-15",series:"Captain America",vol:20,subtitle:"Man Without A Country",type:"Epic",licensed:"No",reprint:"Yes",pages:464,conf:"estimated"},
+  {num:246,date:"2021-09-22",series:"Avengers West Coast",vol:5,subtitle:"Darker Than Scarlet",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:247,date:"2021-09-29",series:"Daredevil",vol:14,subtitle:"The Cutting Edge",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:250,date:"2021-10-20",series:"Thor",vol:20,subtitle:"War Of The Norse Gods",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:253,date:"2021-11-10",series:"Punisher",vol:9,subtitle:"The Slavers",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:254,date:"2021-11-17",series:"Fantastic Four",vol:18,subtitle:"Into The Timestream",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:255,date:"2021-11-24",series:"Avengers",vol:21,subtitle:"Council Of Kangs",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:256,date:"2021-12-01",series:"Wolverine",vol:11,subtitle:"Blood Debt",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:257,date:"2021-12-08",series:"Amazing Spider-Man",vol:21,subtitle:"Cosmic Adventures",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:258,date:"2021-12-15",series:"Captain America",vol:21,subtitle:"Operation: Rebirth",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:259,date:"2021-12-22",series:"Incredible Hulk",vol:16,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"Yes",pages:448,conf:"estimated"},
+  {num:260,date:"2021-12-29",series:"Daredevil",vol:15,subtitle:"Last Rites",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:261,date:"2021-12-29",series:"Iron Man",vol:19,subtitle:"War Machine",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:262,date:"2021-12-29",series:"X-Force",vol:2,subtitle:"X-Cutioner\'s Song",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:263,date:"2021-12-29",series:"Venom",vol:3,subtitle:"Mind Bomb",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:264,date:"2021-12-29",series:"Thor",vol:21,subtitle:"Worldengine",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:265,date:"2021-12-29",series:"Avengers",vol:22,subtitle:"Collection Obsession",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:266,date:"2021-12-29",series:"Punisher",vol:10,subtitle:"Assassin\'s Guild",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:268,date:"2021-12-29",series:"X-Men",vol:5,subtitle:"Second Genesis",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:270,date:"2021-12-29",series:"Wolverine",vol:12,subtitle:"Blood Debt",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:272,date:"2022-01-19",series:"Captain America",vol:22,subtitle:"Man Without A Country",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:273,date:"2022-01-26",series:"Daredevil",vol:16,subtitle:"Into The Fire",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:274,date:"2022-02-02",series:"Thor",vol:22,subtitle:"Worldengine",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:275,date:"2022-02-09",series:"X-Force",vol:3,subtitle:"All Hell Is Breaking Loose",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:276,date:"2022-02-16",series:"Avengers",vol:23,subtitle:"Operation: Galactic Storm",type:"Epic",licensed:"No",reprint:"No",pages:496,conf:"estimated"},
+  {num:277,date:"2022-02-23",series:"Amazing Spider-Man",vol:22,subtitle:"Invasion Of The Spider-Slayers",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:278,date:"2022-03-02",series:"Wolverine",vol:13,subtitle:"Blood Debt",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:279,date:"2022-03-09",series:"Ghost Rider",vol:2,subtitle:"Hell On Wheels",type:"Epic",licensed:"No",reprint:"Yes",pages:424,conf:"estimated"},
+  {num:282,date:"2022-03-30",series:"X-Men",vol:2,subtitle:"It\'s Always Darkest",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:283,date:"2022-04-06",series:"Incredible Hulk",vol:17,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:284,date:"2022-04-13",series:"Fantastic Four",vol:2,subtitle:"Masters Of Evil",type:"Epic",licensed:"No",reprint:"Yes",pages:440,conf:"estimated"},
+  {num:285,date:"2022-04-20",series:"Punisher",vol:11,subtitle:"Kingdom Gone",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:286,date:"2022-04-27",series:"Avengers West Coast",vol:6,subtitle:"Vision Quest",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:287,date:"2022-05-04",series:"Daredevil",vol:17,subtitle:"Into The Fire",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:288,date:"2022-05-11",series:"Thor",vol:23,subtitle:"Thor War",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:290,date:"2022-05-25",series:"X-Force",vol:4,subtitle:"Killing Fields",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:291,date:"2022-06-01",series:"Captain America",vol:23,subtitle:"American Nightmare",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:292,date:"2022-06-08",series:"Amazing Spider-Man",vol:23,subtitle:"Spider-Man And His Deadly Foes",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:293,date:"2022-06-15",series:"Wolverine",vol:14,subtitle:"Blood And Claws",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:294,date:"2022-06-22",series:"Conan",vol:3,subtitle:"The Curse Of The Golden Skull",type:"Epic",licensed:"Yes",reprint:"No",pages:336,conf:"estimated"},
+  {num:295,date:"2022-07-06",series:"Avengers",vol:24,subtitle:"Operation: Galactic Storm",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:296,date:"2022-07-13",series:"Venom",vol:4,subtitle:"Separation Anxiety",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:297,date:"2022-07-20",series:"Incredible Hulk",vol:18,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:298,date:"2022-07-27",series:"Iron Man",vol:20,subtitle:"Force Works",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:299,date:"2022-08-03",series:"X-Men",vol:3,subtitle:"Kree-Skrull War",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:301,date:"2022-08-16",series:"Conan",vol:6,subtitle:"Vengeance In Asgalun",type:"Epic",licensed:"Yes",reprint:"No",pages:328,conf:"estimated"},
+  {num:302,date:"2022-08-24",series:"Fantastic Four",vol:3,subtitle:"Coming Of Galactus",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:303,date:"2022-09-07",series:"X-Force",vol:5,subtitle:"Zero Tolerance",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:304,date:"2022-09-14",series:"Punisher",vol:12,subtitle:"Return To Big Nothing",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:305,date:"2022-09-21",series:"Deadpool",vol:2,subtitle:"Mission Improbable",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:306,date:"2022-09-28",series:"Avengers West Coast",vol:7,subtitle:"How The West Was Won",type:"Epic",licensed:"No",reprint:"Yes",pages:496,conf:"estimated"},
+  {num:307,date:"2022-10-05",series:"Captain America",vol:24,subtitle:"American Nightmare",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:308,date:"2022-10-12",series:"X-Men",vol:9,subtitle:"Fate Of The Phoenix",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:309,date:"2022-10-19",series:"Wolverine",vol:15,subtitle:"Blood And Claws",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:310,date:"2022-10-26",series:"Amazing Spider-Man",vol:24,subtitle:"Clone Saga",type:"Epic",licensed:"No",reprint:"No",pages:504,conf:"estimated"},
+  {num:312,date:"2022-11-09",series:"Iron Man",vol:2,subtitle:"The Enemy Below",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:313,date:"2022-11-16",series:"Conan",vol:1,subtitle:"Phantoms And Phoenixes",type:"Epic",licensed:"Yes",reprint:"No",pages:464,conf:"estimated"},
+  {num:314,date:"2022-11-23",series:"Avengers",vol:25,subtitle:"Blood Ties",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:315,date:"2022-11-30",series:"X-Factor",vol:9,subtitle:"X-Aminations",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:316,date:"2022-12-07",series:"Daredevil",vol:18,subtitle:"The Man Without Fear",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:317,date:"2022-12-14",series:"Venom",vol:5,subtitle:"Enemy Within",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:319,date:"2022-12-27",series:"Thor",vol:24,subtitle:"Thor War",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:320,date:"2022-12-27",series:"Avengers",vol:4,subtitle:"Behold The Vision",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:321,date:"2022-12-27",series:"Captain America",vol:4,subtitle:"The Secret Empire",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:322,date:"2022-12-27",series:"Generation X",vol:2,subtitle:"Survival Of The Fittest",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:323,date:"2022-12-27",series:"X-Force",vol:6,subtitle:"Shattershot",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:324,date:"2022-12-27",series:"Incredible Hulk",vol:19,subtitle:"Tempest Fugit",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:325,date:"2022-12-27",series:"Fantastic Four",vol:10,subtitle:"Nobody Gets Out Alive",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:327,date:"2022-12-27",series:"Amazing Spider-Man",vol:6,subtitle:"The Death Of Captain Stacy",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:328,date:"2022-12-27",series:"Namor",vol:2,subtitle:"The Depths Of Despair",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:329,date:"2022-12-27",series:"Punisher",vol:1,subtitle:"Circle Of Blood",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:331,date:"2022-12-27",series:"Avengers West Coast",vol:8,subtitle:"Darker Than Scarlet",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:332,date:"2022-12-27",series:"Iron Man",vol:5,subtitle:"Doom!",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:335,date:"2022-12-27",series:"Captain America",vol:11,subtitle:"Sturm Und Drang",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:336,date:"2022-12-27",series:"X-Men",vol:8,subtitle:"Legacies",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:337,date:"2022-12-27",series:"Thor",vol:12,subtitle:"Worldengine",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:338,date:"2022-12-27",series:"Avengers",vol:16,subtitle:"Under Siege",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:339,date:"2022-12-27",series:"Fantastic Four",vol:5,subtitle:"Resurrection Of Galactus",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:340,date:"2022-12-27",series:"Silver Surfer",vol:7,subtitle:"Resurrection",type:"Epic",licensed:"No",reprint:"No",pages:400,conf:"estimated"},
+  {num:341,date:"2022-12-27",series:"Excalibur",vol:2,subtitle:"Two-Edged Sword",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:342,date:"2023-01-11",series:"Avengers",vol:26,subtitle:"Once An Avenger",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:343,date:"2023-01-18",series:"X-Force",vol:7,subtitle:"Toy Soldiers",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:344,date:"2023-01-25",series:"Star Wars Legends",vol:2,subtitle:"The Early Adventures",type:"Epic",licensed:"Yes",reprint:"No",pages:472,conf:"estimated"},
+  {num:347,date:"2023-02-15",series:"Amazing Spider-Man",vol:25,subtitle:"Maximum Carnage",type:"Epic",licensed:"No",reprint:"No",pages:392,conf:"estimated"},
+  {num:349,date:"2023-03-01",series:"Fantastic Four",vol:4,subtitle:"The Name Is Doom",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:350,date:"2023-03-08",series:"Daredevil",vol:6,subtitle:"Watch Out For Bullseye",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:352,date:"2023-03-22",series:"Avengers",vol:27,subtitle:"The Collection Obsession",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:353,date:"2023-03-29",series:"X-Men",vol:10,subtitle:"God Loves, Man Kills",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:354,date:"2023-04-05",series:"Incredible Hulk",vol:20,subtitle:"Future Imperfect",type:"Epic",licensed:"No",reprint:"No",pages:464,conf:"estimated"},
+  {num:356,date:"2023-04-19",series:"Iron Man",vol:6,subtitle:"The Crossing",type:"Epic",licensed:"No",reprint:"Yes",pages:464,conf:"estimated"},
+  {num:357,date:"2023-04-26",series:"Captain America",vol:12,subtitle:"Avengers: Galactic Storm",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:358,date:"2023-05-01",series:"Spider-Gwen Modern",vol:1,subtitle:"Edge Of Spider-Verse",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:359,date:"2023-05-10",series:"Avengers",vol:2,subtitle:"The Avengers/Defenders War",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:361,date:"2023-05-24",series:"Thor",vol:2,subtitle:"When Titans Clash",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:362,date:"2023-05-31",series:"Wolverine",vol:3,subtitle:"Blood Wedding",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:363,date:"2023-06-07",series:"Venom",vol:6,subtitle:"Tooth And Claw",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:364,date:"2023-06-14",series:"Fantastic Four",vol:6,subtitle:"Then Came Galactus!",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:365,date:"2023-06-21",series:"Deadpool",vol:3,subtitle:"Sins Of The Past",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:366,date:"2023-06-28",series:"Amazing Spider-Man Modern",vol:1,subtitle:"Coming Home",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:367,date:"2023-07-05",series:"Incredible Hulk",vol:21,subtitle:"Heart Of The Monster",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:368,date:"2023-07-12",series:"Captain America",vol:15,subtitle:"Fighting Chance",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:370,date:"2023-07-26",series:"X-Men",vol:4,subtitle:"The Sentinels Live!",type:"Epic",licensed:"No",reprint:"Yes",pages:496,conf:"estimated"},
+  {num:371,date:"2023-08-02",series:"Avengers",vol:11,subtitle:"The Evil Reborn",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:372,date:"2023-08-09",series:"Iron Man",vol:7,subtitle:"The Crossing",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:373,date:"2023-08-15",series:"Loki Modern",vol:1,subtitle:"Journey Into Mystery",type:"Modern",licensed:"No",reprint:"No",pages:416,conf:"estimated"},
+  {num:374,date:"2023-08-23",series:"Wolverine",vol:4,subtitle:"Drowned In Thunder",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:375,date:"2023-08-30",series:"Thor",vol:3,subtitle:"If He Be Worthy",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:376,date:"2023-09-06",series:"New Mutants",vol:5,subtitle:"The Fall Of The Mutants",type:"Epic",licensed:"No",reprint:"Yes",pages:512,conf:"estimated"},
+  {num:377,date:"2023-09-13",series:"Avengers West Coast",vol:2,subtitle:"Lost In Space-Time",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:378,date:"2023-09-19",series:"Guardians Of The Galaxy Modern",vol:1,subtitle:"Somebody\'s Got To Do It",type:"Modern",licensed:"No",reprint:"No",pages:416,conf:"estimated"},
+  {num:379,date:"2023-09-27",series:"X-Force",vol:2,subtitle:"X-Cutioner\'s Song",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:380,date:"2023-10-04",series:"Ghost Rider: Danny Ketch",vol:2,subtitle:"Resurrection",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:381,date:"2023-10-10",series:"Captain America Modern",vol:1,subtitle:"The New Deal",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:382,date:"2023-10-18",series:"Fantastic Four",vol:7,subtitle:"Where Stalks The Sentry!",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:383,date:"2023-10-25",series:"Spider-Man/Deadpool Modern",vol:1,subtitle:"Isn\'t It Bromantic?",type:"Modern",licensed:"No",reprint:"No",pages:400,conf:"estimated"},
+  {num:384,date:"2023-10-31",series:"Spider-Man/Deadpool Modern",vol:2,subtitle:"Isn\'t It Bromantic?",type:"Modern",licensed:"No",reprint:"No",pages:400,conf:"estimated"},
+  {num:385,date:"2023-11-08",series:"Captain America",vol:3,subtitle:"It\'s Always Darkest",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:386,date:"2023-11-15",series:"Incredible Hulk",vol:8,subtitle:"The Curing Of Dr. Banner",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:387,date:"2023-11-22",series:"Daredevil Modern",vol:1,subtitle:"Guardian Devil",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:388,date:"2023-11-29",series:"X-Men",vol:11,subtitle:"Dissolution And Rebirth",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:389,date:"2023-12-06",series:"Avengers",vol:5,subtitle:"This Beachhead Earth",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:390,date:"2023-12-13",series:"Iron Man Modern",vol:1,subtitle:"Extremis",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:391,date:"2023-12-20",series:"Deadpool",vol:4,subtitle:"Deadpool Vs. S.H.I.E.L.D.",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:392,date:"2023-12-27",series:"New Avengers Modern",vol:1,subtitle:"Avengers Disassembled",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:393,date:"2023-12-27",series:"New Mutants",vol:2,subtitle:"The Demon Bear Saga",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:394,date:"2023-12-27",series:"Daredevil",vol:7,subtitle:"The Concrete Jungle",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:396,date:"2023-12-27",series:"Venom",vol:7,subtitle:"The Hunger",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:397,date:"2023-12-27",series:"Generation X",vol:3,subtitle:"Survival Of The Fittest",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:398,date:"2023-12-27",series:"X-Factor",vol:7,subtitle:"All-New, All-Different",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:400,date:"2023-12-27",series:"Thor",vol:14,subtitle:"The God Storm",type:"Epic",licensed:"No",reprint:"Yes",pages:464,conf:"estimated"},
+  {num:401,date:"2023-12-27",series:"Wolverine",vol:9,subtitle:"Weapon X",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:402,date:"2023-12-27",series:"Ghost Rider: Danny Ketch",vol:3,subtitle:"Siege Of Darkness",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:403,date:"2023-12-27",series:"Excalibur",vol:3,subtitle:"Curiouser And Curiouser",type:"Epic",licensed:"No",reprint:"No",pages:488,conf:"estimated"},
+  {num:404,date:"2023-12-27",series:"Avengers",vol:17,subtitle:"Judgment Day",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:405,date:"2023-12-27",series:"Iron Man",vol:8,subtitle:"Force Works",type:"Epic",licensed:"No",reprint:"Yes",pages:464,conf:"estimated"},
+  {num:406,date:"2023-12-27",series:"Captain America Modern",vol:2,subtitle:"Extremist",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:407,date:"2023-12-27",series:"New Avengers Modern",vol:2,subtitle:"The Sentry",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:408,date:"2023-12-27",series:"Deadpool Modern",vol:1,subtitle:"Secret Invasion",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:409,date:"2023-12-27",series:"Daredevil Modern",vol:2,subtitle:"Out",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:410,date:"2023-12-27",series:"Daredevil Modern",vol:3,subtitle:"The King Of Hell\'s Kitchen",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:411,date:"2023-12-27",series:"Iron Man Modern",vol:2,subtitle:"Director Of S.H.I.E.L.D.",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:412,date:"2023-12-27",series:"X-Men",vol:6,subtitle:"The Outback Years",type:"Epic",licensed:"No",reprint:"Yes",pages:504,conf:"estimated"},
+  {num:413,date:"2023-12-27",series:"New Mutants",vol:6,subtitle:"Crossroads",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:414,date:"2023-12-27",series:"Fantastic Four",vol:8,subtitle:"When Lost In The Comics",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:415,date:"2023-12-27",series:"Wolverine",vol:11,subtitle:"Blood Debt",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:416,date:"2023-12-27",series:"Silver Surfer",vol:4,subtitle:"Parable",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:417,date:"2023-12-27",series:"Avengers",vol:22,subtitle:"Collection Obsession",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:418,date:"2023-12-27",series:"Amazing Spider-Man",vol:8,subtitle:"Venom",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:419,date:"2023-12-27",series:"Incredible Hulk",vol:11,subtitle:"Ground Zero",type:"Epic",licensed:"No",reprint:"Yes",pages:464,conf:"estimated"},
+  {num:421,date:"2023-12-27",series:"Thor Modern",vol:1,subtitle:"The Reborn King",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:422,date:"2024-01-03",series:"Avengers",vol:12,subtitle:"Court-Martial",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:423,date:"2024-01-10",series:"Fantastic Four",vol:9,subtitle:"All In The Family",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:424,date:"2024-01-17",series:"Wolverine",vol:5,subtitle:"Weapon X",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:425,date:"2024-01-24",series:"Captain America",vol:13,subtitle:"Avengers: Galactic Storm",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:426,date:"2024-01-30",series:"Dark Avengers Modern",vol:1,subtitle:"Osborn\'s Reign",type:"Modern",licensed:"No",reprint:"No",pages:552,conf:"estimated"},
+  {num:427,date:"2024-02-07",series:"New Avengers Modern",vol:3,subtitle:"Secrets And Lies",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:428,date:"2024-02-14",series:"Iron Man",vol:3,subtitle:"The Secret Empire",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:429,date:"2024-02-21",series:"Daredevil",vol:4,subtitle:"Heart Of Darkness",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:430,date:"2024-02-28",series:"X-Men",vol:12,subtitle:"Wrath Of The Reavers",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:431,date:"2024-03-06",series:"Thor",vol:15,subtitle:"Into The Dark Nebula",type:"Epic",licensed:"No",reprint:"Yes",pages:464,conf:"estimated"},
+  {num:432,date:"2024-03-13",series:"Incredible Hulk",vol:22,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:433,date:"2024-03-20",series:"New Mutants",vol:7,subtitle:"Inferno",type:"Epic",licensed:"No",reprint:"Yes",pages:504,conf:"estimated"},
+  {num:434,date:"2024-03-26",series:"Astonishing X-Men Modern",vol:1,subtitle:"Gifted",type:"Modern",licensed:"No",reprint:"No",pages:320,conf:"estimated"},
+  {num:435,date:"2024-03-26",series:"Spider-Girl Modern",vol:1,subtitle:"Legacy",type:"Modern",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:436,date:"2024-04-03",series:"Captain America",vol:14,subtitle:"The Captain",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:437,date:"2024-04-10",series:"Wolverine",vol:14,subtitle:"Blood And Claws",type:"Epic",licensed:"No",reprint:"Yes",pages:456,conf:"estimated"},
+  {num:438,date:"2024-04-17",series:"New Avengers Modern",vol:4,subtitle:"The Illuminati",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:439,date:"2024-04-24",series:"X-Factor",vol:3,subtitle:"Judgment War",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:440,date:"2024-05-01",series:"Avengers",vol:11,subtitle:"The Evil Reborn",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:441,date:"2024-05-08",series:"Iron Man Modern",vol:3,subtitle:"World\'s Most Wanted",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:442,date:"2024-05-13",series:"Avengers",vol:12,subtitle:"Court-Martial",type:"Epic",licensed:"No",reprint:"No",pages:528,conf:"estimated"},
+  {num:443,date:"2024-05-22",series:"X-Men",vol:13,subtitle:"Acts Of Vengeance",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:445,date:"2024-05-29",series:"New Avengers Modern",vol:5,subtitle:"Civil War",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:446,date:"2024-06-05",series:"Daredevil",vol:5,subtitle:"It Comes With The Territory",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:447,date:"2024-06-12",series:"Carnage",vol:2,subtitle:"The Complete Collection",type:"Epic",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:448,date:"2024-06-19",series:"Iron Man",vol:4,subtitle:"Fury Of The Firebrand",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:449,date:"2024-06-25",series:"New X-Men Modern",vol:1,subtitle:"E Is For Extinction",type:"Modern",licensed:"No",reprint:"No",pages:376,conf:"estimated"},
+  {num:450,date:"2024-07-03",series:"New Avengers Modern",vol:6,subtitle:"Revolution",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:451,date:"2024-07-10",series:"Fantastic Four",vol:11,subtitle:"Nobody Gets Out Alive",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:452,date:"2024-07-17",series:"X-Force",vol:5,subtitle:"Zero Tolerance",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:453,date:"2024-07-23",series:"Star Wars Modern",vol:1,subtitle:"Skywalker Strikes",type:"Modern",licensed:"Yes",reprint:"No",pages:488,conf:"estimated"},
+  {num:454,date:"2024-07-31",series:"New Avengers Modern",vol:7,subtitle:"The Trust",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:455,date:"2024-08-07",series:"Avengers",vol:18,subtitle:"Heavy Metal",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:456,date:"2024-08-14",series:"Daredevil Modern",vol:4,subtitle:"The Widow",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:457,date:"2024-08-21",series:"Incredible Hulk",vol:14,subtitle:"Ghosts Of The Future",type:"Epic",licensed:"No",reprint:"Yes",pages:448,conf:"estimated"},
+  {num:458,date:"2024-08-28",series:"Captain America Modern",vol:3,subtitle:"The Death Of Captain America",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:459,date:"2024-09-04",series:"X-Men",vol:14,subtitle:"The X-Tinction Agenda",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:460,date:"2024-09-11",series:"Daredevil",vol:6,subtitle:"Watch Out For Bullseye",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:461,date:"2024-09-18",series:"New Avengers Modern",vol:8,subtitle:"Secret Invasion",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:462,date:"2024-09-25",series:"Wolverine",vol:6,subtitle:"Bloodlust",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:463,date:"2024-10-02",series:"Iron Man Modern",vol:4,subtitle:"Rescue",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:464,date:"2024-10-09",series:"Avengers",vol:19,subtitle:"Judgment Day",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:465,date:"2024-10-16",series:"Daredevil Modern",vol:5,subtitle:"Hell To Pay",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:466,date:"2024-10-23",series:"Fantastic Four",vol:12,subtitle:"Into The Timestream",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:467,date:"2024-10-30",series:"Deadpool Modern",vol:2,subtitle:"World\'s Greatest",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:468,date:"2024-11-06",series:"X-Men",vol:15,subtitle:"Days Of Future Past",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:469,date:"2024-11-12",series:"Star Wars: Droids And Ewoks",vol:1,subtitle:"The Original Marvel Years",type:"Epic",licensed:"Yes",reprint:"No",pages:536,conf:"estimated"},
+  {num:470,date:"2024-11-13",series:"New Avengers Modern",vol:9,subtitle:"Secret Invasion",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:471,date:"2024-11-20",series:"Avengers West Coast",vol:3,subtitle:"Tales To Astonish",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:472,date:"2024-11-26",series:"Star Wars Modern",vol:2,subtitle:"Showdown On The Smuggler\'s Moon",type:"Modern",licensed:"Yes",reprint:"No",pages:488,conf:"estimated"},
+  {num:473,date:"2024-11-26",series:"Darth Vader Modern",vol:1,subtitle:"Shadows And Secrets",type:"Modern",licensed:"Yes",reprint:"No",pages:352,conf:"estimated"},
+  {num:474,date:"2024-12-04",series:"Annihilation Modern",vol:1,subtitle:"Annihilation Day",type:"Modern",licensed:"No",reprint:"No",pages:472,conf:"estimated"},
+  {num:475,date:"2024-12-11",series:"Deadpool Modern",vol:3,subtitle:"The Good The Bad And The Ugly",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:476,date:"2024-12-18",series:"New X-Men Modern",vol:2,subtitle:"Assault On Weapon Plus",type:"Modern",licensed:"No",reprint:"No",pages:376,conf:"estimated"},
+  {num:477,date:"2024-12-25",series:"Daredevil",vol:7,subtitle:"The Concrete Jungle",type:"Epic",licensed:"No",reprint:"Yes",pages:528,conf:"estimated"},
+  {num:478,date:"2024-12-25",series:"Avengers",vol:20,subtitle:"Heavy Metal",type:"Epic",licensed:"No",reprint:"Yes",pages:472,conf:"estimated"},
+  {num:479,date:"2024-12-25",series:"X-Force",vol:3,subtitle:"All Hell Is Breaking Loose",type:"Epic",licensed:"No",reprint:"Yes",pages:488,conf:"estimated"},
+  {num:480,date:"2024-12-25",series:"Wolverine",vol:7,subtitle:"Weapon X",type:"Epic",licensed:"No",reprint:"Yes",pages:480,conf:"estimated"},
+  {num:481,date:"2024-12-25",series:"Iron Man Modern",vol:5,subtitle:"Stark Resilient",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:482,date:"2024-12-25",series:"Captain America Modern",vol:4,subtitle:"Road To Reborn",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:483,date:"2024-12-25",series:"Deadpool Modern",vol:4,subtitle:"Deadpool vs. S.H.I.E.L.D.",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:484,date:"2024-12-25",series:"Guardians Of The Galaxy Modern",vol:2,subtitle:"War Of Kings",type:"Modern",licensed:"No",reprint:"No",pages:456,conf:"estimated"},
+  {num:485,date:"2024-12-25",series:"Thor Modern",vol:2,subtitle:"Worlds End",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:486,date:"2024-12-25",series:"Daredevil Modern",vol:6,subtitle:"Cruel And Unusual",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+  {num:487,date:"2024-12-25",series:"Annihilation Modern",vol:2,subtitle:"Annihilation Conquest",type:"Modern",licensed:"No",reprint:"No",pages:480,conf:"estimated"},
+];
 
-                {/* Charts Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {/* Releases by Year Chart */}
-                  <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                    <h2 className="text-xl font-bold mb-4">Releases by Year</h2>
-                    <div className="space-y-2">
-                      {yearlyReleases.map(item => (
-                        <div key={item.year} className="flex items-center gap-2">
-                          <div className="w-12 text-sm text-gray-400">{item.year}</div>
-                          <div className="flex-1 bg-gray-700 rounded-full h-6 relative overflow-hidden">
-                            <div 
-                              className="bg-gradient-to-r from-red-600 to-red-400 h-full rounded-full flex items-center justify-end pr-2 text-xs font-bold transition-all duration-500"
-                              style={{ width: `${(item.count / 89) * 100}%` }}
-                            >
-                              {item.count}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+// ============================================================
+// Yearly totals (Wikipedia-confirmed, used for bar chart baseline)
+// ============================================================
+const yearlyTotals = [
+  { year:2013, epics:4,  reprints:0,  moderns:0,  ultimates:0,  total:4  },
+  { year:2014, epics:19, reprints:0,  moderns:0,  ultimates:0,  total:19 },
+  { year:2015, epics:20, reprints:0,  moderns:0,  ultimates:0,  total:20 },
+  { year:2016, epics:22, reprints:0,  moderns:0,  ultimates:0,  total:22 },
+  { year:2017, epics:32, reprints:0,  moderns:0,  ultimates:0,  total:32 },
+  { year:2018, epics:34, reprints:1,  moderns:0,  ultimates:0,  total:35 },
+  { year:2019, epics:41, reprints:4,  moderns:0,  ultimates:0,  total:45 },
+  { year:2020, epics:33, reprints:4,  moderns:0,  ultimates:0,  total:37 },
+  { year:2021, epics:37, reprints:18, moderns:0,  ultimates:0,  total:55 },
+  { year:2022, epics:47, reprints:24, moderns:0,  ultimates:0,  total:71 },
+  { year:2023, epics:50, reprints:22, moderns:8,  ultimates:0,  total:80 },
+  { year:2024, epics:45, reprints:20, moderns:24, ultimates:0,  total:89 },
+  { year:2025, epics:40, reprints:6,  moderns:27, ultimates:4,  total:77 },
+];
 
-                  {/* Top Series Chart */}
-                  <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                    <h2 className="text-xl font-bold mb-4">Top Series by Volumes</h2>
-                    <div className="space-y-2">
-                      {topSeries.slice(0, 10).map(item => (
-                        <div key={item.series} className="flex items-center gap-2">
-                          <div className="w-32 text-sm text-gray-400 truncate">{item.series}</div>
-                          <div className="flex-1 bg-gray-700 rounded-full h-6 relative overflow-hidden">
-                            <div 
-                              className="bg-gradient-to-r from-blue-600 to-blue-400 h-full rounded-full flex items-center justify-end pr-2 text-xs font-bold transition-all duration-500"
-                              style={{ width: `${(item.count / 30) * 100}%` }}
-                            >
-                              {item.count}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+// ============================================================
+// State
+// ============================================================
+let filters = { type: 'all', licensed: 'all', reprint: 'all' };
+let sortKey = 'num';
+let sortDir = 1;
 
-                {/* Filters Section */}
-                <div className="bg-white/5 rounded-xl p-6 mb-6 border border-white/10">
-                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">Year</label>
-                      <select 
-                        value={yearFilter} 
-                        onChange={(e) => setYearFilter(e.target.value)}
-                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
-                      >
-                        <option>All Years</option>
-                        <option>2026 Only</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">Type</label>
-                      <select 
-                        value={typeFilter} 
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
-                      >
-                        <option>All</option>
-                        <option>Epic</option>
-                        <option>Modern</option>
-                        <option>Ultimate</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">Licensed</label>
-                      <select 
-                        value={licensedFilter} 
-                        onChange={(e) => setLicensedFilter(e.target.value)}
-                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
-                      >
-                        <option>All</option>
-                        <option>Yes</option>
-                        <option>No</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">Reprint</label>
-                      <select 
-                        value={reprintFilter} 
-                        onChange={(e) => setReprintFilter(e.target.value)}
-                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
-                      >
-                        <option>All</option>
-                        <option>Yes</option>
-                        <option>No</option>
-                      </select>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm text-gray-400 mb-2">Search</label>
-                      <div className="flex gap-2">
-                        <input 
-                          type="text"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          placeholder="Search series or subtitle..."
-                          className="flex-1 bg-gray-700 rounded px-3 py-2 text-sm"
-                        />
-                        <button 
-                          onClick={resetFilters}
-                          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-medium transition-colors"
-                        >
-                          Reset
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {yearFilter === 'All Years' && (
-                    <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                      <p className="text-sm text-blue-300">
-                        📊 Showing combined statistics (2013-2026). Detailed table shows 2026 releases only. 
-                        Historical data extraction in progress.
-                      </p>
-                    </div>
-                  )}
-                </div>
+function setFilter(key, val, btn) {
+  filters[key] = val;
+  document.querySelectorAll('#btn-all,#btn-epic,#btn-modern,#btn-ult').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function setLicensed(val, btn) {
+  filters.licensed = val;
+  document.querySelectorAll('#btn-lic-all,#btn-lic-yes').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function setReprint(val, btn) {
+  filters.reprint = val;
+  document.querySelectorAll('#btn-rep-all,#btn-rep-no').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function resetFilters() {
+  filters = { type:'all', licensed:'all', reprint:'all' };
+  document.getElementById('searchBox').value = '';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-all').classList.add('active');
+  document.getElementById('btn-lic-all').classList.add('active');
+  document.getElementById('btn-rep-all').classList.add('active');
+  applyFilters();
+}
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1; else { sortKey = key; sortDir = 1; }
+  ['num','date','series','vol','subtitle','type','pages'].forEach(k => {
+    const th = document.getElementById('th-'+k);
+    if (th) th.classList.toggle('sorted', k === sortKey);
+  });
+  applyFilters();
+}
 
-                {/* Data Table */}
-                <div className="bg-white/5 rounded-xl overflow-hidden border border-white/10">
-                  <div className="p-4 bg-white/5 border-b border-white/10">
-                    <h2 className="text-xl font-bold">
-                      {yearFilter === 'All Years' ? '2026 Releases' : '2026 Releases'} 
-                      <span className="text-gray-400 ml-2 text-sm">({sortedData.length} books)</span>
-                    </h2>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-white/10">
-                        <tr>
-                          {['Release_Number', 'Series', 'Volume', 'Subtitle', 'Type', 'Pages', 'Release_Date'].map(key => (
-                            <th 
-                              key={key}
-                              onClick={() => handleSort(key)}
-                              className="px-4 py-3 text-left cursor-pointer hover:bg-white/5 transition-colors"
-                            >
-                              <div className="flex items-center gap-1">
-                                {key.replace(/_/g, ' ')}
-                                {sortConfig.key === key && (
-                                  <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                                )}
-                              </div>
-                            </th>
-                          ))}
-                          <th className="px-4 py-3 text-left">Tags</th>
-                        </tr>
-                      </thead>
-                      <tbody>{sortedData.map((book) => (
-                        <tr 
-                          key={book.Release_Number} 
-                          className={`border-t border-white/5 hover:bg-white/5 transition-colors ${
-                            book.Release_Number === 500 ? 'bg-gradient-to-r from-yellow-600/20 to-transparent animate-pulse' : ''
-                          }`}
-                        >
-                          <td className="px-4 py-3 font-mono text-sm">
-                            {book.Release_Number === 500 ? (
-                              <span className="font-bold text-yellow-400">#{book.Release_Number} 🎉</span>
-                            ) : (
-                              `#${book.Release_Number}`
-                            )}
-                          </td>
-                          <td className="px-4 py-3 font-medium">{book.Series}</td>
-                          <td className="px-4 py-3">{book.Volume}</td>
-                          <td className="px-4 py-3 text-gray-300">{book.Subtitle}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              book.Type === 'Epic' ? 'bg-blue-500/20 text-blue-400' :
-                              book.Type === 'Modern' ? 'bg-purple-500/20 text-purple-400' :
-                              'bg-green-500/20 text-green-400'
-                            }`}>
-                              {book.Type}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-gray-300">{book.Pages}</td>
-                          <td className="px-4 py-3 text-gray-400 text-sm">{book.Release_Date}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
-                              {book.Reprint === 'Yes' && <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-400">Reprint</span>}
-                              {book.Licensed === 'Yes' && <span className="px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-400">Licensed</span>}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}</tbody>
-                    </table>
-                  </div>
-                </div>
+// ============================================================
+// Core filter + render (updates everything)
+// ============================================================
+function applyFilters() {
+  const search = document.getElementById('searchBox').value.toLowerCase().trim();
+  const filtered = ALL_DATA.filter(d => {
+    if (filters.type !== 'all' && d.type !== filters.type) return false;
+    if (filters.licensed !== 'all' && d.licensed !== filters.licensed) return false;
+    if (filters.reprint !== 'all' && d.reprint !== filters.reprint) return false;
+    if (search) {
+      const hay = ((d.series||'') + ' ' + (d.subtitle||'')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
 
-                {/* Footer */}
-                <div className="mt-8 text-center text-sm text-gray-500">
-                  <p>Data sources: Marvel.com, Wikipedia • Last updated: March 2026</p>
-                  <p className="mt-2">Historical data extraction (Books #1-487) in progress</p>
-                </div>
-              </div>
-            </div>
-          );
-        };
+  updateCards(filtered);
+  updateBarChart(filtered);
+  updateDonut(filtered);
+  renderTable(filtered);
+  updateFilterNote(filtered.length);
+}
 
-        ReactDOM.render(<MarvelEpicDashboard />, document.getElementById('root'));
-    </script>
+// ============================================================
+// Cards
+// ============================================================
+function updateCards(rows) {
+  const unique   = rows.filter(d => d.reprint === 'No').length;
+  const total    = rows.length;
+  const epics    = rows.filter(d => d.type === 'Epic'    && d.reprint === 'No').length;
+  const moderns  = rows.filter(d => d.type === 'Modern'  && d.reprint === 'No').length;
+  const ultimates= rows.filter(d => d.type === 'Ultimate'&& d.reprint === 'No').length;
+  const licensed = rows.filter(d => d.licensed === 'Yes').length;
+  const reprints = rows.filter(d => d.reprint === 'Yes').length;
+
+  document.getElementById('cardUnique').textContent    = unique;
+  document.getElementById('cardTotal').textContent     = total;
+  document.getElementById('cardEpic').textContent      = epics;
+  document.getElementById('cardModern').textContent    = moderns;
+  document.getElementById('cardUltimate').textContent  = ultimates;
+  document.getElementById('cardLicensed').textContent  = licensed;
+  document.getElementById('cardTotalSub').textContent  = reprints + ' reprints in view';
+}
+
+// ============================================================
+// Bar chart — shows filtered data per year (from table rows)
+// ============================================================
+function updateBarChart(filtered) {
+  // Group filtered rows by year
+  const byYear = {};
+  for (const y of yearlyTotals) byYear[y.year] = { year:y.year, epics:0, moderns:0, ultimates:0, reprints:0, total:0 };
+
+  for (const d of filtered) {
+    const y = d.date ? parseInt(d.date.substring(0,4)) : null;
+    if (!y || !byYear[y]) continue;
+    byYear[y].total++;
+    if (d.reprint === 'Yes') { byYear[y].reprints++; continue; }
+    if (d.type === 'Epic')     byYear[y].epics++;
+    else if (d.type === 'Modern')   byYear[y].moderns++;
+    else if (d.type === 'Ultimate') byYear[y].ultimates++;
+  }
+
+  const years = yearlyTotals.map(y => byYear[y.year]);
+  const maxTotal = Math.max(...years.map(y => y.total), 1);
+  const HEIGHT = 150;
+
+  const html = years.map(y => {
+    const eH = Math.round((y.epics    / maxTotal) * HEIGHT);
+    const mH = Math.round((y.moderns  / maxTotal) * HEIGHT);
+    const uH = Math.round((y.ultimates/ maxTotal) * HEIGHT);
+    const rH = Math.round((y.reprints / maxTotal) * HEIGHT);
+    return `<div class="bar-group">
+      <div class="bar-total">${y.total || ''}</div>
+      <div class="bar-stack" style="height:${HEIGHT}px">
+        <div class="bar-segment reprint"  style="height:${rH}px"></div>
+        <div class="bar-segment ultimate" style="height:${uH}px"></div>
+        <div class="bar-segment modern"   style="height:${mH}px"></div>
+        <div class="bar-segment epic"     style="height:${eH}px"></div>
+      </div>
+      <div class="bar-year">${y.year}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('barChart').innerHTML = html;
+  document.getElementById('barTitle').textContent = 'Annual Releases by Type' + (isFiltered() ? ' (filtered view)' : ' (confirmed totals from Wikipedia)');
+}
+
+// ============================================================
+// Donut
+// ============================================================
+function updateDonut(filtered) {
+  const unique = filtered.filter(d => d.reprint === 'No');
+  const e = unique.filter(d => d.type === 'Epic').length;
+  const m = unique.filter(d => d.type === 'Modern').length;
+  const u = unique.filter(d => d.type === 'Ultimate').length;
+  const total = e + m + u || 1;
+
+  const slices = [
+    { val: e, color: '#E8151B', label: 'Classic Epic',  countId: 'de' },
+    { val: m, color: '#3B82F6', label: 'Modern Era',    countId: 'dm' },
+    { val: u, color: '#A855F7', label: 'Ultimate',      countId: 'du' },
+  ].filter(s => s.val > 0);
+
+  const cx=80, cy=80, r=60, inner=38;
+  let angle = -Math.PI/2;
+  let paths = '';
+
+  if (slices.length === 1) {
+    const s = slices[0];
+    paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${s.color}" opacity="0.9"/>`;
+    paths += `<circle cx="${cx}" cy="${cy}" r="${inner}" fill="var(--surface)"/>`;
+  } else {
+    for (const s of slices) {
+      const sweep = (s.val / total) * 2 * Math.PI;
+      const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
+      const x2=cx+r*Math.cos(angle+sweep), y2=cy+r*Math.sin(angle+sweep);
+      const xi1=cx+inner*Math.cos(angle), yi1=cy+inner*Math.sin(angle);
+      const xi2=cx+inner*Math.cos(angle+sweep), yi2=cy+inner*Math.sin(angle+sweep);
+      const large = sweep > Math.PI ? 1 : 0;
+      paths += `<path d="M${xi1} ${yi1} L${x1} ${y1} A${r} ${r} 0 ${large} 1 ${x2} ${y2} L${xi2} ${yi2} A${inner} ${inner} 0 ${large} 0 ${xi1} ${yi1}Z" fill="${s.color}" opacity="0.9"/>`;
+      angle += sweep;
+    }
+  }
+  paths += `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="Bebas Neue" font-size="22" fill="#E8E8E8">${total}</text>`;
+  paths += `<text x="${cx}" y="${cy+12}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#888">UNIQUE</text>`;
+  document.getElementById('donutSvg').innerHTML = paths;
+
+  const allSlices = [
+    { val:e, color:'#E8151B', label:'Classic Epic' },
+    { val:m, color:'#3B82F6', label:'Modern Era'   },
+    { val:u, color:'#A855F7', label:'Ultimate'      },
+  ];
+  document.getElementById('donutLegend').innerHTML = allSlices.map(s =>
+    `<div class="legend-item">
+      <div class="legend-dot" style="background:${s.color}"></div>
+      <div class="legend-label">${s.label}</div>
+      <div class="legend-count">${s.val}</div>
+      <div class="legend-pct">${total ? (s.val/total*100).toFixed(1)+'%' : '—'}</div>
+    </div>`
+  ).join('');
+}
+
+// ============================================================
+// Table
+// ============================================================
+function renderTable(rows) {
+  rows = [...rows].sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av - bv) * sortDir;
+  });
+
+  const dash = '<span class="null-val">——</span>';
+  const html = rows.map(d => {
+    const typeBadge = `<span class="badge ${d.type.toLowerCase()}">${d.type}</span>`;
+    const licIcon   = d.licensed === 'Yes' ? '<span class="icon-yes" title="Licensed IP">★</span>' : '<span class="icon-no">—</span>';
+    const repIcon   = d.reprint  === 'Yes' ? '<span class="icon-rep">R</span>'                     : '<span class="icon-no">—</span>';
+    const confDot   = `<span class="conf-dot ${d.conf}" title="${d.conf === 'verified' ? 'Wikipedia-verified' : 'Estimated from historical data'}"></span>`;
+    return `<tr class="${d.conf === 'estimated' ? 'estimated' : ''}">
+      <td class="num-val">${d.num !== null ? d.num : dash}</td>
+      <td>${d.date || dash}</td>
+      <td>${d.series}</td>
+      <td class="num-val">${d.vol !== null ? d.vol : dash}</td>
+      <td>${d.subtitle || dash}</td>
+      <td>${typeBadge}</td>
+      <td style="text-align:center">${licIcon}</td>
+      <td style="text-align:center">${repIcon}</td>
+      <td class="pages-val">${d.pages !== null ? d.pages : dash}</td>
+      <td style="text-align:center">${confDot}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tableBody').innerHTML = html;
+  document.getElementById('tableCount').textContent = `${rows.length} entries shown`;
+}
+
+// ============================================================
+// Filter note
+// ============================================================
+function isFiltered() {
+  return filters.type !== 'all' || filters.licensed !== 'all' || filters.reprint !== 'all' || document.getElementById('searchBox').value.trim();
+}
+function updateFilterNote(count) {
+  const note = document.getElementById('filterNote');
+  if (isFiltered()) {
+    note.classList.add('visible');
+    document.getElementById('filterNoteText').textContent =
+      `Filters active — showing ${count} of ${ALL_DATA.length} entries. Cards and charts reflect this filtered view.`;
+  } else {
+    note.classList.remove('visible');
+  }
+}
+
+// ============================================================
+// Init
+// ============================================================
+document.getElementById('th-num').classList.add('sorted');
+applyFilters();
+</script>
 </body>
 </html>
