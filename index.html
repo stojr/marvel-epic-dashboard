@@ -15,44 +15,441 @@
     <script type="text/babel">
         const { useState, useMemo } = React;
         
-        const Dashboard = () => {
-          // Test data - if you see this, data is loading!
-          const testData = [
-            { Release_Number: 500, Release_Date: "2026-03-03", Series: "Thor", Volume: 13, Subtitle: "The Surtur War", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 496 },
+        const MarvelEpicDashboard = () => {
+          // Historical stats through Dec 30, 2025
+          const historicalStats = {
+            totalUnique: 487,
+            classic: 424,
+            modern: 59,
+            ultimate: 4,
+            reprints: 99,
+            licensed: 50, // Approximate from Wikipedia
+            totalReleases: 586 // 487 unique + 99 reprints
+          };
+
+          // 2026 detailed releases data (#488-544)
+          const releases2026 = [
             { Release_Number: 488, Release_Date: "2026-01-06", Series: "Amazing Spider-Man", Volume: 12, Subtitle: "Spider-Man - Threat or Menace?", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
-            { Release_Number: 489, Release_Date: "2026-01-06", Series: "Amazing Spider-Man Modern", Volume: 2, Subtitle: "The Life and Death of Spiders", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 400 }
+            { Release_Number: 489, Release_Date: "2026-01-06", Series: "Amazing Spider-Man Modern", Volume: 2, Subtitle: "The Life and Death of Spiders", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 400 },
+            { Release_Number: 490, Release_Date: "2026-01-13", Series: "Blade", Volume: 2, Subtitle: "Nightstalkers", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 432 },
+            { Release_Number: 491, Release_Date: "2026-01-13", Series: "Punisher", Volume: 12, Subtitle: "Return To Big Nothing", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
+            { Release_Number: 492, Release_Date: "2026-01-20", Series: "X-Men", Volume: 20, Subtitle: "Hunt For Professor X", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
+            { Release_Number: 493, Release_Date: "2026-01-27", Series: "Fantastic Four", Volume: 19, Subtitle: "Into The Timestream", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 488 },
+            { Release_Number: 494, Release_Date: "2026-02-03", Series: "Silver Surfer", Volume: 7, Subtitle: "Resurrection", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 400 },
+            { Release_Number: 495, Release_Date: "2026-02-03", Series: "Young Avengers Modern", Volume: 3, Subtitle: "The Children's Crusade", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 248 },
+            { Release_Number: 496, Release_Date: "2026-02-10", Series: "Avengers", Volume: 28, Subtitle: "Heavy Metal", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
+            { Release_Number: 497, Release_Date: "2026-02-10", Series: "New Avengers Modern", Volume: 9, Subtitle: "Secret Invasion Book 2", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 416 },
+            { Release_Number: 498, Release_Date: "2026-02-17", Series: "Wolverine", Volume: 16, Subtitle: "Blood And Claws", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
+            { Release_Number: 499, Release_Date: "2026-02-24", Series: "Incredible Hulk", Volume: 24, Subtitle: "Ghosts Of The Future", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 440 },
+            { Release_Number: 500, Release_Date: "2026-03-03", Series: "Thor", Volume: 13, Subtitle: "The Surtur War", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 496 },
+            { Release_Number: 501, Release_Date: "2026-03-03", Series: "Annihilation Modern", Volume: 3, Subtitle: "Conquest Prelude", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 272 },
+            { Release_Number: 502, Release_Date: "2026-03-10", Series: "Captain America", Volume: 25, Subtitle: "Streets Of Poison", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
+            { Release_Number: 503, Release_Date: "2026-03-10", Series: "Daredevil Modern", Volume: 10, Subtitle: "The King Of Hell's Kitchen", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 392 },
+            { Release_Number: 504, Release_Date: "2026-03-17", Series: "Iron Man", Volume: 18, Subtitle: "The Dragon Seed Saga", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
+            { Release_Number: 505, Release_Date: "2026-03-24", Series: "Amazing Spider-Man", Volume: 13, Subtitle: "Kraven's Last Hunt", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 352 },
+            { Release_Number: 506, Release_Date: "2026-03-31", Series: "Deadpool Modern", Volume: 7, Subtitle: "Weasel Goes To Hell", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 448 },
+            { Release_Number: 507, Release_Date: "2026-04-07", Series: "Thor", Volume: 14, Subtitle: "The God Storm", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
+            { Release_Number: 508, Release_Date: "2026-04-07", Series: "Star Wars Modern", Volume: 4, Subtitle: "Rebels And Rogues", Type: "Modern", Licensed: "Yes", Reprint: "No", Pages: 400 },
+            { Release_Number: 509, Release_Date: "2026-04-14", Series: "X-Men", Volume: 21, Subtitle: "Fall Of The Mutants", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 480 },
+            { Release_Number: 510, Release_Date: "2026-04-21", Series: "Ultimate Spider-Man", Volume: 2, Subtitle: "Learning Curve", Type: "Ultimate", Licensed: "No", Reprint: "Yes", Pages: 352 },
+            { Release_Number: 511, Release_Date: "2026-04-21", Series: "Ultimate X-Men", Volume: 2, Subtitle: "World Tour", Type: "Ultimate", Licensed: "No", Reprint: "No", Pages: 336 },
+            { Release_Number: 512, Release_Date: "2026-04-28", Series: "Avengers", Volume: 29, Subtitle: "The Gatherers Strike", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
+            { Release_Number: 513, Release_Date: "2026-05-05", Series: "Fantastic Four", Volume: 20, Subtitle: "The New Fantastic Four", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
+            { Release_Number: 514, Release_Date: "2026-05-05", Series: "Guardians of the Galaxy Modern", Volume: 3, Subtitle: "Realm Of Kings", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 424 },
+            { Release_Number: 515, Release_Date: "2026-05-12", Series: "Incredible Hulk", Volume: 25, Subtitle: "Future Imperfect", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 280 },
+            { Release_Number: 516, Release_Date: "2026-05-19", Series: "Captain America", Volume: 26, Subtitle: "Man And Wolf", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
+            { Release_Number: 517, Release_Date: "2026-05-26", Series: "Daredevil", Volume: 19, Subtitle: "Fall From Grace", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
+            { Release_Number: 518, Release_Date: "2026-06-02", Series: "New X-Men Modern", Volume: 3, Subtitle: "Planet X", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 336 },
+            { Release_Number: 519, Release_Date: "2026-06-02", Series: "Wolverine", Volume: 17, Subtitle: "Blood Debt", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
+            { Release_Number: 520, Release_Date: "2026-06-09", Series: "Amazing Spider-Man", Volume: 14, Subtitle: "Maximum Carnage", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 392 },
+            { Release_Number: 521, Release_Date: "2026-06-16", Series: "Iron Man", Volume: 19, Subtitle: "War Machine", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
+            { Release_Number: 522, Release_Date: "2026-06-23", Series: "Thor Modern", Volume: 5, Subtitle: "The Siege of Asgard", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 448 },
+            { Release_Number: 523, Release_Date: "2026-06-30", Series: "Punisher", Volume: 13, Subtitle: "Suicide Run", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 480 },
+            { Release_Number: 524, Release_Date: "2026-07-07", Series: "X-Factor", Volume: 10, Subtitle: "X-Aminations", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
+            { Release_Number: 525, Release_Date: "2026-07-14", Series: "Star Wars Legends", Volume: 9, Subtitle: "Legacy Era", Type: "Epic", Licensed: "Yes", Reprint: "No", Pages: 408 },
+            { Release_Number: 526, Release_Date: "2026-07-21", Series: "Venom Modern", Volume: 8, Subtitle: "Circle Of Four", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 416 },
+            { Release_Number: 527, Release_Date: "2026-07-28", Series: "Avengers", Volume: 30, Subtitle: "Bloodties", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
+            { Release_Number: 528, Release_Date: "2026-08-04", Series: "Deadpool", Volume: 8, Subtitle: "Drowning Man", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
+            { Release_Number: 529, Release_Date: "2026-08-11", Series: "Fantastic Four", Volume: 21, Subtitle: "Nobody Gets Out Alive", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
+            { Release_Number: 530, Release_Date: "2026-08-18", Series: "Captain America Modern", Volume: 6, Subtitle: "The Man With No Face", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 424 },
+            { Release_Number: 531, Release_Date: "2026-08-25", Series: "Incredible Hulk", Volume: 26, Subtitle: "Pardoned", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
+            { Release_Number: 532, Release_Date: "2026-09-01", Series: "X-Men", Volume: 22, Subtitle: "Inferno", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 488 },
+            { Release_Number: 533, Release_Date: "2026-09-08", Series: "Spider-Man Modern", Volume: 3, Subtitle: "Brand New Day Vol. 3", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 432 },
+            { Release_Number: 534, Release_Date: "2026-09-15", Series: "Daredevil", Volume: 20, Subtitle: "Flying Blind", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
+            { Release_Number: 535, Release_Date: "2026-09-22", Series: "Thor", Volume: 15, Subtitle: "Into The Dark Nebula", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 464 },
+            { Release_Number: 536, Release_Date: "2026-09-29", Series: "Iron Man Modern", Volume: 7, Subtitle: "Stark Disassembled", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 416 },
+            { Release_Number: 537, Release_Date: "2026-10-06", Series: "Wolverine", Volume: 18, Subtitle: "Not Dead Yet", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 440 },
+            { Release_Number: 538, Release_Date: "2026-10-13", Series: "Avengers West Coast", Volume: 9, Subtitle: "Vision Quest", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 320 },
+            { Release_Number: 539, Release_Date: "2026-10-20", Series: "New Avengers Modern", Volume: 10, Subtitle: "Power", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 424 },
+            { Release_Number: 540, Release_Date: "2026-10-27", Series: "Captain America", Volume: 27, Subtitle: "Fighting Chance", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 472 },
+            { Release_Number: 541, Release_Date: "2026-11-03", Series: "Fantastic Four", Volume: 22, Subtitle: "The Darker Road", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 456 },
+            { Release_Number: 542, Release_Date: "2026-11-10", Series: "X-Force", Volume: 8, Subtitle: "Child's Play", Type: "Epic", Licensed: "No", Reprint: "No", Pages: 448 },
+            { Release_Number: 543, Release_Date: "2026-11-17", Series: "Amazing Spider-Man", Volume: 15, Subtitle: "Clone Saga Epic", Type: "Epic", Licensed: "No", Reprint: "Yes", Pages: 504 },
+            { Release_Number: 544, Release_Date: "2026-11-24", Series: "Guardians of the Galaxy Modern", Volume: 4, Subtitle: "War Of Kings", Type: "Modern", Licensed: "No", Reprint: "No", Pages: 440 }
+          ];
+
+          const [yearFilter, setYearFilter] = useState('All Years');
+          const [typeFilter, setTypeFilter] = useState('All');
+          const [licensedFilter, setLicensedFilter] = useState('All');
+          const [reprintFilter, setReprintFilter] = useState('All');
+          const [searchTerm, setSearchTerm] = useState('');
+          const [sortConfig, setSortConfig] = useState({ key: 'Release_Number', direction: 'asc' });
+
+          // Calculate combined stats based on year filter
+          const stats = useMemo(() => {
+            if (yearFilter === 'All Years') {
+              // Combined stats: historical + 2026
+              const total2026 = releases2026.length;
+              const epic2026 = releases2026.filter(r => r.Type === 'Epic').length;
+              const modern2026 = releases2026.filter(r => r.Type === 'Modern').length;
+              const ultimate2026 = releases2026.filter(r => r.Type === 'Ultimate').length;
+              const reprints2026 = releases2026.filter(r => r.Reprint === 'Yes').length;
+              const licensed2026 = releases2026.filter(r => r.Licensed === 'Yes').length;
+              
+              return {
+                total: historicalStats.totalUnique + total2026,
+                epic: historicalStats.classic + epic2026,
+                modern: historicalStats.modern + modern2026,
+                ultimate: historicalStats.ultimate + ultimate2026,
+                reprints: historicalStats.reprints + reprints2026,
+                licensed: historicalStats.licensed + licensed2026,
+                avgPages: Math.round(releases2026.reduce((sum, r) => sum + r.Pages, 0) / releases2026.length),
+                totalPages: releases2026.reduce((sum, r) => sum + r.Pages, 0)
+              };
+            } else {
+              // 2026 only
+              return {
+                total: releases2026.length,
+                epic: releases2026.filter(r => r.Type === 'Epic').length,
+                modern: releases2026.filter(r => r.Type === 'Modern').length,
+                ultimate: releases2026.filter(r => r.Type === 'Ultimate').length,
+                reprints: releases2026.filter(r => r.Reprint === 'Yes').length,
+                licensed: releases2026.filter(r => r.Licensed === 'Yes').length,
+                avgPages: Math.round(releases2026.reduce((sum, r) => sum + r.Pages, 0) / releases2026.length),
+                totalPages: releases2026.reduce((sum, r) => sum + r.Pages, 0)
+              };
+            }
+          }, [yearFilter]);
+
+          const filteredData = useMemo(() => {
+            return releases2026.filter(item => {
+              const matchesType = typeFilter === 'All' || item.Type === typeFilter;
+              const matchesLicensed = licensedFilter === 'All' || item.Licensed === licensedFilter;
+              const matchesReprint = reprintFilter === 'All' || item.Reprint === reprintFilter;
+              const matchesSearch = searchTerm === '' || 
+                item.Series.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.Subtitle.toLowerCase().includes(searchTerm.toLowerCase());
+              return matchesType && matchesLicensed && matchesReprint && matchesSearch;
+            });
+          }, [typeFilter, licensedFilter, reprintFilter, searchTerm]);
+
+          const sortedData = useMemo(() => {
+            const sorted = [...filteredData].sort((a, b) => {
+              if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+              if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+              return 0;
+            });
+            return sorted;
+          }, [filteredData, sortConfig]);
+
+          const handleSort = (key) => {
+            setSortConfig(prev => ({
+              key,
+              direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+            }));
+          };
+
+          const resetFilters = () => {
+            setYearFilter('All Years');
+            setTypeFilter('All');
+            setLicensedFilter('All');
+            setReprintFilter('All');
+            setSearchTerm('');
+          };
+
+          // Chart data for releases by year (2013-2026)
+          const yearlyReleases = [
+            { year: 2013, count: 4 },
+            { year: 2014, count: 19 },
+            { year: 2015, count: 20 },
+            { year: 2016, count: 22 },
+            { year: 2017, count: 32 },
+            { year: 2018, count: 35 },
+            { year: 2019, count: 45 },
+            { year: 2020, count: 37 },
+            { year: 2021, count: 55 },
+            { year: 2022, count: 71 },
+            { year: 2023, count: 80 },
+            { year: 2024, count: 89 },
+            { year: 2025, count: 77 },
+            { year: 2026, count: 57 }
+          ];
+
+          // Top series by volume count
+          const topSeries = [
+            { series: 'Avengers', count: 30 },
+            { series: 'Amazing Spider-Man', count: 27 },
+            { series: 'Thor', count: 25 },
+            { series: 'Captain America', count: 27 },
+            { series: 'Incredible Hulk', count: 26 },
+            { series: 'X-Men', count: 22 },
+            { series: 'Fantastic Four', count: 22 },
+            { series: 'Wolverine', count: 18 },
+            { series: 'Iron Man', count: 19 },
+            { series: 'Daredevil', count: 20 }
           ];
 
           return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
               <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-8 p-6 bg-white/5 rounded-xl">
+                {/* Header */}
+                <div className="text-center mb-8 p-6 bg-white/5 rounded-xl backdrop-blur-sm">
                   <h1 className="text-5xl font-bold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent">
                     Marvel Epic Collections Dashboard
                   </h1>
-                  <p className="text-gray-400 text-lg mt-2">Test Version - {testData.length} books loaded</p>
+                  <p className="text-gray-400 text-lg mt-2">Complete Publication History (2013-2026)</p>
+                  <p className="text-sm text-gray-500 mt-1">Through Book #{stats.total}</p>
                 </div>
 
-                <div className="bg-white/5 rounded-xl overflow-hidden border border-white/10 p-6">
-                  <h2 className="text-2xl font-bold mb-4">Sample Data (showing first 3 books):</h2>
-                  <div className="space-y-4">
-                    {testData.map(book => (
-                      <div key={book.Release_Number} className="bg-white/10 p-4 rounded-lg">
-                        <div className="font-bold text-xl">#{book.Release_Number}: {book.Series}</div>
-                        <div className="text-gray-300">{book.Subtitle}</div>
-                        <div className="text-sm text-gray-400 mt-2">
-                          {book.Release_Date} • {book.Type} • {book.Pages} pages
-                        </div>
-                      </div>
-                    ))}
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                  <div className="bg-gradient-to-br from-red-600/20 to-red-800/20 p-4 rounded-lg border border-red-500/30">
+                    <div className="text-3xl font-bold">{stats.total}</div>
+                    <div className="text-sm text-gray-400">Total Collections</div>
                   </div>
+                  <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 p-4 rounded-lg border border-blue-500/30">
+                    <div className="text-3xl font-bold">{stats.epic}</div>
+                    <div className="text-sm text-gray-400">Epic Collections</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 p-4 rounded-lg border border-purple-500/30">
+                    <div className="text-3xl font-bold">{stats.modern}</div>
+                    <div className="text-sm text-gray-400">Modern Era</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-600/20 to-green-800/20 p-4 rounded-lg border border-green-500/30">
+                    <div className="text-3xl font-bold">{stats.ultimate}</div>
+                    <div className="text-sm text-gray-400">Ultimate</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-600/20 to-yellow-800/20 p-4 rounded-lg border border-yellow-500/30">
+                    <div className="text-3xl font-bold">{stats.reprints}</div>
+                    <div className="text-sm text-gray-400">Reprints</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-orange-600/20 to-orange-800/20 p-4 rounded-lg border border-orange-500/30">
+                    <div className="text-3xl font-bold">{stats.licensed}</div>
+                    <div className="text-sm text-gray-400">Licensed</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-pink-600/20 to-pink-800/20 p-4 rounded-lg border border-pink-500/30">
+                    <div className="text-3xl font-bold">{stats.avgPages}</div>
+                    <div className="text-sm text-gray-400">Avg Pages</div>
+                  </div>
+                  <div className="bg-gradient-to-br from-indigo-600/20 to-indigo-800/20 p-4 rounded-lg border border-indigo-500/30">
+                    <div className="text-3xl font-bold">{(stats.totalPages / 1000).toFixed(0)}k</div>
+                    <div className="text-sm text-gray-400">Total Pages (2026)</div>
+                  </div>
+                </div>
+
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  {/* Releases by Year Chart */}
+                  <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                    <h2 className="text-xl font-bold mb-4">Releases by Year</h2>
+                    <div className="space-y-2">
+                      {yearlyReleases.map(item => (
+                        <div key={item.year} className="flex items-center gap-2">
+                          <div className="w-12 text-sm text-gray-400">{item.year}</div>
+                          <div className="flex-1 bg-gray-700 rounded-full h-6 relative overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-red-600 to-red-400 h-full rounded-full flex items-center justify-end pr-2 text-xs font-bold transition-all duration-500"
+                              style={{ width: `${(item.count / 89) * 100}%` }}
+                            >
+                              {item.count}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Top Series Chart */}
+                  <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                    <h2 className="text-xl font-bold mb-4">Top Series by Volumes</h2>
+                    <div className="space-y-2">
+                      {topSeries.slice(0, 10).map(item => (
+                        <div key={item.series} className="flex items-center gap-2">
+                          <div className="w-32 text-sm text-gray-400 truncate">{item.series}</div>
+                          <div className="flex-1 bg-gray-700 rounded-full h-6 relative overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-blue-600 to-blue-400 h-full rounded-full flex items-center justify-end pr-2 text-xs font-bold transition-all duration-500"
+                              style={{ width: `${(item.count / 30) * 100}%` }}
+                            >
+                              {item.count}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filters Section */}
+                <div className="bg-white/5 rounded-xl p-6 mb-6 border border-white/10">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Year</label>
+                      <select 
+                        value={yearFilter} 
+                        onChange={(e) => setYearFilter(e.target.value)}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                      >
+                        <option>All Years</option>
+                        <option>2026 Only</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Type</label>
+                      <select 
+                        value={typeFilter} 
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                      >
+                        <option>All</option>
+                        <option>Epic</option>
+                        <option>Modern</option>
+                        <option>Ultimate</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Licensed</label>
+                      <select 
+                        value={licensedFilter} 
+                        onChange={(e) => setLicensedFilter(e.target.value)}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                      >
+                        <option>All</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Reprint</label>
+                      <select 
+                        value={reprintFilter} 
+                        onChange={(e) => setReprintFilter(e.target.value)}
+                        className="w-full bg-gray-700 rounded px-3 py-2 text-sm"
+                      >
+                        <option>All</option>
+                        <option>Yes</option>
+                        <option>No</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-gray-400 mb-2">Search</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          placeholder="Search series or subtitle..."
+                          className="flex-1 bg-gray-700 rounded px-3 py-2 text-sm"
+                        />
+                        <button 
+                          onClick={resetFilters}
+                          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-medium transition-colors"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  {yearFilter === 'All Years' && (
+                    <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                      <p className="text-sm text-blue-300">
+                        📊 Showing combined statistics (2013-2026). Detailed table shows 2026 releases only. 
+                        Historical data extraction in progress.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Data Table */}
+                <div className="bg-white/5 rounded-xl overflow-hidden border border-white/10">
+                  <div className="p-4 bg-white/5 border-b border-white/10">
+                    <h2 className="text-xl font-bold">
+                      {yearFilter === 'All Years' ? '2026 Releases' : '2026 Releases'} 
+                      <span className="text-gray-400 ml-2 text-sm">({sortedData.length} books)</span>
+                    </h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-white/10">
+                        <tr>
+                          {['Release_Number', 'Series', 'Volume', 'Subtitle', 'Type', 'Pages', 'Release_Date'].map(key => (
+                            <th 
+                              key={key}
+                              onClick={() => handleSort(key)}
+                              className="px-4 py-3 text-left cursor-pointer hover:bg-white/5 transition-colors"
+                            >
+                              <div className="flex items-center gap-1">
+                                {key.replace(/_/g, ' ')}
+                                {sortConfig.key === key && (
+                                  <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                )}
+                              </div>
+                            </th>
+                          ))}
+                          <th className="px-4 py-3 text-left">Tags</th>
+                        </tr>
+                      </thead>
+                      <tbody>{sortedData.map((book) => (
+                        <tr 
+                          key={book.Release_Number} 
+                          className={`border-t border-white/5 hover:bg-white/5 transition-colors ${
+                            book.Release_Number === 500 ? 'bg-gradient-to-r from-yellow-600/20 to-transparent animate-pulse' : ''
+                          }`}
+                        >
+                          <td className="px-4 py-3 font-mono text-sm">
+                            {book.Release_Number === 500 ? (
+                              <span className="font-bold text-yellow-400">#{book.Release_Number} 🎉</span>
+                            ) : (
+                              `#${book.Release_Number}`
+                            )}
+                          </td>
+                          <td className="px-4 py-3 font-medium">{book.Series}</td>
+                          <td className="px-4 py-3">{book.Volume}</td>
+                          <td className="px-4 py-3 text-gray-300">{book.Subtitle}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              book.Type === 'Epic' ? 'bg-blue-500/20 text-blue-400' :
+                              book.Type === 'Modern' ? 'bg-purple-500/20 text-purple-400' :
+                              'bg-green-500/20 text-green-400'
+                            }`}>
+                              {book.Type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-300">{book.Pages}</td>
+                          <td className="px-4 py-3 text-gray-400 text-sm">{book.Release_Date}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-1">
+                              {book.Reprint === 'Yes' && <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-400">Reprint</span>}
+                              {book.Licensed === 'Yes' && <span className="px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-400">Licensed</span>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-8 text-center text-sm text-gray-500">
+                  <p>Data sources: Marvel.com, Wikipedia • Last updated: March 2026</p>
+                  <p className="mt-2">Historical data extraction (Books #1-487) in progress</p>
                 </div>
               </div>
             </div>
           );
         };
 
-        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+        ReactDOM.render(<MarvelEpicDashboard />, document.getElementById('root'));
     </script>
 </body>
 </html>
