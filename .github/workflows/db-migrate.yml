@@ -1,0 +1,43 @@
+name: Run Database Migration
+
+on:
+  # Trigger manually from the Actions tab in GitHub
+  workflow_dispatch:
+
+  # Also auto-run when supabase-migration.sql changes on main
+  push:
+    branches: [main]
+    paths:
+      - 'supabase-migration.sql'
+
+jobs:
+  migrate:
+    name: Apply SQL migration to Supabase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install psql
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Run migration
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          psql \
+            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres" \
+            --file=supabase-migration.sql \
+            --set ON_ERROR_STOP=1
+
+      - name: Confirm columns exist
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          psql \
+            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres" \
+            -c "SELECT column_name, data_type FROM information_schema.columns
+                WHERE table_name='comic_entries'
+                  AND column_name IN ('isbn','writers','artists','description')
+                ORDER BY column_name;"
