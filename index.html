@@ -61,7 +61,7 @@ header::after{content:'';position:absolute;right:-60px;bottom:-60px;width:320px;
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ─── PUB TABS ─── */
-.pub-tabs{max-width:1600px;margin:0 auto;padding:0 28px;display:flex;gap:0;border-bottom:1px solid var(--border);position:relative;z-index:9;overflow-x:auto}
+.pub-tabs{max-width:1600px;margin:0 auto;padding:0 28px;display:flex;gap:0;border-bottom:1px solid var(--border);position:relative;z-index:9}
 .ptab{padding:11px 24px;font-family:var(--cf);font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:all .2s;position:relative;top:1px;white-space:nowrap}
 .ptab:hover{color:var(--text)}
 .ptab.all.on{color:var(--gold);border-bottom-color:var(--gold)}
@@ -134,7 +134,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .barchart{display:flex;flex-direction:column;gap:6px}
 .brow{display:flex;align-items:center;gap:8px}
 .byr{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--muted);width:38px;text-align:right;flex-shrink:0}
-.btrack{flex:1;height:22px;background:var(--surface2);border-radius:2px;overflow:hidden;display:flex}
+.btrack{flex:1;height:24px;background:var(--surface2);border-radius:2px;overflow:hidden;display:flex}
 .bfm{height:100%;background:var(--red);transition:width .5s ease}
 .bfd{height:100%;background:var(--blue);transition:width .5s ease}
 .bcnt{font-family:var(--cf);font-size:13px;color:var(--muted);width:32px}
@@ -286,6 +286,9 @@ tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 .cover-clear-btn:hover{border-color:var(--red);color:var(--red)}
 /* PRH link field in modal */
 .modal-prh-section{grid-column:1/-1}
+.modal-textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:7px 10px;width:100%;resize:vertical;min-height:80px;transition:border-color .15s}
+.modal-textarea:focus{outline:none;border-color:var(--gold)}
+.field-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:wrap}
 .modal-btn{padding:8px 20px;border-radius:var(--r);font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1.5px solid}
 .modal-btn.cancel{background:transparent;border-color:var(--border2);color:var(--muted)}
@@ -671,7 +674,7 @@ footer a{color:var(--gold);text-decoration:none}
         <input class="modal-input" id="mSubtitle" type="text" placeholder="e.g. The Coming of Galactus">
       </div>
       <div class="modal-field">
-        <label class="modal-label">Years Covered (DC)</label>
+        <label class="modal-label">Years Covered</label>
         <input class="modal-input" id="mYears" type="text" placeholder="e.g. 1966-1971">
       </div>
       <div class="modal-field">
@@ -695,6 +698,7 @@ footer a{color:var(--gold);text-decoration:none}
       <div class="modal-field">
         <label class="modal-label">Confidence</label>
         <select class="modal-select" id="mConf">
+          <option value="stojr verified">stojr Verified</option>
           <option value="verified">Verified (Wikipedia)</option>
           <option value="sourced">Sourced (Community)</option>
           <option value="estimated">Estimated</option>
@@ -705,10 +709,38 @@ footer a{color:var(--gold);text-decoration:none}
         <input class="modal-input" id="mNum" type="number" min="1" placeholder="Overall series #">
       </div>
 
+      <!-- ── ISBN ── -->
+      <div class="modal-field">
+        <label class="modal-label">ISBN</label>
+        <input class="modal-input" id="mIsbn" type="text" placeholder="e.g. 978-1302950682" oninput="onIsbnInput()">
+      </div>
+      <div class="modal-field"><!-- spacer --></div>
+
+      <!-- ── Writers ── -->
+      <div class="modal-field full">
+        <label class="modal-label">Writers</label>
+        <input class="modal-input" id="mWriters" type="text" placeholder="e.g. Stan Lee, Roger Stern">
+      </div>
+
+      <!-- ── Artists ── -->
+      <div class="modal-field full">
+        <label class="modal-label">Artists</label>
+        <input class="modal-input" id="mArtists" type="text" placeholder="e.g. Jack Kirby, John Romita">
+      </div>
+
       <!-- ── PRH / Store Link ── -->
       <div class="modal-field full modal-prh-section">
         <label class="modal-label">🔗 Store / PRH Link (Optional)</label>
         <input class="modal-input" id="mPrhLink" type="url" placeholder="https://penguinrandomhouse.com/books/…">
+      </div>
+
+      <!-- ── Description ── -->
+      <div class="modal-field full">
+        <div class="field-header-row">
+          <label class="modal-label">Description / Synopsis</label>
+          <button class="cover-url-btn" onclick="fetchDescription()" style="height:26px;font-size:10px;padding:3px 10px">⬇ Fetch from PRH/Books</button>
+        </div>
+        <textarea class="modal-textarea" id="mDescription" rows="4" placeholder="Book description / synopsis (auto-fetched from PRH or Google Books when ISBN is set)…"></textarea>
       </div>
 
       <!-- ── Cover Image ── -->
@@ -1166,7 +1198,7 @@ function buildBarChart(filtered) {
       ? `repeating-linear-gradient(135deg,rgba(255,255,255,.22) 0px,rgba(255,255,255,.22) 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 6px),`
       : '';
     const tc = textColor || '#fff';
-    return `<div style="width:${w}%;height:100%;background:${hatch}${bgColor};display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0" title="${label}: ${count}"><span style="font-size:8px;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:${tc};text-shadow:0 0 2px rgba(0,0,0,.6);padding:0 1px;white-space:nowrap">${count}</span></div>`;
+    return `<div style="width:${w}%;height:100%;background:${hatch}${bgColor};display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0" title="${label}: ${count}"><span style="font-size:10px;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:${tc};text-shadow:0 0 2px rgba(0,0,0,.6);padding:0 1px;white-space:nowrap">${count}</span></div>`;
   }
   const legEl = document.getElementById('barLegend');
   if (legEl) {
@@ -1349,7 +1381,11 @@ function toggleExpand(id, cols) {
           <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
           <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
           ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
+          ${d.isbn?`<div class="expand-field"><span class="expand-label">ISBN</span><span class="expand-value">${escHtml(d.isbn)}</span></div>`:''}
+          ${d.writers?`<div class="expand-field" style="min-width:200px"><span class="expand-label">Writers</span><span class="expand-value">${escHtml(d.writers)}</span></div>`:''}
+          ${d.artists?`<div class="expand-field" style="min-width:200px"><span class="expand-label">Artists</span><span class="expand-value">${escHtml(d.artists)}</span></div>`:''}
           <div class="expand-field"><span class="expand-label">Store Link</span>${prhHtml}</div>
+          ${d.description?`<div class="expand-field" style="width:100%;min-width:300px"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.5">${escHtml(d.description)}</span></div>`:''}
         </div>
       </div>
       <div class="expand-field expand-notes-area">
@@ -1506,6 +1542,56 @@ function clearCover() {
   updateModalCoverPreview(null);
 }
 
+// ── ISBN helpers ────────────────────────────────
+function onIsbnInput() {
+  const raw = document.getElementById('mIsbn').value.trim();
+  const isbn = raw.replace(/-/g,'');
+  if (!isbn) return;
+  // Auto-fill cover URL field if it's empty or previously set from ISBN
+  const coverField = document.getElementById('mCoverUrl');
+  const cur = coverField.value.trim();
+  const autoUrl = `https://images.penguinrandomhouse.com/cover/${isbn}`;
+  if (!cur || cur.includes('penguinrandomhouse.com/cover/')) {
+    coverField.value = autoUrl;
+    if (!_pendingCoverValue || _pendingCoverValue.includes('penguinrandomhouse.com/cover/')) {
+      _pendingCoverValue = autoUrl;
+      updateModalCoverPreview(autoUrl);
+    }
+  }
+}
+
+// ── Description auto-fetch ──────────────────────
+async function fetchDescription() {
+  const isbn = document.getElementById('mIsbn').value.trim().replace(/-/g,'');
+  const desc = document.getElementById('mDescription');
+  if (!isbn) { showToast('Enter an ISBN first', true); return; }
+  showToast('Fetching description…');
+  // Primary: Google Books API (CORS-friendly, no auth required)
+  try {
+    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
+    if (r.ok) {
+      const data = await r.json();
+      const info = data?.items?.[0]?.volumeInfo;
+      if (info?.description) {
+        desc.value = info.description;
+        showToast('✓ Description fetched');
+        return;
+      }
+    }
+  } catch(e) {}
+  // Fallback: OpenLibrary
+  try {
+    const r = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
+    if (r.ok) {
+      const data = await r.json();
+      const book = data[`ISBN:${isbn}`];
+      const d = book?.details?.description?.value || book?.details?.description;
+      if (d) { desc.value = typeof d === 'string' ? d : JSON.stringify(d); showToast('✓ Description fetched'); return; }
+    }
+  } catch(e) {}
+  showToast('No description found — enter manually', true);
+}
+
 // ── Add/Edit Modal ─────────────────────────────
 function openAddModal() {
   editingEntryId = null;
@@ -1526,6 +1612,10 @@ function openAddModal() {
   document.getElementById('mConf').value = 'sourced';
   document.getElementById('mNum').value = '';
   document.getElementById('mPrhLink').value = '';
+  document.getElementById('mIsbn').value = '';
+  document.getElementById('mWriters').value = '';
+  document.getElementById('mArtists').value = '';
+  document.getElementById('mDescription').value = '';
   document.getElementById('mCoverUrl').value = '';
   document.getElementById('mCoverFile').value = '';
   updateModalCoverPreview(null);
@@ -1553,6 +1643,10 @@ function openEditModal(id) {
   document.getElementById('mConf').value = d.conf || 'sourced';
   document.getElementById('mNum').value = d.num != null ? d.num : '';
   document.getElementById('mPrhLink').value = d.prh_link || '';
+  document.getElementById('mIsbn').value = d.isbn || '';
+  document.getElementById('mWriters').value = d.writers || '';
+  document.getElementById('mArtists').value = d.artists || '';
+  document.getElementById('mDescription').value = d.description || '';
   // Show existing cover (from entry or user_data)
   const existingCover = getUD(id).cover_url || d.cover_url || null;
   document.getElementById('mCoverUrl').value = (existingCover && !existingCover.startsWith('data:')) ? existingCover : '';
@@ -1577,26 +1671,33 @@ async function saveEntry() {
   }
   document.getElementById('mSeries').classList.remove('required-empty');
 
-  // Resolve cover: prefer pending (new upload/URL), else the URL field text
+  // Resolve cover: prefer pending (new upload/URL), else URL field, else auto-derive from ISBN
   const coverUrlField = document.getElementById('mCoverUrl').value.trim();
-  const finalCover = _pendingCoverValue || coverUrlField || null;
+  const rawIsbn = document.getElementById('mIsbn').value.trim();
+  const cleanIsbn = rawIsbn.replace(/-/g,'');
+  const isbnCoverUrl = cleanIsbn ? `https://images.penguinrandomhouse.com/cover/${cleanIsbn}` : null;
+  const finalCover = _pendingCoverValue || coverUrlField || isbnCoverUrl || null;
 
   const body = {
-    pub:      document.getElementById('mPub').value,
-    type:     document.getElementById('mType').value,
-    series:   series,
-    vol:      document.getElementById('mVol').value ? parseInt(document.getElementById('mVol').value) : null,
-    date:     document.getElementById('mDate').value.trim() || null,
-    subtitle: document.getElementById('mSubtitle').value.trim() || null,
-    years:    document.getElementById('mYears').value.trim() || null,
-    pages:    document.getElementById('mPages').value ? parseInt(document.getElementById('mPages').value) : null,
-    licensed: document.getElementById('mLicensed').value,
-    reprint:  document.getElementById('mReprint').value,
-    conf:     document.getElementById('mConf').value,
-    num:      document.getElementById('mNum').value ? parseInt(document.getElementById('mNum').value) : null,
-    prh_link: document.getElementById('mPrhLink').value.trim() || null,
+    pub:         document.getElementById('mPub').value,
+    type:        document.getElementById('mType').value,
+    series:      series,
+    vol:         document.getElementById('mVol').value ? parseInt(document.getElementById('mVol').value) : null,
+    date:        document.getElementById('mDate').value.trim() || null,
+    subtitle:    document.getElementById('mSubtitle').value.trim() || null,
+    years:       document.getElementById('mYears').value.trim() || null,
+    pages:       document.getElementById('mPages').value ? parseInt(document.getElementById('mPages').value) : null,
+    licensed:    document.getElementById('mLicensed').value,
+    reprint:     document.getElementById('mReprint').value,
+    conf:        document.getElementById('mConf').value,
+    num:         document.getElementById('mNum').value ? parseInt(document.getElementById('mNum').value) : null,
+    prh_link:    document.getElementById('mPrhLink').value.trim() || null,
+    isbn:        rawIsbn || null,
+    writers:     document.getElementById('mWriters').value.trim() || null,
+    artists:     document.getElementById('mArtists').value.trim() || null,
+    description: document.getElementById('mDescription').value.trim() || null,
     // cover_url stored on the entry itself (URL-based) or in user_data (base64 uploads)
-    cover_url: (finalCover && !finalCover.startsWith('data:')) ? finalCover : null,
+    cover_url:   (finalCover && !finalCover.startsWith('data:')) ? finalCover : null,
   };
 
   const modal = document.querySelector('.modal');
@@ -1684,7 +1785,7 @@ async function doDelete() {
 // ── Export CSV ────────────────────────────────
 function exportCSV(all) {
   const rows = all ? ALL_DATA : currentFiltered;
-  const headers = ['id','pub','date','series','vol','subtitle','years','type','licensed','reprint','pages','conf','prh_link','stojr_owned','nick_owned','stojr_wishlist','nick_wishlist','stojr_read','nick_read'];
+  const headers = ['id','pub','date','series','vol','subtitle','years','type','licensed','reprint','pages','conf','isbn','writers','artists','prh_link','stojr_owned','nick_owned','stojr_wishlist','nick_wishlist','stojr_read','nick_read'];
   const escape = v => { if(v===null||v===undefined)return''; const s=String(v); return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s; };
   const csvRows=[headers.join(',')];
   rows.forEach(d=>{
@@ -1692,7 +1793,7 @@ function exportCSV(all) {
     csvRows.push([
       escape(d.id),escape(d.pub),escape(d.date),escape(d.series),escape(d.vol),
       escape(d.subtitle),escape(d.years),escape(d.type),escape(d.licensed),escape(d.reprint),
-      escape(d.pages),escape(d.conf),escape(d.prh_link),
+      escape(d.pages),escape(d.conf),escape(d.isbn),escape(d.writers),escape(d.artists),escape(d.prh_link),
       escape(ud.stojr_owned?'Yes':'No'),escape(ud.nick_owned?'Yes':'No'),
       escape(ud.stojr_wishlist?'Yes':'No'),escape(ud.nick_wishlist?'Yes':'No'),
       escape(ud.stojr_read?'Yes':'No'),escape(ud.nick_read?'Yes':'No'),
