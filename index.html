@@ -183,13 +183,14 @@ td{padding:8px 10px;vertical-align:middle;white-space:nowrap}
 .tb-modern{background:#221c00;color:#f0c832;border:1px solid #443800}
 .tb-ultimate{background:#0a2216;color:#4de088;border:1px solid #164830}
 .tb-dcfinest{background:#0a1528;color:var(--blue);border:1px solid #163060}
+.tb-omnibus{background:#1e0a28;color:#c97ef5;border:1px solid #4a1870}
 .td-lic{font-family:var(--cf);font-size:12px}
 .td-lic.y{color:#d4a030}.td-lic.n{color:var(--dimtext)}
 .td-rep{font-family:var(--cf);font-size:12px;color:var(--dimtext)}
 .td-rep.y{color:#666}
 .td-conf{text-align:center}
 .own-cell{display:flex;gap:4px}
-.ob{width:24px;height:20px;border-radius:3px;border:1.5px solid;background:transparent;cursor:pointer;font-family:var(--cf);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0}
+.ob{width:30px;height:20px;border-radius:3px;border:1.5px solid;background:transparent;cursor:pointer;font-family:var(--cf);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0}
 .ob.os{border-color:var(--stojr);color:var(--stojr)}
 .ob.os.on{background:var(--stojr);color:#fff}
 .ob.on2{border-color:var(--nick);color:var(--nick)}
@@ -489,6 +490,7 @@ footer a{color:var(--gold);text-decoration:none}
         <option value="Modern">Modern Era</option>
         <option value="Ultimate">Ultimate</option>
         <option value="DC Finest">DC Finest</option>
+        <option value="Omnibus">Omnibus</option>
       </select></div>
     <div class="fg"><div class="flabel">Licensed IP</div>
       <select id="fLic" onchange="applyFilters()">
@@ -646,6 +648,7 @@ footer a{color:var(--gold);text-decoration:none}
           <option value="Modern">Modern Era</option>
           <option value="Ultimate">Ultimate</option>
           <option value="DC Finest">DC Finest</option>
+          <option value="Omnibus">Omnibus</option>
         </select>
       </div>
       <div class="modal-field full">
@@ -1220,8 +1223,8 @@ function buildDonut(filtered) {
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,180,180);
   const uniq=filtered.filter(d=>d.reprint==='No');
-  const byType={'Classic Epic':uniq.filter(d=>d.type==='Epic').length,'Modern Era':uniq.filter(d=>d.type==='Modern').length,'Ultimate':uniq.filter(d=>d.type==='Ultimate').length,'DC Finest':uniq.filter(d=>d.type==='DC Finest').length};
-  const COLORS=['#e8352a','#f0b429','#2ecc71','#1a7fd4'];
+  const byType={'Classic Epic':uniq.filter(d=>d.type==='Epic').length,'Modern Era':uniq.filter(d=>d.type==='Modern').length,'Ultimate':uniq.filter(d=>d.type==='Ultimate').length,'DC Finest':uniq.filter(d=>d.type==='DC Finest').length,'Omnibus':uniq.filter(d=>d.type==='Omnibus').length};
+  const COLORS=['#e8352a','#f0b429','#2ecc71','#1a7fd4','#c97ef5'];
   const labels=Object.keys(byType),vals=labels.map(l=>byType[l]),total=vals.reduce((a,b)=>a+b,0)||1;
   let start=-Math.PI/2;
   const cx=90,cy=90,r=78,ir=52;
@@ -1261,7 +1264,7 @@ function changePageSize(){pageSize=parseInt(document.getElementById('pgSize').va
 function changePage(dir){const max=Math.ceil(currentFiltered.length/pageSize);page=Math.max(1,Math.min(max,page+dir));buildTable(currentFiltered);}
 
 function typeBadge(d) {
-  const cls=d.type==='Epic'?'tb-epic':d.type==='Modern'?'tb-modern':d.type==='Ultimate'?'tb-ultimate':'tb-dcfinest';
+  const cls=d.type==='Epic'?'tb-epic':d.type==='Modern'?'tb-modern':d.type==='Ultimate'?'tb-ultimate':d.type==='Omnibus'?'tb-omnibus':'tb-dcfinest';
   const lbl=d.type==='DC Finest'?'DC Finest':d.type==='Epic'?'Classic':d.type;
   return `<span class="type-badge ${cls}">${lbl}</span>`;
 }
