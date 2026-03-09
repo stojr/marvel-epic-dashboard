@@ -27,7 +27,7 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 header{position:relative;overflow:hidden;border-bottom:2px solid var(--border);z-index:10;background:linear-gradient(160deg,#0e0e12 0%,#14141c 60%,#0c0c10 100%)}
 header::before{content:'';position:absolute;left:-80px;top:-80px;width:400px;height:400px;background:radial-gradient(circle,#e8352a14 0%,transparent 65%);pointer-events:none}
 header::after{content:'';position:absolute;right:-60px;bottom:-60px;width:320px;height:320px;background:radial-gradient(circle,#1a7fd414 0%,transparent 65%);pointer-events:none}
-.hdr-inner{max-width:1600px;margin:0 auto;padding:18px 28px 14px;display:flex;align-items:center;gap:18px;position:relative}
+.hdr-inner{max-width:1600px;margin:0 auto;padding:18px 28px 14px;display:flex;align-items:center;gap:18px;position:relative;flex-wrap:wrap}
 .hdr-logo{flex-shrink:0;display:flex;flex-direction:column;gap:0}
 .hdr-bce{font-family:var(--hf);font-size:72px;line-height:.82;letter-spacing:3px;background:linear-gradient(135deg,var(--red) 0%,#ff7a3d 45%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hdr-pod{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:5px;text-transform:uppercase;color:var(--muted);margin-top:3px}
@@ -36,7 +36,7 @@ header::after{content:'';position:absolute;right:-60px;bottom:-60px;width:320px;
 .hdr-title{font-family:var(--hf);font-size:36px;line-height:1;letter-spacing:.5px;color:var(--text)}
 .hdr-title em{color:var(--gold);font-style:normal}
 .hdr-desc{font-family:var(--cf);font-size:13px;font-weight:400;color:var(--muted);letter-spacing:.5px}
-.hdr-spacer{flex:1}
+.hdr-spacer{flex:1;min-width:10px}
 .hdr-hosts{display:flex;flex-direction:column;gap:5px;align-items:flex-end}
 .hdr-host-label{font-family:var(--cf);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dimtext)}
 .hdr-host-names{display:flex;gap:10px}
@@ -61,8 +61,8 @@ header::after{content:'';position:absolute;right:-60px;bottom:-60px;width:320px;
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ─── PUB TABS ─── */
-.pub-tabs{max-width:1600px;margin:0 auto;padding:0 28px;display:flex;gap:0;border-bottom:1px solid var(--border);position:relative;z-index:9}
-.ptab{padding:11px 24px;font-family:var(--cf);font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:all .2s;position:relative;top:1px}
+.pub-tabs{max-width:1600px;margin:0 auto;padding:0 28px;display:flex;gap:0;border-bottom:1px solid var(--border);position:relative;z-index:9;overflow-x:auto}
+.ptab{padding:11px 24px;font-family:var(--cf);font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:all .2s;position:relative;top:1px;white-space:nowrap}
 .ptab:hover{color:var(--text)}
 .ptab.all.on{color:var(--gold);border-bottom-color:var(--gold)}
 .ptab.marvel.on{color:var(--red);border-bottom-color:var(--red)}
@@ -82,7 +82,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .fspacer{flex:1}
 
 /* owner filter pills */
-.owner-filters{display:flex;gap:8px;align-items:center}
+.owner-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .own-filter-pill{padding:5px 14px;border-radius:20px;font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1.5px solid;cursor:pointer;transition:all .15s;user-select:none;height:34px;display:flex;align-items:center}
 .own-filter-pill.stojr{color:var(--stojr);border-color:var(--stojr)}
 .own-filter-pill.stojr.on{background:var(--stojr);color:#fff}
@@ -90,7 +90,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .own-filter-pill.nick.on{background:var(--nick);color:#000}
 .own-filter-pill.both{color:#a8dfff;border-color:#a8dfff}
 .own-filter-pill.both.on{background:#a8dfff;color:#000}
-.rbtn{padding:5px 14px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;height:34px}
+.rbtn{padding:5px 14px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;height:34px;white-space:nowrap}
 .rbtn:hover{border-color:var(--gold);color:var(--gold)}
 .rbtn.primary{border-color:var(--gold);color:var(--gold)}
 .rbtn.primary:hover{background:var(--gold);color:#000}
@@ -104,6 +104,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 /* ─── STAT CARDS ─── */
 .cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
 @media(max-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;position:relative;overflow:hidden}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .card.cm::before{background:var(--red)}
@@ -158,11 +159,11 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .thead-bar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ttitle{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
 .tcnt{font-family:var(--cf);font-size:15px;font-weight:700;color:var(--gold)}
-.conf-key{margin-left:auto;display:flex;gap:12px;align-items:center}
+.conf-key{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .ck-item{display:flex;align-items:center;gap:4px;font-family:var(--cf);font-size:12px;color:var(--muted)}
 .ck-dot{width:7px;height:7px;border-radius:50%}
 .ck-dot.v{background:var(--green)}.ck-dot.s{background:var(--orange)}.ck-dot.e{background:var(--dim)}
-.tscroll{overflow-x:auto}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:14px}
 thead th{padding:9px 10px;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:44px;z-index:5}
 thead th:hover{color:var(--text)}
@@ -204,11 +205,11 @@ td{padding:8px 10px;vertical-align:middle;white-space:nowrap}
 .note-indicator.has-note{opacity:1}
 
 /* ─── PAGINATION ─── */
-.pagination{padding:11px 16px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);font-family:var(--cf);font-size:13px;color:var(--muted)}
+.pagination{padding:11px 16px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);font-family:var(--cf);font-size:13px;color:var(--muted);flex-wrap:wrap}
 .pgbtn{padding:5px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:13px;cursor:pointer;transition:all .15s}
 .pgbtn:hover:not(:disabled){border-color:var(--gold);color:var(--text)}
 .pgbtn:disabled{opacity:.3;cursor:default}
-.pginf{flex:1;text-align:center}
+.pginf{flex:1;text-align:center;min-width:120px}
 .pgsz select{margin-left:6px}
 
 /* ─── ROW EXPAND ─── */
@@ -229,6 +230,17 @@ tr.expand-detail td{padding:10px 16px;border-bottom:1px solid var(--border)}
 .profile-badge.stojr{background:rgba(201,127,255,.15);color:var(--stojr);border:1px solid rgba(201,127,255,.3)}
 .profile-badge.nick{background:rgba(46,232,212,.15);color:var(--nick);border:1px solid rgba(46,232,212,.3)}
 
+/* ─── EXPAND DETAIL: COVER + PRH LINK ─── */
+.expand-cover{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.cover-img-wrap{width:100px;height:150px;border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cover-img-wrap img{width:100%;height:100%;object-fit:cover}
+.cover-placeholder{font-family:var(--cf);font-size:10px;letter-spacing:1px;color:var(--dimtext);text-align:center;padding:8px}
+.cover-detail-row{display:flex;gap:14px;align-items:flex-start}
+.cover-detail-meta{display:flex;flex-direction:column;gap:8px;flex:1}
+.prh-link{display:inline-flex;align-items:center;gap:5px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);border:1px solid var(--blue);border-radius:var(--r);padding:4px 10px;text-decoration:none;transition:all .15s;width:fit-content}
+.prh-link:hover{background:var(--blue);color:#000}
+.prh-link-none{font-family:var(--cf);font-size:11px;color:var(--dimtext);font-style:italic}
+
 /* ─── BADGES ─── */
 .date-tbd{font-family:var(--cf);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;background:#181810;color:#777;border:1px solid #2e2e20;letter-spacing:.5px}
 .date-new{font-family:var(--cf);font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;background:#0a2012;color:var(--green);border:1px solid #1a4828;letter-spacing:.5px;margin-left:4px}
@@ -242,19 +254,38 @@ tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 /* ─── ADD/EDIT ENTRY MODAL ─── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:8px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;padding:24px}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:8px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:24px}
 .modal-title{font-family:var(--hf);font-size:28px;letter-spacing:1px;color:var(--text);margin-bottom:4px}
 .modal-sub{font-family:var(--cf);font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:20px}
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal-field{display:flex;flex-direction:column;gap:5px}
 .modal-field.full{grid-column:1/-1}
 .modal-label{font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
-.modal-input{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:7px 10px;transition:border-color .15s}
+.modal-input{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:7px 10px;transition:border-color .15s;width:100%}
 .modal-input:focus{outline:none;border-color:var(--gold)}
 .modal-input.required-empty{border-color:var(--red)}
-.modal-select{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:7px 10px;cursor:pointer}
+.modal-select{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:7px 10px;cursor:pointer;width:100%}
 .modal-select:focus{outline:none;border-color:var(--gold)}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+/* Cover image section in modal */
+.modal-cover-section{grid-column:1/-1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.modal-cover-preview{width:80px;height:120px;border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-cover-preview img{width:100%;height:100%;object-fit:cover}
+.modal-cover-placeholder{font-family:var(--cf);font-size:9px;letter-spacing:1px;color:var(--dimtext);text-align:center;padding:6px}
+.modal-cover-inputs{flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px}
+.cover-url-row{display:flex;gap:6px;align-items:flex-end}
+.cover-url-row input{flex:1}
+.cover-url-btn{padding:7px 12px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;height:36px;transition:all .15s}
+.cover-url-btn:hover{border-color:var(--blue);color:var(--blue)}
+.cover-divider{display:flex;align-items:center;gap:8px;font-family:var(--cf);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext)}
+.cover-divider::before,.cover-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.cover-upload-label{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);transition:all .15s}
+.cover-upload-label:hover{border-color:var(--gold);color:var(--gold)}
+.cover-upload-label input{display:none}
+.cover-clear-btn{padding:4px 10px;background:transparent;border:1px solid #553;border-radius:var(--r);color:var(--dimtext);font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;align-self:flex-start}
+.cover-clear-btn:hover{border-color:var(--red);color:var(--red)}
+/* PRH link field in modal */
+.modal-prh-section{grid-column:1/-1}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:wrap}
 .modal-btn{padding:8px 20px;border-radius:var(--r);font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;border:1.5px solid}
 .modal-btn.cancel{background:transparent;border-color:var(--border2);color:var(--muted)}
 .modal-btn.cancel:hover{border-color:var(--gold);color:var(--gold)}
@@ -267,7 +298,7 @@ tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 /* ─── CONFIRM DELETE ─── */
 .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
 .confirm-overlay.open{display:flex}
-.confirm-box{background:var(--surface);border:1px solid var(--red);border-radius:8px;padding:24px;max-width:400px;text-align:center}
+.confirm-box{background:var(--surface);border:1px solid var(--red);border-radius:8px;padding:24px;max-width:400px;text-align:center;margin:20px}
 .confirm-title{font-family:var(--hf);font-size:24px;color:var(--red);margin-bottom:8px}
 .confirm-text{font-family:var(--cf);font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6}
 .confirm-actions{display:flex;gap:10px;justify-content:center}
@@ -302,12 +333,91 @@ footer a{color:var(--gold);text-decoration:none}
 .loading-sub{font-family:var(--cf);font-size:11px;letter-spacing:2px;color:var(--dimtext)}
 
 /* edit row btn */
-.edit-btn{width:20px;height:20px;border-radius:3px;border:1.5px solid var(--border2);background:transparent;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .12s;color:var(--dimtext);flex-shrink:0}
+.edit-btn{width:20px;height:20px;border-radius:3px;border:1.5px solid var(--border2);background:transparent;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .12px;color:var(--dimtext);flex-shrink:0}
 .edit-btn:hover{border-color:var(--gold);color:var(--gold)}
 
 /* syncing indicator */
 .sync-spin{display:none;width:10px;height:10px;border:1.5px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite;margin-left:6px;vertical-align:middle}
 .syncing .sync-spin{display:inline-block}
+
+/* ─── FAB (Mobile Floating Add Button) ─── */
+.fab{position:fixed;bottom:80px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:26px;color:#000;font-weight:700;box-shadow:0 4px 20px rgba(255,210,52,.4);z-index:50;transition:transform .15s,box-shadow .15s;line-height:1}
+.fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(255,210,52,.55)}
+.fab:active{transform:scale(.96)}
+
+/* ─── MOBILE LAYOUT ─── */
+@media(max-width:700px){
+  /* Shrink header on mobile so it doesn't dominate */
+  .hdr-bce{font-size:44px}
+  .hdr-vbar,.hdr-vbar2,.hdr-stats{display:none}
+  .hdr-inner{padding:12px 14px 10px;gap:10px}
+  .hdr-title{font-size:22px}
+  .hdr-desc{font-size:11px}
+  .hdr-hosts{align-items:flex-start}
+  .host-chip{font-size:12px;padding:4px 10px}
+
+  /* Wrap */
+  .wrap{padding:10px 12px}
+
+  /* Filter bar: stack vertically, full-width controls */
+  .fbar{padding:10px 12px;gap:8px}
+  .fbar .fg{width:100%}
+  .fbar select,.fbar input[type=text]{width:100%;height:40px;font-size:15px}
+  .fsep{display:none}
+  .fspacer{display:none}
+  .fbar .rbtn{flex:1}
+  /* Row of action buttons */
+  .fbar-actions{display:flex;gap:6px;width:100%;flex-wrap:wrap}
+  .fbar-actions .rbtn{flex:1;min-width:90px}
+  /* Hide desktop + Add button, show FAB on mobile */
+  .rbtn.add-desktop{display:none}
+  .fab{display:flex}
+
+  /* Owner filter pills: allow wrapping */
+  .owner-filters{gap:6px}
+  .own-filter-pill{font-size:12px;padding:4px 10px;height:32px}
+
+  /* Cards: 2 col */
+  .cards{grid-template-columns:repeat(2,1fr);gap:8px}
+  .card-n{font-size:36px}
+  .card-l{font-size:10px;letter-spacing:1px}
+  .card{padding:10px 12px}
+
+  /* Charts: stack and shrink donut */
+  .charts{grid-template-columns:1fr;gap:10px}
+
+  /* Table: hide less-important columns on mobile */
+  .col-lic,.col-rep,.col-type{display:none}
+  thead th.col-lic,thead th.col-rep,thead th.col-type{display:none}
+  td.col-lic,td.col-rep,td.col-type{display:none}
+
+  /* Table panel header */
+  .thead-bar{padding:10px 12px}
+  .conf-key{display:none} /* Hidden on mobile to save space */
+
+  /* Pagination: compact */
+  .pagination{padding:8px 10px;gap:6px}
+  .pginf{font-size:11px}
+  .pgbtn{padding:4px 10px;font-size:12px}
+
+  /* Modal: full screen on mobile */
+  .modal{max-height:100vh;border-radius:0;padding:16px}
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal-grid{grid-template-columns:1fr}
+  .modal-field.full{grid-column:1}
+
+  /* Toast: above FAB */
+  .toast{bottom:90px;right:14px;font-size:12px;padding:6px 14px}
+
+  /* Footer */
+  footer{padding:10px 12px;font-size:11px}
+}
+
+@media(min-width:701px){
+  /* On desktop, the FAB is always hidden; the top button is visible */
+  .fab{display:none !important}
+  .rbtn.add-desktop{display:inline-flex}
+}
 </style>
 </head>
 <body>
@@ -407,7 +517,8 @@ footer a{color:var(--gold);text-decoration:none}
       </div>
     </div>
     <div class="fspacer"></div>
-    <button class="rbtn primary" onclick="openAddModal()" title="Add new entry">+ Add Entry</button>
+    <!-- Desktop "Add Entry" button — hidden on mobile (FAB takes over) -->
+    <button class="rbtn primary add-desktop" onclick="openAddModal()" title="Add new entry">＋ Add Entry</button>
     <button class="rbtn" onclick="exportCSV(false)">⬇ Export View</button>
     <button class="rbtn" onclick="exportCSV(true)">⬇ Export All</button>
     <button class="rbtn" onclick="resetAll()">↺ Reset</button>
@@ -481,9 +592,9 @@ footer a{color:var(--gold);text-decoration:none}
             <th onclick="sortBy('series')" id="th-series">Series <span class="sort-arrow"></span></th>
             <th onclick="sortBy('vol')" id="th-vol">Vol <span class="sort-arrow"></span></th>
             <th>Subtitle / Years</th>
-            <th onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
-            <th>Lic</th>
-            <th>Rpt</th>
+            <th class="col-type" onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
+            <th class="col-lic">Lic</th>
+            <th class="col-rep">Rpt</th>
             <th>✓</th>
             <th>stojr</th>
             <th>Nick</th>
@@ -509,6 +620,9 @@ footer a{color:var(--gold);text-decoration:none}
   <div>BCE COMICS POD — EPIC DATABASE · Powered by Supabase · Data synced across devices</div>
   <div class="ft-hosts">Hosted by <span class="fs">stojr</span> &amp; <span class="fn">Nick</span> · <a href="https://linktr.ee/stojrsshelf" target="_blank">stojr's shelf</a> · <a href="https://linktr.ee/DrSmithHistory" target="_blank">DrSmithHistory</a></div>
 </footer>
+
+<!-- Mobile FAB: floating + Add button -->
+<button class="fab" onclick="openAddModal()" title="Add new entry" aria-label="Add entry">＋</button>
 
 <div class="toast" id="saveToast"></div>
 
@@ -584,6 +698,33 @@ footer a{color:var(--gold);text-decoration:none}
         <label class="modal-label">Series # (Optional)</label>
         <input class="modal-input" id="mNum" type="number" min="1" placeholder="Overall series #">
       </div>
+
+      <!-- ── PRH / Store Link ── -->
+      <div class="modal-field full modal-prh-section">
+        <label class="modal-label">🔗 Store / PRH Link (Optional)</label>
+        <input class="modal-input" id="mPrhLink" type="url" placeholder="https://penguinrandomhouse.com/books/…">
+      </div>
+
+      <!-- ── Cover Image ── -->
+      <div class="modal-cover-section">
+        <div class="modal-cover-preview" id="modalCoverPreview">
+          <div class="modal-cover-placeholder">No Cover</div>
+        </div>
+        <div class="modal-cover-inputs">
+          <div class="modal-label" style="margin-bottom:2px">📷 Cover Image</div>
+          <div class="cover-url-row">
+            <input class="modal-input" id="mCoverUrl" type="url" placeholder="Paste image URL (PRH, Amazon…)">
+            <button class="cover-url-btn" onclick="loadCoverFromUrl()">Preview</button>
+          </div>
+          <div class="cover-divider">or upload</div>
+          <label class="cover-upload-label">
+            ⬆ Upload Image
+            <input type="file" id="mCoverFile" accept="image/*" onchange="handleCoverFileUpload(event)">
+          </label>
+          <button class="cover-clear-btn" id="coverClearBtn" onclick="clearCover()" style="display:none">✕ Remove Cover</button>
+        </div>
+      </div>
+
     </div>
     <div class="modal-actions">
       <button class="modal-btn delete" id="modalDeleteBtn" onclick="confirmDeleteEntry()" style="display:none">🗑 Delete</button>
@@ -608,7 +749,6 @@ footer a{color:var(--gold);text-decoration:none}
 <script>
 // ═══════════════════════════════════════════════════
 //  BCE EPIC DATABASE — Supabase Edition
-//  Supabase URL + Key
 // ═══════════════════════════════════════════════════
 const SB_URL = 'https://quxuidnmewcmovjbnfgy.supabase.co';
 const SB_KEY = 'sb_publishable_nXvg5ji8j6d_tUxLfp4N0A_KT3-vh-b';
@@ -635,45 +775,34 @@ async function sbUpsert(table, body, onConflict) {
 }
 
 // ── State ──────────────────────────────────────
-let ALL_DATA = [];       // comic entries from DB
-let USER_DATA = {};      // keyed by entry_id → {stojr_owned, nick_owned, stojr_wishlist, nick_wishlist, stojr_read, nick_read, stojr_notes, nick_notes}
+let ALL_DATA = [];
+let USER_DATA = {};
 let activeProfile = 'stojr';
 let activePub = 'all';
-let sortCol = 'date', sortDir = 1;
+// Default sort: series name + vol/year — so Aliens Vol.1,2,3 group together, Batman titles group together
+let sortCol = 'series', sortDir = 1;
+let sortSecondary = 'vol';  // secondary sort key used after series
 let page = 1, pageSize = 100;
 let currentFiltered = [];
 let ownerFilters = { stojr: false, nick: false, both: false };
 let userDataFilters = { wishlist: false, read: false };
 let barMode = 'normal';
 let chartMode = 'bar';
-let editingEntryId = null;  // null = adding new
+let editingEntryId = null;
 let pendingDeleteId = null;
+let modalCoverDataUrl = null; // base64 data URL for uploaded file covers
 const CURRENT_YEAR = new Date().getFullYear().toString();
-
-// ── DB Setup (create tables if needed) ──────────
-async function ensureTables() {
-  // We'll use the REST API — tables must exist in Supabase
-  // Tables: comic_entries, user_data
-  // We try a quick query to check existence
-  try {
-    await sbSelect('comic_entries', '?limit=1');
-    return true;
-  } catch(e) {
-    return false;
-  }
-}
 
 // ── Load all data ────────────────────────────────
 async function loadData() {
   setDbStatus('loading', 'Loading entries…');
   document.getElementById('loadingMsg').textContent = 'Loading comic entries…';
   try {
-    // Load comic entries (sorted by date)
-    const entries = await sbSelect('comic_entries', '?order=date.asc.nullslast,series.asc&limit=2000');
+    // Load comic entries — we apply our own default sort in JS, so just fetch all
+    const entries = await sbSelect('comic_entries', '?limit=2000');
     ALL_DATA = entries || [];
 
     document.getElementById('loadingMsg').textContent = 'Loading user data…';
-    // Load user data
     const ud = await sbSelect('user_data', '?limit=5000');
     USER_DATA = {};
     (ud || []).forEach(row => { USER_DATA[row.entry_id] = row; });
@@ -687,7 +816,6 @@ async function loadData() {
     console.error('Load error:', e);
     setDbStatus('error', 'Connection failed — check Supabase tables');
     document.getElementById('loadingMsg').textContent = 'Database connection failed. Check console for details.';
-    // Don't hide loading, show error state
     setTimeout(hideLoading, 3000);
   }
 }
@@ -732,11 +860,8 @@ function setProfile(who) {
   activeProfile = who;
   document.getElementById('chipStojr').classList.toggle('active-profile', who==='stojr');
   document.getElementById('chipNick').classList.toggle('active-profile', who==='nick');
-  // Update the per-profile column header
   document.getElementById('th-ud-label').textContent = `${who} ★/✓`;
-  // Update profile filter label
   document.getElementById('profileFilterLabel').textContent = `${who} Filter`;
-  // Update filter pill colors to match active profile
   const wl = document.getElementById('pfWishlist');
   const rd = document.getElementById('pfRead');
   if (who === 'stojr') {
@@ -762,19 +887,15 @@ async function toggleUserField(entryId, field) {
   const ud = getUD(entryId);
   const current = !!(ud[field]);
   const newVal = !current;
-  // Optimistic update
   if (!USER_DATA[entryId]) USER_DATA[entryId] = { entry_id: entryId };
   USER_DATA[entryId][field] = newVal;
-  // Reflect in table
   updateRowUDButtons(entryId);
   buildCards(currentFiltered);
-  // Persist
   setSyncing(true);
   try {
     await sbUpsert('user_data', { entry_id: entryId, [field]: newVal }, 'entry_id');
     showToast('✓ Saved');
   } catch(e) {
-    // Rollback
     USER_DATA[entryId][field] = current;
     updateRowUDButtons(entryId);
     showToast('Save failed', true);
@@ -803,7 +924,6 @@ function updateRowUDButtons(entryId) {
   if (wBtn) wBtn.classList.toggle('on', isWishlist(entryId, activeProfile));
   if (rBtn) rBtn.classList.toggle('on', isRead(entryId, activeProfile));
   if (nInd) nInd.classList.toggle('has-note', hasNotes(entryId, activeProfile));
-  // Also ownership buttons
   const sBtn = document.querySelector(`.ob.os[data-id="${entryId}"]`);
   const nBtn = document.querySelector(`.ob.on2[data-id="${entryId}"]`);
   if (sBtn) sBtn.classList.toggle('on', isOwned(entryId, 'stojr'));
@@ -819,6 +939,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch(e){}
 
+  // Initialise sort arrow to match default sort (series)
+  const thSeries = document.getElementById('th-series');
+  if (thSeries) { const a = thSeries.querySelector('.sort-arrow'); if(a) a.textContent = ' ▼'; }
+
   loadData();
 
   document.addEventListener('keydown', e => {
@@ -833,7 +957,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Close modal on overlay click
   document.getElementById('entryModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
   });
@@ -843,7 +966,6 @@ window.addEventListener('DOMContentLoaded', () => {
 function populateYearFilter() {
   const years = [...new Set(ALL_DATA.map(d => d.date ? d.date.slice(0,4) : null).filter(Boolean))].sort();
   const sel = document.getElementById('fYear');
-  // Clear existing options except first
   while (sel.options.length > 1) sel.remove(1);
   years.forEach(y => { const o = document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o); });
 }
@@ -869,6 +991,27 @@ function toggleUserFilter(which) {
   const ids = { wishlist:'pfWishlist', read:'pfRead' };
   document.getElementById(ids[which]).classList.toggle('on', userDataFilters[which]);
   applyFilters();
+}
+
+// ── Default sort: series name A→Z, then volume (Marvel) or date/years (DC) ──
+// This groups "Amazing Spider-Man Vol.1, Vol.2, Vol.3…" together and keeps
+// DC Finest titles like "Batman" sorted earliest-year-first within each title.
+function defaultSort(a, b) {
+  const aSeries = (a.series||'').toLowerCase();
+  const bSeries = (b.series||'').toLowerCase();
+  if (aSeries < bSeries) return -1;
+  if (aSeries > bSeries) return 1;
+  // Same series — now sort by volume for Marvel, by date/years for DC
+  if (a.pub === 'DC' || b.pub === 'DC') {
+    // DC Finest: sort by the year portion of the `years` field (e.g. "1966-1971" → 1966)
+    const ay = a.years ? parseInt(a.years) : (a.date ? parseInt(a.date) : 9999);
+    const by = b.years ? parseInt(b.years) : (b.date ? parseInt(b.date) : 9999);
+    return ay - by;
+  }
+  // Marvel: sort by volume number ascending
+  const av = a.vol != null ? a.vol : 9999;
+  const bv = b.vol != null ? b.vol : 9999;
+  return av - bv;
 }
 
 function applyFilters() {
@@ -900,13 +1043,20 @@ function applyFilters() {
     return true;
   });
 
-  filtered.sort((a,b) => {
-    let av = a[sortCol], bv = b[sortCol];
-    if (sortCol === 'vol') { av=av||0; bv=bv||0; return (av-bv)*sortDir; }
-    if (sortCol === 'date') { av=av||'zzz'; bv=bv||'zzz'; }
-    av=(av||'').toString().toLowerCase(); bv=(bv||'').toString().toLowerCase();
-    return av<bv ? -sortDir : av>bv ? sortDir : 0;
-  });
+  // Apply sort: if the user has manually selected a column, honour it;
+  // otherwise use the smart default sort (series → vol/year).
+  if (sortCol === 'series' && sortDir === 1) {
+    // default mode — use the rich two-level sort
+    filtered.sort(defaultSort);
+  } else {
+    filtered.sort((a,b) => {
+      let av = a[sortCol], bv = b[sortCol];
+      if (sortCol === 'vol') { av=av||0; bv=bv||0; return (av-bv)*sortDir; }
+      if (sortCol === 'date') { av=av||'zzz'; bv=bv||'zzz'; }
+      av=(av||'').toString().toLowerCase(); bv=(bv||'').toString().toLowerCase();
+      return av<bv ? -sortDir : av>bv ? sortDir : 0;
+    });
+  }
 
   currentFiltered = filtered;
   page = 1;
@@ -1093,11 +1243,17 @@ function buildDonut(filtered) {
 
 // ── Table ──────────────────────────────────────
 function sortBy(col) {
-  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}
+  if(sortCol===col) {
+    sortDir*=-1;
+  } else {
+    sortCol=col;
+    sortDir=1;
+  }
+  // Update sort arrow UI
   document.querySelectorAll('thead th').forEach(th=>{
     const id=th.id;if(!id)return;
     const arrow=th.querySelector('.sort-arrow');
-    if(arrow)arrow.textContent=id.replace('th-','')===sortCol?(sortDir===1?' ▼':' ▲'):'';
+    if(arrow) arrow.textContent = id.replace('th-','')===sortCol ? (sortDir===1?' ▼':' ▲') : '';
   });
   applyFilters();
 }
@@ -1112,7 +1268,12 @@ function typeBadge(d) {
 
 let expandedRow = null;
 function toggleExpand(id, cols) {
-  if(expandedRow===id){expandedRow=null;document.querySelectorAll('tr[data-row-id]').forEach(r=>r.classList.remove('expanded'));document.querySelectorAll('tr.expand-detail').forEach(r=>r.remove());return;}
+  if(expandedRow===id){
+    expandedRow=null;
+    document.querySelectorAll('tr[data-row-id]').forEach(r=>r.classList.remove('expanded'));
+    document.querySelectorAll('tr.expand-detail').forEach(r=>r.remove());
+    return;
+  }
   document.querySelectorAll('tr.expand-detail').forEach(r=>r.remove());
   document.querySelectorAll('tr[data-row-id]').forEach(r=>r.classList.remove('expanded'));
   expandedRow=id;
@@ -1121,21 +1282,46 @@ function toggleExpand(id, cols) {
   row.classList.add('expanded');
   const who=activeProfile;
   const notesVal=getNotes(id,who);
+
+  // Cover: prefer uploaded data URL stored in user_data, then cover_url from comic entry
+  const coverUrl = getUD(id).cover_url || d.cover_url || null;
+  const coverHtml = coverUrl
+    ? `<img src="${escHtml(coverUrl)}" alt="Cover" onerror="this.parentElement.innerHTML='<div class=cover-placeholder>No Cover</div>'">`
+    : `<div class="cover-placeholder">No Cover</div>`;
+
+  // PRH / store link
+  const prhUrl = d.prh_link || null;
+  const prhHtml = prhUrl
+    ? `<a class="prh-link" href="${escHtml(prhUrl)}" target="_blank" rel="noopener">🔗 View on Store</a>`
+    : `<span class="prh-link-none">No store link</span>`;
+
   const det=document.createElement('tr');
   det.className='expand-detail';
-  det.innerHTML=`<td colspan="${cols}"><div class="expand-content">
-    <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
-    <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
-    <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
-    <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
-    ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
-    <div class="expand-field expand-notes-area">
-      <span class="expand-label"><span class="profile-badge ${who}">${who}</span> Notes</span>
-      <textarea class="notes-textarea" id="notesArea_${id}" placeholder="Add personal notes about this book…">${notesVal}</textarea>
-      <button class="notes-save-btn" onclick="saveNotes(${id},'${who}',document.getElementById('notesArea_${id}').value)">Save Notes</button>
+  det.innerHTML=`<td colspan="${cols}">
+    <div class="expand-content">
+      <div class="cover-detail-row">
+        <div class="cover-img-wrap">${coverHtml}</div>
+        <div class="cover-detail-meta">
+          <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
+          <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
+          <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
+          <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
+          ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
+          <div class="expand-field"><span class="expand-label">Store Link</span>${prhHtml}</div>
+        </div>
+      </div>
+      <div class="expand-field expand-notes-area">
+        <span class="expand-label"><span class="profile-badge ${who}">${who}</span> Notes</span>
+        <textarea class="notes-textarea" id="notesArea_${id}" placeholder="Add personal notes about this book…">${notesVal}</textarea>
+        <button class="notes-save-btn" onclick="saveNotes(${id},'${who}',document.getElementById('notesArea_${id}').value)">Save Notes</button>
+      </div>
     </div>
-  </div></td>`;
+  </td>`;
   row.after(det);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 const VIRT_ROW_H=37;
@@ -1207,9 +1393,9 @@ function buildRowEl(d, cols) {
     <td class="td-series">${d.series||'–'}${licIcon}</td>
     <td class="td-vol">${volTxt}</td>
     <td class="td-sub" title="${subTxt}">${subTxt}</td>
-    <td>${typeBadge(d)}</td>
-    <td class="td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
-    <td class="td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
+    <td class="col-type">${typeBadge(d)}</td>
+    <td class="col-lic td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
+    <td class="col-rep td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
     <td class="td-conf">${confDot}</td>
     <td><button class="ob os${sOwn?' on':''}" data-id="${d.id}" data-who="stojr" onclick="event.stopPropagation();toggleUserField(${d.id},'stojr_owned')" title="stojr owns">S</button></td>
     <td><button class="ob on2${nOwn?' on':''}" data-id="${d.id}" data-who="nick"  onclick="event.stopPropagation();toggleUserField(${d.id},'nick_owned')"  title="Nick owns">N</button></td>
@@ -1222,13 +1408,69 @@ function buildRowEl(d, cols) {
   return tr;
 }
 
+// ── Cover Image Handling ──────────────────────
+// Holds a pending cover value for the modal (either a URL string or a base64 data URL)
+let _pendingCoverValue = null;
+
+function updateModalCoverPreview(src) {
+  const wrap = document.getElementById('modalCoverPreview');
+  if (src) {
+    wrap.innerHTML = `<img src="${escHtml(src)}" alt="Cover" onerror="this.parentElement.innerHTML='<div class=modal-cover-placeholder>Bad image</div>'">`;
+    document.getElementById('coverClearBtn').style.display = '';
+  } else {
+    wrap.innerHTML = `<div class="modal-cover-placeholder">No Cover</div>`;
+    document.getElementById('coverClearBtn').style.display = 'none';
+  }
+}
+
+function loadCoverFromUrl() {
+  const url = document.getElementById('mCoverUrl').value.trim();
+  if (!url) return;
+  _pendingCoverValue = url;
+  updateModalCoverPreview(url);
+}
+
+function handleCoverFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  // Resize to reasonable dimensions before storing as base64
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Max 300px wide for storage efficiency
+      const MAX = 300;
+      const scale = Math.min(1, MAX / img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(img.width  * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      _pendingCoverValue = dataUrl;
+      // Also clear the URL field so it's obvious which source is active
+      document.getElementById('mCoverUrl').value = '';
+      updateModalCoverPreview(dataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearCover() {
+  _pendingCoverValue = null;
+  document.getElementById('mCoverUrl').value = '';
+  document.getElementById('mCoverFile').value = '';
+  updateModalCoverPreview(null);
+}
+
 // ── Add/Edit Modal ─────────────────────────────
 function openAddModal() {
   editingEntryId = null;
+  _pendingCoverValue = null;
   document.getElementById('modalTitle').textContent = 'Add Entry';
   document.getElementById('modalSub').textContent = 'New comic entry';
   document.getElementById('modalDeleteBtn').style.display = 'none';
-  // Clear fields
   document.getElementById('mPub').value = 'Marvel';
   document.getElementById('mType').value = 'Epic';
   document.getElementById('mSeries').value = '';
@@ -1241,6 +1483,10 @@ function openAddModal() {
   document.getElementById('mReprint').value = 'No';
   document.getElementById('mConf').value = 'sourced';
   document.getElementById('mNum').value = '';
+  document.getElementById('mPrhLink').value = '';
+  document.getElementById('mCoverUrl').value = '';
+  document.getElementById('mCoverFile').value = '';
+  updateModalCoverPreview(null);
   document.getElementById('entryModal').classList.add('open');
 }
 
@@ -1248,6 +1494,7 @@ function openEditModal(id) {
   const d = ALL_DATA.find(x=>x.id===id);
   if (!d) return;
   editingEntryId = id;
+  _pendingCoverValue = null;
   document.getElementById('modalTitle').textContent = 'Edit Entry';
   document.getElementById('modalSub').textContent = `${d.series||''}${d.vol?' Vol. '+d.vol:''}`;
   document.getElementById('modalDeleteBtn').style.display = '';
@@ -1263,6 +1510,12 @@ function openEditModal(id) {
   document.getElementById('mReprint').value = d.reprint || 'No';
   document.getElementById('mConf').value = d.conf || 'sourced';
   document.getElementById('mNum').value = d.num != null ? d.num : '';
+  document.getElementById('mPrhLink').value = d.prh_link || '';
+  // Show existing cover (from entry or user_data)
+  const existingCover = getUD(id).cover_url || d.cover_url || null;
+  document.getElementById('mCoverUrl').value = (existingCover && !existingCover.startsWith('data:')) ? existingCover : '';
+  updateModalCoverPreview(existingCover);
+  if (existingCover) _pendingCoverValue = existingCover; // keep it unless user changes
   document.getElementById('entryModal').classList.add('open');
 }
 
@@ -1270,6 +1523,7 @@ function closeModal() {
   document.getElementById('entryModal').classList.remove('open');
   document.getElementById('mSeries').classList.remove('required-empty');
   editingEntryId = null;
+  _pendingCoverValue = null;
 }
 
 async function saveEntry() {
@@ -1280,6 +1534,10 @@ async function saveEntry() {
     return;
   }
   document.getElementById('mSeries').classList.remove('required-empty');
+
+  // Resolve cover: prefer pending (new upload/URL), else the URL field text
+  const coverUrlField = document.getElementById('mCoverUrl').value.trim();
+  const finalCover = _pendingCoverValue || coverUrlField || null;
 
   const body = {
     pub:      document.getElementById('mPub').value,
@@ -1294,6 +1552,9 @@ async function saveEntry() {
     reprint:  document.getElementById('mReprint').value,
     conf:     document.getElementById('mConf').value,
     num:      document.getElementById('mNum').value ? parseInt(document.getElementById('mNum').value) : null,
+    prh_link: document.getElementById('mPrhLink').value.trim() || null,
+    // cover_url stored on the entry itself (URL-based) or in user_data (base64 uploads)
+    cover_url: (finalCover && !finalCover.startsWith('data:')) ? finalCover : null,
   };
 
   const modal = document.querySelector('.modal');
@@ -1301,20 +1562,31 @@ async function saveEntry() {
   setSyncing(true);
 
   try {
+    let entryId = editingEntryId;
+
     if (editingEntryId === null) {
-      // INSERT
       const result = await sbInsert('comic_entries', body);
       const newEntry = Array.isArray(result) ? result[0] : result;
       ALL_DATA.push(newEntry);
+      entryId = newEntry.id;
       showToast('✓ Entry added');
     } else {
-      // UPDATE
       const result = await sbUpdate('comic_entries', `id=eq.${editingEntryId}`, body);
       const updated = Array.isArray(result) ? result[0] : result;
       const idx = ALL_DATA.findIndex(x=>x.id===editingEntryId);
       if (idx !== -1) ALL_DATA[idx] = updated || { ...ALL_DATA[idx], ...body };
       showToast('✓ Entry updated');
     }
+
+    // If a base64 cover was uploaded, save it to user_data (avoids bloating comic_entries)
+    if (finalCover && finalCover.startsWith('data:') && entryId) {
+      if (!USER_DATA[entryId]) USER_DATA[entryId] = { entry_id: entryId };
+      USER_DATA[entryId].cover_url = finalCover;
+      try {
+        await sbUpsert('user_data', { entry_id: entryId, cover_url: finalCover }, 'entry_id');
+      } catch(e) { console.warn('Cover save to user_data failed:', e); }
+    }
+
     closeModal();
     populateYearFilter();
     applyFilters();
@@ -1350,7 +1622,6 @@ async function doDelete() {
   setSyncing(true);
   try {
     await sbDelete('comic_entries', `id=eq.${id}`);
-    // Also delete user_data for this entry
     try { await sbDelete('user_data', `entry_id=eq.${id}`); } catch(e){}
     const idx = ALL_DATA.findIndex(x=>x.id===id);
     if (idx !== -1) ALL_DATA.splice(idx, 1);
@@ -1368,7 +1639,7 @@ async function doDelete() {
 // ── Export CSV ────────────────────────────────
 function exportCSV(all) {
   const rows = all ? ALL_DATA : currentFiltered;
-  const headers = ['id','pub','date','series','vol','subtitle','years','type','licensed','reprint','pages','conf','stojr_owned','nick_owned','stojr_wishlist','nick_wishlist','stojr_read','nick_read'];
+  const headers = ['id','pub','date','series','vol','subtitle','years','type','licensed','reprint','pages','conf','prh_link','stojr_owned','nick_owned','stojr_wishlist','nick_wishlist','stojr_read','nick_read'];
   const escape = v => { if(v===null||v===undefined)return''; const s=String(v); return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s; };
   const csvRows=[headers.join(',')];
   rows.forEach(d=>{
@@ -1376,7 +1647,7 @@ function exportCSV(all) {
     csvRows.push([
       escape(d.id),escape(d.pub),escape(d.date),escape(d.series),escape(d.vol),
       escape(d.subtitle),escape(d.years),escape(d.type),escape(d.licensed),escape(d.reprint),
-      escape(d.pages),escape(d.conf),
+      escape(d.pages),escape(d.conf),escape(d.prh_link),
       escape(ud.stojr_owned?'Yes':'No'),escape(ud.nick_owned?'Yes':'No'),
       escape(ud.stojr_wishlist?'Yes':'No'),escape(ud.nick_wishlist?'Yes':'No'),
       escape(ud.stojr_read?'Yes':'No'),escape(ud.nick_read?'Yes':'No'),
@@ -1401,9 +1672,13 @@ function resetAll() {
   ['pfStojr','pfNick','pfBoth','pfWishlist','pfRead'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
   document.querySelectorAll('.ptab').forEach(t=>{t.className='ptab '+t.classList[1];});
   document.querySelector('.ptab.all').classList.add('on');
-  activePub='all';sortCol='date';sortDir=1;
+  activePub='all';
+  // Reset to default sort: series + vol/year
+  sortCol='series';sortDir=1;
   document.querySelectorAll('thead th .sort-arrow').forEach(a=>a.textContent='');
-  const th=document.getElementById('th-date');if(th){const a=th.querySelector('.sort-arrow');if(a)a.textContent=' ▼';}
+  const thSeries=document.getElementById('th-series');if(thSeries){const a=thSeries.querySelector('.sort-arrow');if(a)a.textContent=' ▼';}
   applyFilters();
 }
 </script>
+</body>
+</html>
