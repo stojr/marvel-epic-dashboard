@@ -134,7 +134,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .barchart{display:flex;flex-direction:column;gap:6px}
 .brow{display:flex;align-items:center;gap:8px}
 .byr{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--muted);width:38px;text-align:right;flex-shrink:0}
-.btrack{flex:1;height:20px;background:var(--surface2);border-radius:2px;overflow:hidden;display:flex}
+.btrack{flex:1;height:22px;background:var(--surface2);border-radius:2px;overflow:hidden;display:flex}
 .bfm{height:100%;background:var(--red);transition:width .5s ease}
 .bfd{height:100%;background:var(--blue);transition:width .5s ease}
 .bcnt{font-family:var(--cf);font-size:13px;color:var(--muted);width:32px}
@@ -173,8 +173,8 @@ tbody tr:hover{background:var(--surface2)}
 td{padding:8px 10px;vertical-align:middle;white-space:nowrap}
 .td-date{color:var(--muted);font-family:var(--cf);font-size:13px}
 .pub-badge{display:inline-block;font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 6px;border-radius:3px;white-space:nowrap}
-.pub-badge.m{background:#280d0a;color:var(--red);border:1px solid #501c18}
-.pub-badge.d{background:#0a1228;color:var(--blue);border:1px solid #162855}
+.pub-badge.m{background:var(--red);color:#fff;border:1px solid #cc1c14}
+.pub-badge.d{background:var(--blue);color:#fff;border:1px solid #1a6db5}
 .td-series{font-weight:500;color:var(--text)}
 .td-vol{color:var(--muted);font-family:var(--cf);font-size:13px}
 .td-sub{color:var(--muted);font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis}
@@ -308,8 +308,11 @@ tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 body.light{
   --bg:#f0f2f8;--surface:#ffffff;--surface2:#e8eaf2;--surface3:#dde0ee;
   --border:#c8cad8;--border2:#b0b3c8;--text:#1a1a2e;--muted:#555577;--dimtext:#888899;
+  --gold:#9c6e00; /* darken amber so it reads on white/light-grey backgrounds */
 }
 body.light::before{background-image:radial-gradient(circle,#00000009 1px,transparent 1px)}
+/* Header always has a dark background — restore bright token values for its children */
+body.light header{--text:#f0f3ff;--muted:#9a9abf;--dimtext:#5a5a7a;--gold:#ffd234}
 
 /* ─── THEME TOGGLE ─── */
 .theme-toggle{padding:5px 11px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;height:30px;align-self:flex-start;margin-top:6px}
@@ -1130,11 +1133,18 @@ function filterByYear(year) {
 }
 function buildBarChart(filtered) {
   if (chartMode === 'line') { buildLineChart(filtered); return; }
+  const TYPES = ['Epic','Modern','Ultimate','DC Finest','Omnibus'];
+  const TYPE_COLORS = {'Epic':'#e8352a','Modern':'#f0b429','Ultimate':'#2ecc71','DC Finest':'#1a7fd4','Omnibus':'#c97ef5'};
+  // Text color inside each type segment for legibility
+  const TYPE_TEXT = {'Epic':'#fff','Modern':'#000','Ultimate':'#000','DC Finest':'#fff','Omnibus':'#000'};
   const yearMap = {};
   filtered.forEach(d => {
     if (!d.date) return;
     const y = d.date.slice(0,4);
-    if (!yearMap[y]) yearMap[y]={m:0,d:0,stojr:0,nick:0,both:0,none:0};
+    if (!yearMap[y]) {
+      yearMap[y]={m:0,d:0,stojr:0,nick:0,both:0,none:0};
+      TYPES.forEach(t=>{yearMap[y][t+'_o']=0;yearMap[y][t+'_r']=0;});
+    }
     yearMap[y].m += d.pub==='Marvel'?1:0;
     yearMap[y].d += d.pub==='DC'?1:0;
     const s=isOwned(d.id,'stojr'),n=isOwned(d.id,'nick');
@@ -1142,38 +1152,61 @@ function buildBarChart(filtered) {
     else if(s) yearMap[y].stojr++;
     else if(n) yearMap[y].nick++;
     else yearMap[y].none++;
+    // Track by type × reprint status
+    const tk=(d.type||'')+(d.reprint==='Yes'?'_r':'_o');
+    if(tk in yearMap[y]) yearMap[y][tk]++;
   });
   const years = Object.keys(yearMap).sort();
   const maxVal = Math.max(...years.map(y=>yearMap[y].m+yearMap[y].d),1);
+  // Helper: render a labelled bar segment with optional hatch for reprints
+  function seg(widthPct, bgColor, count, label, isReprint, textColor) {
+    if (!count) return '';
+    const w = widthPct.toFixed(1);
+    const hatch = isReprint
+      ? `repeating-linear-gradient(135deg,rgba(255,255,255,.22) 0px,rgba(255,255,255,.22) 3px,rgba(0,0,0,.18) 3px,rgba(0,0,0,.18) 6px),`
+      : '';
+    const tc = textColor || '#fff';
+    return `<div style="width:${w}%;height:100%;background:${hatch}${bgColor};display:inline-flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0" title="${label}: ${count}"><span style="font-size:8px;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:${tc};text-shadow:0 0 2px rgba(0,0,0,.6);padding:0 1px;white-space:nowrap">${count}</span></div>`;
+  }
   const legEl = document.getElementById('barLegend');
   if (legEl) {
-    legEl.innerHTML = barMode==='owned'
-      ? `<div class="bl-item"><div class="bl-dot" style="background:#a8dfff"></div>Both</div>
+    if (barMode==='owned') {
+      legEl.innerHTML =
+        `<div class="bl-item"><div class="bl-dot" style="background:#a8dfff"></div>Both</div>
          <div class="bl-item"><div class="bl-dot" style="background:var(--stojr)"></div>stojr</div>
          <div class="bl-item"><div class="bl-dot" style="background:var(--nick)"></div>Nick</div>
-         <div class="bl-item"><div class="bl-dot" style="background:var(--dim)"></div>Neither</div>`
-      : `<div class="bl-item"><div class="bl-dot" style="background:var(--red)"></div>Marvel</div>
-         <div class="bl-item"><div class="bl-dot" style="background:var(--blue)"></div>DC</div>`;
+         <div class="bl-item"><div class="bl-dot" style="background:var(--dim)"></div>Neither</div>`;
+    } else {
+      // Type legend + reprint hatch swatch
+      legEl.innerHTML = TYPES.map(t=>
+        `<div class="bl-item"><div class="bl-dot" style="background:${TYPE_COLORS[t]}"></div>${t}</div>`
+      ).join('') +
+      `<div class="bl-item"><div class="bl-dot" style="background:repeating-linear-gradient(135deg,rgba(255,255,255,.3) 0px,rgba(255,255,255,.3) 3px,rgba(0,0,0,.3) 3px,rgba(0,0,0,.3) 6px),#888"></div>Reprint</div>`;
+    }
   }
   document.getElementById('barChart').innerHTML = years.map(y => {
-    const mv=yearMap[y].m,dc=yearMap[y].d,tot=mv+dc;
+    const tot=yearMap[y].m+yearMap[y].d;
     if (barMode==='owned') {
       const b=yearMap[y].both,s=yearMap[y].stojr,n=yearMap[y].nick,none=yearMap[y].none;
       return `<div class="brow" onclick="filterByYear('${y}')" style="cursor:pointer">
         <div class="byr">${y}</div>
         <div class="btrack">
-          <div class="bfm" style="width:${(b/maxVal*100).toFixed(1)}%;background:#a8dfff"></div>
-          <div class="bfm" style="width:${(s/maxVal*100).toFixed(1)}%;background:var(--stojr)"></div>
-          <div class="bfm" style="width:${(n/maxVal*100).toFixed(1)}%;background:var(--nick)"></div>
-          <div class="bfm" style="width:${(none/maxVal*100).toFixed(1)}%;background:var(--dim);opacity:.4"></div>
+          ${seg(b/maxVal*100,'#a8dfff',b,'Both',false,'#000')}
+          ${seg(s/maxVal*100,'var(--stojr)',s,'stojr',false,'#fff')}
+          ${seg(n/maxVal*100,'var(--nick)',n,'Nick',false,'#000')}
+          ${seg(none/maxVal*100,'var(--dim)',none,'Neither',false,'#fff')}
         </div><div class="bcnt"><b>${tot}</b></div></div>`;
     }
+    // Normal mode: stack solid (original) then hatched (reprint) per type
+    const segs = TYPES.map(t => {
+      const oc=yearMap[y][t+'_o']||0, rc=yearMap[y][t+'_r']||0;
+      const col=TYPE_COLORS[t], tc=TYPE_TEXT[t];
+      return seg(oc/maxVal*100,col,oc,t,false,tc) + seg(rc/maxVal*100,col,rc,t+' reprint',true,tc);
+    }).join('');
     return `<div class="brow" onclick="filterByYear('${y}')" style="cursor:pointer">
       <div class="byr">${y}</div>
-      <div class="btrack">
-        <div class="bfm" style="width:${(mv/maxVal*100).toFixed(1)}%"></div>
-        <div class="bfd" style="width:${(dc/maxVal*100).toFixed(1)}%"></div>
-      </div><div class="bcnt"><b>${tot}</b></div></div>`;
+      <div class="btrack">${segs}</div>
+      <div class="bcnt"><b>${tot}</b></div></div>`;
   }).join('');
   document.getElementById('barChartTitle').textContent = filtered.length<ALL_DATA.length
     ? 'Releases Per Year (filtered)' : 'Releases Per Year';
@@ -1220,8 +1253,14 @@ function buildLineChart(filtered) {
 // ── Donut ──────────────────────────────────────
 function buildDonut(filtered) {
   const canvas=document.getElementById('donut');
+  const dpr=window.devicePixelRatio||1;
+  const SIZE=180;
+  // Scale canvas buffer to device pixel ratio for crisp rendering on HiDPI screens
+  canvas.width=SIZE*dpr; canvas.height=SIZE*dpr;
+  canvas.style.width=SIZE+'px'; canvas.style.height=SIZE+'px';
   const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,180,180);
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,SIZE,SIZE);
   const uniq=filtered.filter(d=>d.reprint==='No');
   const byType={'Classic Epic':uniq.filter(d=>d.type==='Epic').length,'Modern Era':uniq.filter(d=>d.type==='Modern').length,'Ultimate':uniq.filter(d=>d.type==='Ultimate').length,'DC Finest':uniq.filter(d=>d.type==='DC Finest').length,'Omnibus':uniq.filter(d=>d.type==='Omnibus').length};
   const COLORS=['#e8352a','#f0b429','#2ecc71','#1a7fd4','#c97ef5'];
@@ -1631,7 +1670,10 @@ async function doDelete() {
     delete USER_DATA[id];
     showToast('✓ Entry deleted');
     populateYearFilter();
-    applyFilters();
+    const _savedPage = page;
+    applyFilters(); // resets page to 1 internally
+    page = Math.min(_savedPage, Math.ceil(currentFiltered.length / pageSize) || 1);
+    buildTable(currentFiltered);
   } catch(e) {
     console.error('Delete error:', e);
     showToast('Delete failed', true);
