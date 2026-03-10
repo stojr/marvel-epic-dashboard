@@ -234,7 +234,11 @@ tr.expand-detail td{padding:10px 16px;border-bottom:1px solid var(--border)}
 /* ─── EXPAND DETAIL: COVER + PRH LINK ─── */
 .expand-cover{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .cover-img-wrap{width:100px;height:150px;border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.cover-img-wrap img{width:100%;height:100%;object-fit:cover}
+.cover-img-wrap img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+/* ─── IMAGE LIGHTBOX ─── */
+.img-lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
+.img-lightbox-overlay.open{opacity:1;pointer-events:auto}
+.img-lightbox-overlay img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:6px;box-shadow:0 8px 48px rgba(0,0,0,.7);cursor:zoom-out}
 .cover-placeholder{font-family:var(--cf);font-size:10px;letter-spacing:1px;color:var(--dimtext);text-align:center;padding:8px}
 .cover-detail-row{display:flex;gap:14px;align-items:flex-start}
 .cover-detail-meta{display:flex;flex-direction:column;gap:8px;flex:1}
@@ -428,6 +432,11 @@ footer a{color:var(--gold);text-decoration:none}
 </style>
 </head>
 <body>
+
+<!-- Image lightbox -->
+<div class="img-lightbox-overlay" id="imgLightbox" onclick="closeImgLightbox()">
+  <img id="imgLightboxImg" src="" alt="Cover enlarged">
+</div>
 
 <!-- Loading overlay -->
 <div class="loading-overlay" id="loadingOverlay">
@@ -1360,7 +1369,7 @@ function toggleExpand(id, cols) {
   // Cover: prefer uploaded data URL stored in user_data, then cover_url from comic entry
   const coverUrl = getUD(id).cover_url || d.cover_url || null;
   const coverHtml = coverUrl
-    ? `<img src="${escHtml(coverUrl)}" alt="Cover" onerror="this.parentElement.innerHTML='<div class=cover-placeholder>No Cover</div>'">`
+    ? `<img src="${escHtml(coverUrl)}" alt="Cover" onclick="openImgLightbox(this)" onerror="this.parentElement.innerHTML='<div class=cover-placeholder>No Cover</div>'">`
     : `<div class="cover-placeholder">No Cover</div>`;
 
   // PRH / store link
@@ -1401,6 +1410,18 @@ function toggleExpand(id, cols) {
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+function openImgLightbox(imgEl) {
+  const lb = document.getElementById('imgLightbox');
+  document.getElementById('imgLightboxImg').src = imgEl.src;
+  lb.classList.add('open');
+  // Stop the click from also toggling the row collapse
+  event.stopPropagation();
+}
+function closeImgLightbox() {
+  document.getElementById('imgLightbox').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeImgLightbox(); });
 
 const VIRT_ROW_H=37;
 let _virtScroll=null;
