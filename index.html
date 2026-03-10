@@ -712,7 +712,7 @@ footer a{color:var(--gold);text-decoration:none}
       <!-- ── ISBN ── -->
       <div class="modal-field">
         <label class="modal-label">ISBN</label>
-        <input class="modal-input" id="mIsbn" type="text" placeholder="e.g. 978-1302950682" oninput="onIsbnInput()">
+        <input class="modal-input" id="mIsbn" type="text" placeholder="e.g. 978-1302950682" oninput="onIsbnInput()" onblur="if(this.value.trim()&&!document.getElementById('mDescription').value.trim())fetchDescription()">
       </div>
       <div class="modal-field"><!-- spacer --></div>
 
@@ -1565,8 +1565,24 @@ async function fetchDescription() {
   const isbn = document.getElementById('mIsbn').value.trim().replace(/-/g,'');
   const desc = document.getElementById('mDescription');
   if (!isbn) { showToast('Enter an ISBN first', true); return; }
+  // Skip if description already filled (manual edit)
   showToast('Fetching description…');
-  // Primary: PRH Comics page via CORS proxy — most accurate for Marvel/DC trades
+
+  // Primary: Google Books API — reliable JSON, no CORS proxy needed
+  try {
+    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
+    if (r.ok) {
+      const data = await r.json();
+      const info = data?.items?.[0]?.volumeInfo;
+      if (info?.description) {
+        desc.value = info.description;
+        showToast('✓ Description fetched (Google Books)');
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Fallback 1: PRH Comics page via CORS proxy
   try {
     const prhUrl = `https://prhcomics.com/book/?isbn=${isbn}`;
     const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(prhUrl)}`);
@@ -1578,34 +1594,23 @@ async function fetchDescription() {
                || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
       if (m && m[1].trim()) {
         desc.value = m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
-        showToast('✓ Description fetched');
+        showToast('✓ Description fetched (PRH)');
         return;
       }
     }
   } catch(e) {}
-  // Fallback: Google Books API
-  try {
-    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-    if (r.ok) {
-      const data = await r.json();
-      const info = data?.items?.[0]?.volumeInfo;
-      if (info?.description) {
-        desc.value = info.description;
-        showToast('✓ Description fetched');
-        return;
-      }
-    }
-  } catch(e) {}
-  // Fallback: OpenLibrary
+
+  // Fallback 2: OpenLibrary
   try {
     const r = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
     if (r.ok) {
       const data = await r.json();
       const book = data[`ISBN:${isbn}`];
       const d = book?.details?.description?.value || book?.details?.description;
-      if (d) { desc.value = typeof d === 'string' ? d : JSON.stringify(d); showToast('✓ Description fetched'); return; }
+      if (d) { desc.value = typeof d === 'string' ? d : JSON.stringify(d); showToast('✓ Description fetched (OpenLibrary)'); return; }
     }
   } catch(e) {}
+
   showToast('No description found — enter manually', true);
 }
 
