@@ -27,7 +27,7 @@ jobs:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           psql \
-            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres" \
+            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require" \
             --file=supabase-migration.sql \
             --set ON_ERROR_STOP=1
 
@@ -36,7 +36,7 @@ jobs:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           psql \
-            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres" \
+            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require" \
             -c "SELECT column_name, data_type FROM information_schema.columns
                 WHERE table_name='comic_entries'
                   AND column_name IN ('isbn','writers','artists','description')
