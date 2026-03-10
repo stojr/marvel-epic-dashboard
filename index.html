@@ -1566,7 +1566,24 @@ async function fetchDescription() {
   const desc = document.getElementById('mDescription');
   if (!isbn) { showToast('Enter an ISBN first', true); return; }
   showToast('Fetching description…');
-  // Primary: Google Books API (CORS-friendly, no auth required)
+  // Primary: PRH Comics page via CORS proxy — most accurate for Marvel/DC trades
+  try {
+    const prhUrl = `https://prhcomics.com/book/?isbn=${isbn}`;
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(prhUrl)}`);
+    if (r.ok) {
+      const data = await r.json();
+      const html = data.contents || '';
+      // Parse og:description meta tag (handles both attribute orderings)
+      const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
+               || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
+      if (m && m[1].trim()) {
+        desc.value = m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+        showToast('✓ Description fetched');
+        return;
+      }
+    }
+  } catch(e) {}
+  // Fallback: Google Books API
   try {
     const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
     if (r.ok) {
@@ -1708,7 +1725,9 @@ async function saveEntry() {
     let entryId = editingEntryId;
 
     if (editingEntryId === null) {
-      const result = await sbInsert('comic_entries', body);
+      // Omit null values on INSERT so optional columns not yet in the schema don't cause errors
+      const insertBody = Object.fromEntries(Object.entries(body).filter(([, v]) => v !== null));
+      const result = await sbInsert('comic_entries', insertBody);
       const newEntry = Array.isArray(result) ? result[0] : result;
       ALL_DATA.push(newEntry);
       entryId = newEntry.id;
