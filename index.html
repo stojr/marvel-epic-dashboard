@@ -1033,6 +1033,14 @@ function setPub(pub, el) {
   activePub = pub;
   document.querySelectorAll('.ptab').forEach(t => { t.className = 'ptab ' + t.classList[1]; });
   el.classList.add('on');
+  // Omni tab implies type=Omnibus; clear & hide the type dropdown to avoid conflicts
+  const typeWrap = document.getElementById('fTypeWrap');
+  if (pub === 'omni') {
+    document.getElementById('fType').value = '';
+    typeWrap.style.display = 'none';
+  } else {
+    typeWrap.style.display = '';
+  }
   applyFilters();
 }
 
@@ -1949,6 +1957,7 @@ function resetAll() {
   document.querySelectorAll('.ptab').forEach(t=>{t.className='ptab '+t.classList[1];});
   document.querySelector('.ptab.all').classList.add('on');
   activePub='all';
+  document.getElementById('fTypeWrap').style.display = '';
   // Reset to default sort: series + vol/year
   sortCol='series';sortDir=1;
   document.querySelectorAll('thead th .sort-arrow').forEach(a=>a.textContent='');
