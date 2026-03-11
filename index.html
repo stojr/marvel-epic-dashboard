@@ -604,18 +604,19 @@ footer a{color:var(--gold);text-decoration:none}
       <table>
         <thead>
           <tr>
-            <th onclick="sortBy('date')" id="th-date">Date <span class="sort-arrow">▼</span></th>
-            <th>Pub</th>
-            <th onclick="sortBy('series')" id="th-series">Series <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('vol')" id="th-vol">Vol <span class="sort-arrow"></span></th>
-            <th>Subtitle / Years</th>
-            <th class="col-type" onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
-            <th class="col-lic">Lic</th>
-            <th class="col-rep">Rpt</th>
-            <th>✓</th>
             <th>stojr</th>
             <th>Nick</th>
             <th id="th-ud-label">stojr ★/✓</th>
+            <th onclick="sortBy('vol')" id="th-vol">Vol <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('series')" id="th-series">Series <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('years')" id="th-years">Years Covered <span class="sort-arrow"></span></th>
+            <th>Pub</th>
+            <th>Subtitle / Years</th>
+            <th class="col-type" onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('date')" id="th-date">Release Date <span class="sort-arrow"></span></th>
+            <th class="col-lic">Lic</th>
+            <th class="col-rep">Rpt</th>
+            <th>✓</th>
             <th>Edit</th>
           </tr>
         </thead>
@@ -1487,15 +1488,6 @@ function buildRowEl(d, cols) {
   const sOwn=isOwned(d.id,'stojr'),nOwn=isOwned(d.id,'nick');
   const wl=isWishlist(d.id,activeProfile),rd=isRead(d.id,activeProfile),hn=hasNotes(d.id,activeProfile);
   tr.innerHTML=`
-    <td class="td-date">${dateHtml}</td>
-    <td>${pubBadge}</td>
-    <td class="td-series">${d.series||'–'}${licIcon}</td>
-    <td class="td-vol">${volTxt}</td>
-    <td class="td-sub" title="${subTxt}">${subTxt}</td>
-    <td class="col-type">${typeBadge(d)}</td>
-    <td class="col-lic td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
-    <td class="col-rep td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
-    <td class="td-conf">${confDot}</td>
     <td><button class="ob os${sOwn?' on':''}" data-id="${d.id}" data-who="stojr" onclick="event.stopPropagation();toggleUserField(${d.id},'stojr_owned')" title="stojr owns">S</button></td>
     <td><button class="ob on2${nOwn?' on':''}" data-id="${d.id}" data-who="nick"  onclick="event.stopPropagation();toggleUserField(${d.id},'nick_owned')"  title="Nick owns">N</button></td>
     <td><div class="ud-cell">
@@ -1503,6 +1495,16 @@ function buildRowEl(d, cols) {
       <button class="udb read${rd?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'${activeProfile}_read')" title="${activeProfile} read it">✓</button>
       <div class="note-indicator${hn?' has-note':''}" data-id="${d.id}" title="${activeProfile} has notes"></div>
     </div></td>
+    <td class="td-vol">${volTxt}</td>
+    <td class="td-series">${d.series||'–'}${licIcon}</td>
+    <td class="td-years">${d.years||'–'}</td>
+    <td>${pubBadge}</td>
+    <td class="td-sub" title="${subTxt}">${subTxt}</td>
+    <td class="col-type">${typeBadge(d)}</td>
+    <td class="td-date">${dateHtml}</td>
+    <td class="col-lic td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
+    <td class="col-rep td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
+    <td class="td-conf">${confDot}</td>
     <td><button class="edit-btn" onclick="event.stopPropagation();openEditModal(${d.id})" title="Edit entry">✏</button></td>`;
   return tr;
 }
