@@ -12,7 +12,7 @@
   --red:#ff4136; --blue:#3aa8ff; --gold:#ffd234;
   --green:#3eff8a; --orange:#ff9f2a; --dim:#6a6a88;
   --stojr:#c97fff; --nick:#2ee8d4;
-  --text:#f0f3ff; --muted:#9a9abf; --dimtext:#5a5a7a;
+  --text:#f0f3ff; --muted:#9a9abf; --dimtext:#7a7a9a;
   --r:4px;
   --hf:'Bebas Neue',impact,sans-serif;
   --cf:'Barlow Condensed',sans-serif;
@@ -67,6 +67,7 @@ header::after{content:'';position:absolute;right:-60px;bottom:-60px;width:320px;
 .ptab.all.on{color:var(--gold);border-bottom-color:var(--gold)}
 .ptab.marvel.on{color:var(--red);border-bottom-color:var(--red)}
 .ptab.dc.on{color:var(--blue);border-bottom-color:var(--blue)}
+.ptab.omni.on{color:#c97ef5;border-bottom-color:#c97ef5}
 .ptab-count{font-size:10px;opacity:.6;margin-left:5px}
 
 /* ─── MAIN ─── */
@@ -80,6 +81,7 @@ select,input[type=text]{background:var(--surface2);border:1px solid var(--border
 select:focus,input:focus{outline:none;border-color:var(--gold)}
 .fsep{width:1px;height:36px;background:var(--border);align-self:center}
 .fspacer{flex:1}
+.fbar-break{flex-basis:100%;height:0}
 
 /* owner filter pills */
 .owner-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -90,7 +92,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .own-filter-pill.nick.on{background:var(--nick);color:#000}
 .own-filter-pill.both{color:#a8dfff;border-color:#a8dfff}
 .own-filter-pill.both.on{background:#a8dfff;color:#000}
-.rbtn{padding:5px 14px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;height:34px;white-space:nowrap}
+.rbtn{padding:5px 14px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:#b0b0cc;font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s;height:34px;white-space:nowrap}
 .rbtn:hover{border-color:var(--gold);color:var(--gold)}
 .rbtn.primary{border-color:var(--gold);color:var(--gold)}
 .rbtn.primary:hover{background:var(--gold);color:#000}
@@ -162,7 +164,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .conf-key{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .ck-item{display:flex;align-items:center;gap:4px;font-family:var(--cf);font-size:12px;color:var(--muted)}
 .ck-dot{width:7px;height:7px;border-radius:50%}
-.ck-dot.v{background:var(--green)}.ck-dot.s{background:var(--orange)}.ck-dot.e{background:var(--dim)}
+.ck-dot.v{background:var(--green)}.ck-dot.s{background:var(--orange)}.ck-dot.e{background:#8a8aaa}
 .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-size:14px}
 thead th{padding:9px 10px;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:44px;z-index:5}
@@ -171,12 +173,13 @@ thead th.sorted{color:var(--gold)}
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
 tbody tr:hover{background:var(--surface2)}
 td{padding:8px 10px;vertical-align:middle;white-space:nowrap}
-.td-date{color:var(--muted);font-family:var(--cf);font-size:13px}
+.td-date{color:#b8b8d8;font-family:var(--cf);font-size:13px}
 .pub-badge{display:inline-block;font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 6px;border-radius:3px;white-space:nowrap}
 .pub-badge.m{background:var(--red);color:#fff;border:1px solid #cc1c14}
 .pub-badge.d{background:var(--blue);color:#fff;border:1px solid #1a6db5}
 .td-series{font-weight:500;color:var(--text)}
 .td-vol{color:var(--muted);font-family:var(--cf);font-size:13px}
+.td-years{color:#b8b8d8;font-family:var(--cf);font-size:13px}
 .td-sub{color:var(--muted);font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis}
 .type-badge{display:inline-block;font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:.5px;padding:3px 7px;border-radius:3px;text-transform:uppercase}
 .tb-epic{background:#0e1e30;color:#7ab8f5;border:1px solid #1e4870}
@@ -248,10 +251,12 @@ tr.expand-detail td{padding:10px 16px;border-bottom:1px solid var(--border)}
 
 /* ─── BADGES ─── */
 .date-tbd{font-family:var(--cf);font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;background:#181810;color:#777;border:1px solid #2e2e20;letter-spacing:.5px}
-.date-new{font-family:var(--cf);font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;background:#0a2012;color:var(--green);border:1px solid #1a4828;letter-spacing:.5px;margin-left:4px}
+.date-new{font-family:var(--cf);font-size:10px;font-weight:700;padding:2px 5px;border-radius:3px;background:#0a2012;color:var(--green);border:1px solid var(--green);letter-spacing:.5px;margin-left:4px;box-shadow:0 0 6px rgba(62,255,138,.25)}
 tbody tr.conf-verified td:first-child{border-left:3px solid var(--green)}
 tbody tr.conf-sourced td:first-child{border-left:3px solid var(--orange)}
-tbody tr.conf-est td:first-child{border-left:3px solid var(--dim)}
+tbody tr.conf-est td:first-child{border-left:3px solid #8a8aaa}
+tbody tr.conf-verified{background:rgba(62,255,138,.03)}
+tbody tr.conf-verified:hover{background:rgba(62,255,138,.07)}
 tbody tr.licensed-row{background:rgba(255,210,52,.03)}
 tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 .lic-icon{font-size:10px;margin-left:3px;opacity:.65;vertical-align:middle}
@@ -489,6 +494,7 @@ footer a{color:var(--gold);text-decoration:none}
     <button class="ptab all on" onclick="setPub('all',this)">All <span class="ptab-count" id="tabAllCnt">–</span></button>
     <button class="ptab marvel" onclick="setPub('marvel',this)">Marvel Epic <span class="ptab-count" id="tabMrvCnt">–</span></button>
     <button class="ptab dc"     onclick="setPub('dc',this)">DC Finest <span class="ptab-count" id="tabDCCnt">–</span></button>
+    <button class="ptab omni"   onclick="setPub('omni',this)">Omnis <span class="ptab-count" id="tabOmniCnt">–</span></button>
   </div>
 </div>
 
@@ -533,7 +539,7 @@ footer a{color:var(--gold);text-decoration:none}
         <span class="own-filter-pill both"  id="pfBoth"  onclick="toggleOwnerFilter('both')">Both own</span>
       </div>
     </div>
-    <div class="fspacer"></div>
+    <div class="fbar-break"></div>
     <!-- Desktop "Add Entry" button — hidden on mobile (FAB takes over) -->
     <button class="rbtn primary add-desktop" onclick="openAddModal()" title="Add new entry">＋ Add Entry</button>
     <button class="rbtn" onclick="exportCSV(false)">⬇ Export View</button>
@@ -611,8 +617,8 @@ footer a{color:var(--gold);text-decoration:none}
             <th onclick="sortBy('series')" id="th-series">Series <span class="sort-arrow"></span></th>
             <th onclick="sortBy('years')" id="th-years">Years Covered <span class="sort-arrow"></span></th>
             <th>Pub</th>
-            <th>Subtitle / Years</th>
             <th class="col-type" onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
+            <th>Subtitle / Years</th>
             <th onclick="sortBy('date')" id="th-date">Release Date <span class="sort-arrow"></span></th>
             <th class="col-lic">Lic</th>
             <th class="col-rep">Rpt</th>
@@ -1041,22 +1047,18 @@ function toggleUserFilter(which) {
   applyFilters();
 }
 
-// ── Default sort: series name A→Z, then volume (Marvel) or date/years (DC) ──
-// This groups "Amazing Spider-Man Vol.1, Vol.2, Vol.3…" together and keeps
-// DC Finest titles like "Batman" sorted earliest-year-first within each title.
+// ── Default sort: series A→Z, then type (keeps Classic Epics together), then vol ascending ──
+const TYPE_ORDER = ['Epic','Modern','Ultimate','DC Finest','Omnibus'];
 function defaultSort(a, b) {
   const aSeries = (a.series||'').toLowerCase();
   const bSeries = (b.series||'').toLowerCase();
   if (aSeries < bSeries) return -1;
   if (aSeries > bSeries) return 1;
-  // Same series — now sort by volume for Marvel, by date/years for DC
-  if (a.pub === 'DC' || b.pub === 'DC') {
-    // DC Finest: sort by the year portion of the `years` field (e.g. "1966-1971" → 1966)
-    const ay = a.years ? parseInt(a.years) : (a.date ? parseInt(a.date) : 9999);
-    const by = b.years ? parseInt(b.years) : (b.date ? parseInt(b.date) : 9999);
-    return ay - by;
-  }
-  // Marvel: sort by volume number ascending
+  // Same series — sort by type order
+  const at = TYPE_ORDER.indexOf(a.type), bt = TYPE_ORDER.indexOf(b.type);
+  const atOrd = at === -1 ? 99 : at, btOrd = bt === -1 ? 99 : bt;
+  if (atOrd !== btOrd) return atOrd - btOrd;
+  // Same series + type — sort by volume ascending
   const av = a.vol != null ? a.vol : 9999;
   const bv = b.vol != null ? b.vol : 9999;
   return av - bv;
@@ -1073,8 +1075,9 @@ function applyFilters() {
     || userDataFilters.wishlist || userDataFilters.read;
 
   let filtered = ALL_DATA.filter(d => {
-    if (activePub === 'marvel' && d.pub !== 'Marvel') return false;
-    if (activePub === 'dc'     && d.pub !== 'DC')     return false;
+    if (activePub === 'marvel' && d.pub !== 'Marvel')    return false;
+    if (activePub === 'dc'     && d.pub !== 'DC')        return false;
+    if (activePub === 'omni'   && d.type !== 'Omnibus')  return false;
     if (year && (!d.date || !d.date.startsWith(year))) return false;
     if (type && d.type !== type) return false;
     if (lic  && d.licensed !== lic) return false;
@@ -1119,9 +1122,11 @@ function applyFilters() {
 
   const allM = ALL_DATA.filter(d=>d.pub==='Marvel').length;
   const allD = ALL_DATA.filter(d=>d.pub==='DC').length;
-  document.getElementById('tabAllCnt').textContent = ALL_DATA.length;
-  document.getElementById('tabMrvCnt').textContent = allM;
-  document.getElementById('tabDCCnt').textContent  = allD;
+  const allO = ALL_DATA.filter(d=>d.type==='Omnibus').length;
+  document.getElementById('tabAllCnt').textContent  = ALL_DATA.length;
+  document.getElementById('tabMrvCnt').textContent  = allM;
+  document.getElementById('tabDCCnt').textContent   = allD;
+  document.getElementById('tabOmniCnt').textContent = allO;
   document.getElementById('hTotalMarvl').textContent = allM;
   document.getElementById('hTotalDC').textContent    = allD;
 
@@ -1379,6 +1384,7 @@ function toggleExpand(id, cols) {
     ? `<a class="prh-link" href="${escHtml(prhUrl)}" target="_blank" rel="noopener">🔗 View on Store</a>`
     : `<span class="prh-link-none">No store link</span>`;
 
+  const volDisplay = d.vol != null ? `Vol. ${d.vol}` : '–';
   const det=document.createElement('tr');
   det.className='expand-detail';
   det.innerHTML=`<td colspan="${cols}">
@@ -1386,11 +1392,17 @@ function toggleExpand(id, cols) {
       <div class="cover-detail-row">
         <div class="cover-img-wrap">${coverHtml}</div>
         <div class="cover-detail-meta">
+          <div class="expand-field"><span class="expand-label">Series</span><span class="expand-value">${escHtml(d.series||'–')}</span></div>
+          <div class="expand-field"><span class="expand-label">Volume</span><span class="expand-value">${volDisplay}</span></div>
+          <div class="expand-field"><span class="expand-label">Publisher</span><span class="expand-value">${escHtml(d.pub||'–')}</span></div>
+          <div class="expand-field"><span class="expand-label">Type</span><span class="expand-value">${d.type||'–'}</span></div>
+          ${d.subtitle?`<div class="expand-field" style="min-width:220px"><span class="expand-label">Subtitle</span><span class="expand-value">${escHtml(d.subtitle)}</span></div>`:''}
+          <div class="expand-field"><span class="expand-label">Release Date</span><span class="expand-value">${d.date||'–'}</span></div>
+          ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
           <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
-          <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
           <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
           <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
-          ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
+          <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
           ${d.isbn?`<div class="expand-field"><span class="expand-label">ISBN</span><span class="expand-value">${escHtml(d.isbn)}</span></div>`:''}
           ${d.writers?`<div class="expand-field" style="min-width:200px"><span class="expand-label">Writers</span><span class="expand-value">${escHtml(d.writers)}</span></div>`:''}
           ${d.artists?`<div class="expand-field" style="min-width:200px"><span class="expand-label">Artists</span><span class="expand-value">${escHtml(d.artists)}</span></div>`:''}
@@ -1431,7 +1443,7 @@ function buildTable(filtered) {
   const start=(page-1)*pageSize,end=Math.min(start+pageSize,filtered.length);
   const rows=filtered.slice(start,end);
   const maxPage=Math.ceil(filtered.length/pageSize)||1;
-  const COLS=13;
+  const COLS=14;
   document.getElementById('tableCount').textContent=`${filtered.length} entries`;
   document.getElementById('pgInfo').textContent=`Page ${page} of ${maxPage} · ${start+1}–${end} of ${filtered.length}`;
   document.getElementById('pgPrev').disabled=page<=1;
@@ -1499,8 +1511,8 @@ function buildRowEl(d, cols) {
     <td class="td-series">${d.series||'–'}${licIcon}</td>
     <td class="td-years">${d.years||'–'}</td>
     <td>${pubBadge}</td>
-    <td class="td-sub" title="${subTxt}">${subTxt}</td>
     <td class="col-type">${typeBadge(d)}</td>
+    <td class="td-sub" title="${subTxt}">${subTxt}</td>
     <td class="td-date">${dateHtml}</td>
     <td class="col-lic td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
     <td class="col-rep td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
@@ -1566,6 +1578,7 @@ function clearCover() {
 }
 
 // ── ISBN helpers ────────────────────────────────
+let _isbnFetchTimer = null;
 function onIsbnInput() {
   const raw = document.getElementById('mIsbn').value.trim();
   const isbn = raw.replace(/-/g,'');
@@ -1581,6 +1594,62 @@ function onIsbnInput() {
       updateModalCoverPreview(autoUrl);
     }
   }
+  // Debounce: auto-populate blank fields after short pause
+  clearTimeout(_isbnFetchTimer);
+  if (isbn.length >= 10) {
+    _isbnFetchTimer = setTimeout(() => fetchIsbnFields(isbn), 800);
+  }
+}
+
+async function fetchIsbnFields(isbn) {
+  // Only attempt if at least some key fields are blank
+  const hasData = document.getElementById('mSeries').value.trim()
+    && document.getElementById('mPages').value.trim();
+  if (hasData) return; // already filled, don't overwrite
+  try {
+    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
+    if (!r.ok) return;
+    const data = await r.json();
+    const info = data?.items?.[0]?.volumeInfo;
+    if (!info) return;
+
+    const setIfBlank = (id, val) => {
+      if (!val) return;
+      const el = document.getElementById(id);
+      if (el && !el.value.trim()) el.value = val;
+    };
+
+    setIfBlank('mSeries', info.title);
+    setIfBlank('mSubtitle', info.subtitle);
+    if (info.authors?.length) setIfBlank('mWriters', info.authors.join(', '));
+    if (info.pageCount) setIfBlank('mPages', info.pageCount);
+    if (info.publishedDate) setIfBlank('mDate', info.publishedDate.slice(0,10));
+    setIfBlank('mDescription', info.description);
+
+    // Cover from Google Books if not already set via PRH
+    const gbCover = info.imageLinks?.thumbnail?.replace('http:','https:');
+    if (gbCover) {
+      const coverField = document.getElementById('mCoverUrl');
+      // Only use Google Books cover if no PRH cover is loaded
+      if (!_pendingCoverValue || _pendingCoverValue.includes('penguinrandomhouse.com/cover/')) {
+        // Prefer PRH cover; only fall back to Google Books if PRH URL fails
+        // We'll keep PRH as primary, GB as fallback shown in preview on error
+        const img = new Image();
+        img.onload = () => {}; // PRH worked, keep it
+        img.onerror = () => {
+          if (!document.getElementById('mCoverUrl').value.includes('googleapis') &&
+              !document.getElementById('mCoverUrl').value.includes('books.google')) {
+            coverField.value = gbCover;
+            _pendingCoverValue = gbCover;
+            updateModalCoverPreview(gbCover);
+          }
+        };
+        img.src = _pendingCoverValue || '';
+      }
+    }
+
+    showToast('✓ Fields populated from ISBN');
+  } catch(e) {}
 }
 
 // ── Description auto-fetch ──────────────────────
