@@ -1477,6 +1477,7 @@ function buildTable(filtered) {
     setupVirtScroll(rows,tscroll,COLS);
   } else {
     tscroll.style.maxHeight='';tscroll.style.overflowY='';
+    tscroll.scrollTop=0;
     if(_virtScroll){tscroll.removeEventListener('scroll',_virtScroll);_virtScroll=null;}
     const tbody=document.getElementById('tBody');
     const frag=document.createDocumentFragment();
