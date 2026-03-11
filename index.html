@@ -238,6 +238,10 @@ tr.expand-detail td{padding:10px 16px;border-bottom:1px solid var(--border)}
 .expand-cover{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
 .cover-img-wrap{width:100px;height:150px;border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .cover-img-wrap img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.expand-meta-row{display:flex;flex-wrap:wrap;gap:6px 20px}
+.expand-meta-row .expand-field{flex:1;min-width:110px}
+.expand-meta-row .expand-field.ef-wide{flex:2;min-width:190px}
+.expand-meta-row .expand-field.ef-full{flex:0 0 100%;min-width:0}
 /* ─── IMAGE LIGHTBOX ─── */
 .img-lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
 .img-lightbox-overlay.open{opacity:1;pointer-events:auto}
@@ -613,12 +617,12 @@ footer a{color:var(--gold);text-decoration:none}
             <th>stojr</th>
             <th>Nick</th>
             <th id="th-ud-label">stojr ★/✓</th>
-            <th onclick="sortBy('vol')" id="th-vol">Vol <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('series')" id="th-series">Series <span class="sort-arrow"></span></th>
-            <th onclick="sortBy('years')" id="th-years">Years Covered <span class="sort-arrow"></span></th>
             <th>Pub</th>
             <th class="col-type" onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('vol')" id="th-vol">Vol <span class="sort-arrow"></span></th>
+            <th onclick="sortBy('series')" id="th-series">Series <span class="sort-arrow"></span></th>
             <th>Subtitle / Years</th>
+            <th onclick="sortBy('years')" id="th-years">Years Covered <span class="sort-arrow"></span></th>
             <th onclick="sortBy('date')" id="th-date">Release Date <span class="sort-arrow"></span></th>
             <th class="col-lic">Lic</th>
             <th class="col-rep">Rpt</th>
@@ -1392,22 +1396,32 @@ function toggleExpand(id, cols) {
       <div class="cover-detail-row">
         <div class="cover-img-wrap">${coverHtml}</div>
         <div class="cover-detail-meta">
-          <div class="expand-field"><span class="expand-label">Series</span><span class="expand-value">${escHtml(d.series||'–')}</span></div>
-          <div class="expand-field"><span class="expand-label">Volume</span><span class="expand-value">${volDisplay}</span></div>
-          <div class="expand-field"><span class="expand-label">Publisher</span><span class="expand-value">${escHtml(d.pub||'–')}</span></div>
-          <div class="expand-field"><span class="expand-label">Type</span><span class="expand-value">${d.type||'–'}</span></div>
-          ${d.subtitle?`<div class="expand-field" style="min-width:220px"><span class="expand-label">Subtitle</span><span class="expand-value">${escHtml(d.subtitle)}</span></div>`:''}
-          <div class="expand-field"><span class="expand-label">Release Date</span><span class="expand-value">${d.date||'–'}</span></div>
-          ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
-          <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
-          <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
-          <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
-          <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
-          ${d.isbn?`<div class="expand-field"><span class="expand-label">ISBN</span><span class="expand-value">${escHtml(d.isbn)}</span></div>`:''}
-          ${d.writers?`<div class="expand-field" style="min-width:200px"><span class="expand-label">Writers</span><span class="expand-value">${escHtml(d.writers)}</span></div>`:''}
-          ${d.artists?`<div class="expand-field" style="min-width:200px"><span class="expand-label">Artists</span><span class="expand-value">${escHtml(d.artists)}</span></div>`:''}
-          <div class="expand-field"><span class="expand-label">Store Link</span>${prhHtml}</div>
-          ${d.description?`<div class="expand-field" style="width:100%;min-width:300px"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.5">${escHtml(d.description)}</span></div>`:''}
+          <div class="expand-meta-row">
+            <div class="expand-field ef-wide"><span class="expand-label">Series</span><span class="expand-value">${escHtml(d.series||'–')}</span></div>
+            <div class="expand-field"><span class="expand-label">Volume</span><span class="expand-value">${volDisplay}</span></div>
+            <div class="expand-field"><span class="expand-label">Publisher</span><span class="expand-value">${escHtml(d.pub||'–')}</span></div>
+            <div class="expand-field"><span class="expand-label">Type</span><span class="expand-value">${d.type||'–'}</span></div>
+          </div>
+          <div class="expand-meta-row">
+            ${d.subtitle?`<div class="expand-field ef-wide"><span class="expand-label">Subtitle</span><span class="expand-value">${escHtml(d.subtitle)}</span></div>`:''}
+            <div class="expand-field"><span class="expand-label">Release Date</span><span class="expand-value">${d.date||'–'}</span></div>
+            ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
+            <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
+          </div>
+          <div class="expand-meta-row">
+            <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
+            <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
+            <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
+            ${d.isbn?`<div class="expand-field"><span class="expand-label">ISBN</span><span class="expand-value">${escHtml(d.isbn)}</span></div>`:''}
+          </div>
+          ${(d.writers||d.artists)?`<div class="expand-meta-row">
+            ${d.writers?`<div class="expand-field ef-wide"><span class="expand-label">Writers</span><span class="expand-value">${escHtml(d.writers)}</span></div>`:''}
+            ${d.artists?`<div class="expand-field ef-wide"><span class="expand-label">Artists</span><span class="expand-value">${escHtml(d.artists)}</span></div>`:''}
+          </div>`:''}
+          <div class="expand-meta-row">
+            <div class="expand-field ef-full"><span class="expand-label">Store Link</span>${prhHtml}</div>
+          </div>
+          ${d.description?`<div class="expand-meta-row"><div class="expand-field ef-full"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.5">${escHtml(d.description)}</span></div></div>`:''}
         </div>
       </div>
       <div class="expand-field expand-notes-area">
@@ -1507,12 +1521,12 @@ function buildRowEl(d, cols) {
       <button class="udb read${rd?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'${activeProfile}_read')" title="${activeProfile} read it">✓</button>
       <div class="note-indicator${hn?' has-note':''}" data-id="${d.id}" title="${activeProfile} has notes"></div>
     </div></td>
-    <td class="td-vol">${volTxt}</td>
-    <td class="td-series">${d.series||'–'}${licIcon}</td>
-    <td class="td-years">${d.years||'–'}</td>
     <td>${pubBadge}</td>
     <td class="col-type">${typeBadge(d)}</td>
+    <td class="td-vol">${volTxt}</td>
+    <td class="td-series">${d.series||'–'}${licIcon}</td>
     <td class="td-sub" title="${subTxt}">${subTxt}</td>
+    <td class="td-years">${d.years||'–'}</td>
     <td class="td-date">${dateHtml}</td>
     <td class="col-lic td-lic ${d.licensed==='Yes'?'y':'n'}">${d.licensed==='Yes'?'Yes':'–'}</td>
     <td class="col-rep td-rep ${d.reprint==='Yes'?'y':''}">${d.reprint==='Yes'?'Yes':'–'}</td>
