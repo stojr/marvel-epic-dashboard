@@ -5,10 +5,12 @@
 -- ═══════════════════════════════════════════════════════════════
 
 -- 1. New metadata columns (safe to re-run)
-ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS isbn        TEXT;
-ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS writers     TEXT;
-ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS artists     TEXT;
-ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS isbn                      TEXT;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS writers                   TEXT;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS artists                   TEXT;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS description               TEXT;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS issues_covered            TEXT;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS secondary_issues_covered  TEXT;
 
 -- 2. 'stojr verified' confidence: no schema change needed (conf is free-form TEXT).
 

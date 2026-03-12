@@ -164,7 +164,7 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .conf-key{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .ck-item{display:flex;align-items:center;gap:4px;font-family:var(--cf);font-size:12px;color:var(--muted)}
 .ck-dot{width:7px;height:7px;border-radius:50%}
-.ck-dot.v{background:var(--green)}.ck-dot.s{background:var(--orange)}.ck-dot.e{background:#8a8aaa}
+.ck-dot.v{background:var(--green)}.ck-dot.s{background:var(--orange)}.ck-dot.e{background:#8a8aaa}.ck-dot.sv{background:var(--stojr)}
 .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;overflow-anchor:none}
 table{width:100%;border-collapse:collapse;font-size:14px}
 thead th{padding:9px 10px;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border2);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;z-index:5}
@@ -259,8 +259,11 @@ tr.expand-detail td{padding:10px 16px;border-bottom:1px solid var(--border)}
 tbody tr.conf-verified td:first-child{border-left:3px solid var(--green)}
 tbody tr.conf-sourced td:first-child{border-left:3px solid var(--orange)}
 tbody tr.conf-est td:first-child{border-left:3px solid #8a8aaa}
+tbody tr.conf-stojr-verified td:first-child{border-left:3px solid var(--stojr)}
 tbody tr.conf-verified{background:rgba(62,255,138,.03)}
 tbody tr.conf-verified:hover{background:rgba(62,255,138,.07)}
+tbody tr.conf-stojr-verified{background:rgba(201,127,255,.03)}
+tbody tr.conf-stojr-verified:hover{background:rgba(201,127,255,.07)}
 tbody tr.licensed-row{background:rgba(255,210,52,.03)}
 tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 .lic-icon{font-size:10px;margin-left:3px;opacity:.65;vertical-align:middle}
@@ -377,12 +380,19 @@ footer a{color:var(--gold);text-decoration:none}
 .bec-lic{min-width:72px}.bec-rep{min-width:72px}
 .bec-conf{min-width:140px}.bec-isbn{min-width:132px}
 .bec-writers{min-width:150px}.bec-artists{min-width:150px}
+.bec-issues{min-width:100px}.bec-sec-issues{min-width:130px}
 .be-del-btn{width:26px;height:26px;border-radius:3px;border:1.5px solid var(--border2);background:transparent;cursor:pointer;color:var(--dimtext);display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s;margin:0 auto;flex-shrink:0}
 .be-del-btn:hover{border-color:var(--red);color:var(--red)}
 .be-del-btn.undo-del{border-color:var(--orange);color:var(--orange)}
 .bulk-footer{background:var(--surface);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
 .bulk-search{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:13px;padding:5px 10px;height:32px;width:180px}
 .bulk-search:focus{outline:none;border-color:var(--gold)}
+.bulk-tbl thead th[data-sort]{cursor:pointer;user-select:none}
+.bulk-tbl thead th[data-sort]:hover{color:var(--text)}
+.bulk-tbl thead th[data-sort].be-sorted{color:var(--gold)}
+.be-sort-arrow{font-size:9px;opacity:.6;margin-left:3px}
+.be-col-filter{display:block;margin-top:4px;width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--bf);font-size:11px;padding:2px 4px;height:20px;box-sizing:border-box;font-weight:400;letter-spacing:0;text-transform:none}
+.be-col-filter:focus{outline:none;border-color:var(--gold)}
 
 /* ─── LOADING OVERLAY ─── */
 .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s}
@@ -646,6 +656,7 @@ footer a{color:var(--gold);text-decoration:none}
       <span class="ttitle">Releases</span>
       <span class="tcnt" id="tableCount">–</span>
       <div class="conf-key">
+        <div class="ck-item"><div class="ck-dot sv"></div>stojr Verified</div>
         <div class="ck-item"><div class="ck-dot v"></div>Verified</div>
         <div class="ck-item"><div class="ck-dot s"></div>Sourced</div>
         <div class="ck-item"><div class="ck-dot e"></div>Estimated</div>
@@ -710,7 +721,7 @@ footer a{color:var(--gold);text-decoration:none}
       </div>
       <div class="modal-field">
         <label class="modal-label">Type *</label>
-        <select class="modal-select" id="mType">
+        <select class="modal-select" id="mType" onchange="onModalDcFinestCheck()">
           <option value="Epic">Classic Epic</option>
           <option value="Modern">Modern Era</option>
           <option value="Ultimate">Ultimate</option>
@@ -720,7 +731,7 @@ footer a{color:var(--gold);text-decoration:none}
       </div>
       <div class="modal-field full">
         <label class="modal-label">Series Title *</label>
-        <input class="modal-input" id="mSeries" type="text" placeholder="e.g. Amazing Spider-Man">
+        <input class="modal-input" id="mSeries" type="text" placeholder="e.g. Amazing Spider-Man" onblur="onModalDcFinestCheck()">
       </div>
       <div class="modal-field">
         <label class="modal-label">Volume #</label>
@@ -737,6 +748,14 @@ footer a{color:var(--gold);text-decoration:none}
       <div class="modal-field">
         <label class="modal-label">Years Covered</label>
         <input class="modal-input" id="mYears" type="text" placeholder="e.g. 1966-1971">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Issues Covered</label>
+        <input class="modal-input" id="mIssuesCovered" type="text" placeholder="e.g. #1-24">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Secondary Issues Covered</label>
+        <input class="modal-input" id="mSecondaryIssuesCovered" type="text" placeholder="e.g. Annual #1">
       </div>
       <div class="modal-field">
         <label class="modal-label">Pages</label>
@@ -852,20 +871,22 @@ footer a{color:var(--gold);text-decoration:none}
       <thead>
         <tr>
           <th class="bec-del">Del</th>
-          <th class="bec-pub">Publisher</th>
-          <th class="bec-type">Type</th>
-          <th class="bec-series">Series *</th>
-          <th class="bec-vol">Vol</th>
-          <th class="bec-sub">Subtitle</th>
-          <th class="bec-years">Years</th>
-          <th class="bec-date">Release Date</th>
-          <th class="bec-pages">Pages</th>
-          <th class="bec-lic">Licensed</th>
-          <th class="bec-rep">Reprint</th>
-          <th class="bec-conf">Confidence</th>
-          <th class="bec-isbn">ISBN</th>
-          <th class="bec-writers">Writers</th>
-          <th class="bec-artists">Artists</th>
+          <th class="bec-pub"     data-sort="pub"     onclick="sortBulkBy('pub')">Publisher<span class="be-sort-arrow" id="bsa-pub"></span><input class="be-col-filter" data-col-filter="pub"     placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-type"    data-sort="type"    onclick="sortBulkBy('type')">Type<span class="be-sort-arrow" id="bsa-type"></span><input class="be-col-filter" data-col-filter="type"    placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-series"  data-sort="series"  onclick="sortBulkBy('series')">Series *<span class="be-sort-arrow" id="bsa-series"></span><input class="be-col-filter" data-col-filter="series"  placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-vol"     data-sort="vol"     onclick="sortBulkBy('vol')">Vol<span class="be-sort-arrow" id="bsa-vol"></span></th>
+          <th class="bec-sub"     data-sort="subtitle" onclick="sortBulkBy('subtitle')">Subtitle<span class="be-sort-arrow" id="bsa-subtitle"></span><input class="be-col-filter" data-col-filter="subtitle" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-years"   data-sort="years"   onclick="sortBulkBy('years')">Years<span class="be-sort-arrow" id="bsa-years"></span></th>
+          <th class="bec-issues"  data-sort="issues_covered" onclick="sortBulkBy('issues_covered')">Issues<span class="be-sort-arrow" id="bsa-issues_covered"></span></th>
+          <th class="bec-date"    data-sort="date"    onclick="sortBulkBy('date')">Release Date<span class="be-sort-arrow" id="bsa-date"></span></th>
+          <th class="bec-pages"   data-sort="pages"   onclick="sortBulkBy('pages')">Pages<span class="be-sort-arrow" id="bsa-pages"></span></th>
+          <th class="bec-lic"     data-sort="licensed" onclick="sortBulkBy('licensed')">Licensed<span class="be-sort-arrow" id="bsa-licensed"></span></th>
+          <th class="bec-rep"     data-sort="reprint"  onclick="sortBulkBy('reprint')">Reprint<span class="be-sort-arrow" id="bsa-reprint"></span></th>
+          <th class="bec-conf"    data-sort="conf"    onclick="sortBulkBy('conf')">Confidence<span class="be-sort-arrow" id="bsa-conf"></span><input class="be-col-filter" data-col-filter="conf" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-isbn"    data-sort="isbn"    onclick="sortBulkBy('isbn')">ISBN<span class="be-sort-arrow" id="bsa-isbn"></span></th>
+          <th class="bec-writers" data-sort="writers" onclick="sortBulkBy('writers')">Writers<span class="be-sort-arrow" id="bsa-writers"></span><input class="be-col-filter" data-col-filter="writers" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-artists" data-sort="artists" onclick="sortBulkBy('artists')">Artists<span class="be-sort-arrow" id="bsa-artists"></span><input class="be-col-filter" data-col-filter="artists" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-sec-issues">Sec. Issues</th>
         </tr>
       </thead>
       <tbody id="bulkTbody"></tbody>
@@ -1191,9 +1212,9 @@ function applyFilters() {
     || userDataFilters.wishlist || userDataFilters.read;
 
   let filtered = ALL_DATA.filter(d => {
-    if (activePub === 'marvel' && d.pub !== 'Marvel')    return false;
-    if (activePub === 'dc'     && d.pub !== 'DC')        return false;
-    if (activePub === 'omni'   && d.type !== 'Omnibus')  return false;
+    if (activePub === 'marvel' && d.pub !== 'Marvel')        return false;
+    if (activePub === 'dc'     && d.type !== 'DC Finest')    return false; // tab labeled "DC Finest" — match Finest only, not all DC
+    if (activePub === 'omni'   && d.type !== 'Omnibus')      return false;
     if (year && (!d.date || !d.date.startsWith(year))) return false;
     if (type && d.type !== type) return false;
     if (lic  && d.licensed !== lic) return false;
@@ -1236,12 +1257,13 @@ function applyFilters() {
     banner.classList.remove('show');
   }
 
-  const allM = ALL_DATA.filter(d=>d.pub==='Marvel').length;
-  const allD = ALL_DATA.filter(d=>d.pub==='DC').length;
-  const allO = ALL_DATA.filter(d=>d.type==='Omnibus').length;
+  const allM  = ALL_DATA.filter(d=>d.pub==='Marvel').length;
+  const allD  = ALL_DATA.filter(d=>d.pub==='DC').length;
+  const allDC = ALL_DATA.filter(d=>d.type==='DC Finest').length; // DC Finest tab count
+  const allO  = ALL_DATA.filter(d=>d.type==='Omnibus').length;
   document.getElementById('tabAllCnt').textContent  = ALL_DATA.length;
   document.getElementById('tabMrvCnt').textContent  = allM;
-  document.getElementById('tabDCCnt').textContent   = allD;
+  document.getElementById('tabDCCnt').textContent   = allDC;
   document.getElementById('tabOmniCnt').textContent = allO;
   document.getElementById('hTotalMarvl').textContent = allM;
   document.getElementById('hTotalDC').textContent    = allD;
@@ -1611,7 +1633,7 @@ function setupVirtScroll(rows,container,cols){
 }
 
 function buildRowEl(d, cols) {
-  const confClass=d.conf==='verified'?'conf-verified':d.conf==='sourced'?'conf-sourced':'conf-est';
+  const confClass=d.conf==='stojr verified'?'conf-stojr-verified':d.conf==='verified'?'conf-verified':d.conf==='sourced'?'conf-sourced':'conf-est';
   const licClass=d.licensed==='Yes'?'licensed-row':'';
   const tr=document.createElement('tr');
   tr.className=['data-row',confClass,licClass].filter(Boolean).join(' ');
@@ -1620,8 +1642,9 @@ function buildRowEl(d, cols) {
   const isNew=d.date&&d.date.startsWith(CURRENT_YEAR);
   const dateHtml=d.date?`${d.date}${isNew?' <span class="date-new">NEW</span>':''}`:`<span class="date-tbd">TBD</span>`;
   const pubBadge=d.pub==='Marvel'?`<span class="pub-badge m">Marvel</span>`:`<span class="pub-badge d">DC</span>`;
-  const confDot=d.conf==='verified'?`<div class="ck-dot v" style="display:inline-block"></div>`:d.conf==='sourced'?`<div class="ck-dot s" style="display:inline-block"></div>`:`<div class="ck-dot e" style="display:inline-block"></div>`;
-  const volTxt=d.pub==='Marvel'&&d.vol!=null?`Vol. ${d.vol}`:(d.years||'–');
+  const confDot=d.conf==='stojr verified'?`<div class="ck-dot sv" style="display:inline-block"></div>`:d.conf==='verified'?`<div class="ck-dot v" style="display:inline-block"></div>`:d.conf==='sourced'?`<div class="ck-dot s" style="display:inline-block"></div>`:`<div class="ck-dot e" style="display:inline-block"></div>`;
+  // DC Finest uses "Years Covered" in the Vol column; all other types use Vol number
+  const volTxt=d.type==='DC Finest'?(d.years||'–'):(d.vol!=null?`Vol. ${d.vol}`:'–');
   const subTxt=d.subtitle||'–';
   const licIcon=d.licensed==='Yes'?' <span class="lic-icon" title="Licensed IP">™</span>':'';
   const sOwn=isOwned(d.id,'stojr'),nOwn=isOwned(d.id,'nick');
@@ -1702,6 +1725,85 @@ function clearCover() {
   document.getElementById('mCoverUrl').value = '';
   document.getElementById('mCoverFile').value = '';
   updateModalCoverPreview(null);
+}
+
+// ── DC Finest ISBN Reference Table ─────────────
+// Source-of-truth mapping: { series, issue (volume/year), barcode }
+const DC_FINEST_ISBN_MAP = [
+  { series:'Batman: DC Finest',                                                  issue:'1985', barcode:'978179950273953000' },
+  { series:'Batman: DC Finest',                                                  issue:'1986', barcode:'978177952835353000' },
+  { series:'Batman: DC Finest',                                                  issue:'1988', barcode:'978179950145953000' },
+  { series:'DC Finest Events: Crisis On Infinite Earths',                        issue:'1TP',  barcode:'978179950304053000' },
+  { series:'DC Finest: Green Arrow - The Trial Of Oliver Queen',                 issue:'TP',   barcode:'978179951024653000' },
+  { series:'DC Finest: Justice League Of America - Starro The Conqueror',        issue:'TP',   barcode:'978179950773453000' },
+  { series:'Green Arrow: DC Finest',                                             issue:'1987', barcode:'978177952991653000' },
+  { series:'Justice League of America: DC Finest',                               issue:'1966', barcode:'978177952837753000' },
+  { series:'Justice League of America: DC Finest',                               issue:'1985', barcode:'978179950244953000' },
+  { series:'Legion of Super-Heroes: DC Finest',                                  issue:'1968', barcode:'978177952849053000' },
+  { series:'Suicide Squad: DC Finest',                                           issue:'1986', barcode:'978179950075953000' },
+  { series:'Superman: DC Finest',                                                issue:'1938', barcode:'978177952833953000' },
+  { series:'Superman: DC Finest',                                                issue:'1940', barcode:'978179950332353000' },
+  { series:'Superman: DC Finest',                                                issue:'1971', barcode:'978179950165753000' },
+  { series:'Teen Titans: DC Finest',                                             issue:'1983', barcode:'978179950025453000' },
+  { series:'DC Finest Events: Zero Hour',                                        issue:'1TP',  barcode:'978177952850653000' },
+  { series:'DC Finest Events: Zero Hour',                                        issue:'2TP',  barcode:'978179950130553000' },
+];
+
+/**
+ * Look up a DC Finest ISBN by series name + volume/year.
+ * Returns the barcode string or null if not found.
+ */
+function lookupDcFinestIsbn(series, vol) {
+  if (!series || vol == null) return null;
+  const normSeries = series.trim().toLowerCase();
+  const normVol    = String(vol).trim();
+  const match = DC_FINEST_ISBN_MAP.find(r =>
+    r.series.toLowerCase() === normSeries && r.issue === normVol
+  );
+  return match ? match.barcode : null;
+}
+
+/**
+ * When series/vol changes on a DC Finest entry, try to auto-populate the ISBN.
+ * If no match, log insertion and insert the book into the local DB.
+ */
+async function autofillDcFinestIsbn(series, vol, rowContext) {
+  if (!series || vol == null) return;
+  const isbn = lookupDcFinestIsbn(series, vol);
+  if (isbn) {
+    if (rowContext.setIsbn) rowContext.setIsbn(isbn);
+    showToast('✓ DC Finest ISBN populated');
+    return;
+  }
+  // No match — insert into DB and log
+  console.info(`[DC Finest] No ISBN match for "${series}" vol "${vol}" — inserting new entry`);
+  try {
+    const insertBody = { pub:'DC', type:'DC Finest', series: series.trim(), years: String(vol), conf:'estimated' };
+    const result = await sbInsert('comic_entries', insertBody);
+    const newEntry = Array.isArray(result) ? result[0] : result;
+    if (newEntry) {
+      ALL_DATA.push(newEntry);
+      showToast('✓ New DC Finest entry added to DB');
+    }
+  } catch(e) {
+    console.warn('[DC Finest] Failed to insert new entry:', e);
+  }
+}
+
+// ── DC Finest modal check ──────────────────────
+function onModalDcFinestCheck() {
+  const type   = document.getElementById('mType')?.value;
+  const series = document.getElementById('mSeries')?.value.trim();
+  const years  = document.getElementById('mYears')?.value.trim();
+  const isbnEl = document.getElementById('mIsbn');
+  if (type !== 'DC Finest' || !series || !years || !isbnEl) return;
+  if (isbnEl.value.trim()) return; // already has an ISBN, don't overwrite
+  const isbn = lookupDcFinestIsbn(series, years);
+  if (isbn) {
+    isbnEl.value = isbn;
+    onIsbnInput(); // trigger cover URL + fetch
+    showToast('✓ DC Finest ISBN auto-populated');
+  }
 }
 
 // ── ISBN helpers ────────────────────────────────
@@ -1859,6 +1961,8 @@ function openAddModal() {
   document.getElementById('mDescription').value = '';
   document.getElementById('mCoverUrl').value = '';
   document.getElementById('mCoverFile').value = '';
+  document.getElementById('mIssuesCovered').value = '';
+  document.getElementById('mSecondaryIssuesCovered').value = '';
   updateModalCoverPreview(null);
   document.getElementById('entryModal').classList.add('open');
 }
@@ -1888,6 +1992,8 @@ function openEditModal(id) {
   document.getElementById('mWriters').value = d.writers || '';
   document.getElementById('mArtists').value = d.artists || '';
   document.getElementById('mDescription').value = d.description || '';
+  document.getElementById('mIssuesCovered').value = d.issues_covered || '';
+  document.getElementById('mSecondaryIssuesCovered').value = d.secondary_issues_covered || '';
   // Show existing cover (from entry or user_data)
   const existingCover = getUD(id).cover_url || d.cover_url || null;
   document.getElementById('mCoverUrl').value = (existingCover && !existingCover.startsWith('data:')) ? existingCover : '';
@@ -1933,10 +2039,12 @@ async function saveEntry() {
     conf:        document.getElementById('mConf').value,
     num:         document.getElementById('mNum').value ? parseInt(document.getElementById('mNum').value) : null,
     prh_link:    document.getElementById('mPrhLink').value.trim() || null,
-    isbn:        rawIsbn || null,
-    writers:     document.getElementById('mWriters').value.trim() || null,
-    artists:     document.getElementById('mArtists').value.trim() || null,
-    description: document.getElementById('mDescription').value.trim() || null,
+    isbn:                       rawIsbn || null,
+    writers:                    document.getElementById('mWriters').value.trim() || null,
+    artists:                    document.getElementById('mArtists').value.trim() || null,
+    description:                document.getElementById('mDescription').value.trim() || null,
+    issues_covered:             document.getElementById('mIssuesCovered').value.trim() || null,
+    secondary_issues_covered:   document.getElementById('mSecondaryIssuesCovered').value.trim() || null,
     // cover_url stored on the entry itself (URL-based) or in user_data (base64 uploads)
     cover_url:   (finalCover && !finalCover.startsWith('data:')) ? finalCover : null,
   };
@@ -2056,7 +2164,13 @@ let _beIsbnTimers = {};
 function openBulkEdit() {
   _beRowIdCounter = -1;
   _beIsbnTimers = {};
+  _beSortCol = null; _beSortDir = 1;
   document.getElementById('bulkSearch').value = '';
+  // Clear column filter inputs
+  document.querySelectorAll('.be-col-filter').forEach(el => el.value = '');
+  // Clear sort arrow UI
+  document.querySelectorAll('.be-sort-arrow').forEach(el => el.textContent = '');
+  document.querySelectorAll('.bulk-tbl thead th[data-sort]').forEach(th => th.classList.remove('be-sorted'));
   const rows = [...ALL_DATA].sort(defaultSort);
   buildBulkTable(rows);
   document.getElementById('bulkOverlay').classList.add('open');
@@ -2086,13 +2200,19 @@ function makeBulkRow(d, isNew) {
   tr.dataset.isNew = isNew ? '1' : '0';
   if (isNew) tr.classList.add('be-new');
 
-  const selHtml = (field, opts, val) =>
-    `<select class="be-select" data-field="${field}" data-row="${rowId}" onchange="markBulkDirty('${rowId}')">${
+  const selHtml = (field, opts, val) => {
+    const isLookupField = field === 'type';
+    const handler = isLookupField ? `onBulkFieldChange('${rowId}')` : `markBulkDirty('${rowId}')`;
+    return `<select class="be-select" data-field="${field}" data-row="${rowId}" onchange="${handler}">${
       opts.map(([v,l]) => `<option value="${v}"${val===v?' selected':''}>${l}</option>`).join('')
     }</select>`;
+  };
 
-  const inpHtml = (field, type, val, extra='') =>
-    `<input class="be-input" data-field="${field}" data-row="${rowId}" type="${type}" value="${escHtml(String(val??''))}" ${extra} oninput="markBulkDirty('${rowId}')">`;
+  const inpHtml = (field, type, val, extra='') => {
+    const isLookupField = field === 'series' || field === 'years';
+    const handler = isLookupField ? `onBulkFieldChange('${rowId}')` : `markBulkDirty('${rowId}')`;
+    return `<input class="be-input" data-field="${field}" data-row="${rowId}" type="${type}" value="${escHtml(String(val??''))}" ${extra} oninput="${handler}">`;
+  };
 
   tr.innerHTML = `
     <td class="bec-del"><button class="be-del-btn" onclick="bulkToggleDelete(this,'${rowId}')" title="Delete row">✕</button></td>
@@ -2102,6 +2222,7 @@ function makeBulkRow(d, isNew) {
     <td class="bec-vol">${inpHtml('vol','number',d.vol??'','min="1" placeholder="—"')}</td>
     <td class="bec-sub">${inpHtml('subtitle','text',d.subtitle||'','placeholder="—"')}</td>
     <td class="bec-years">${inpHtml('years','text',d.years||'','placeholder="e.g. 1966-1971"')}</td>
+    <td class="bec-issues">${inpHtml('issues_covered','text',d.issues_covered||'','placeholder="e.g. #1-24"')}</td>
     <td class="bec-date">${inpHtml('date','text',d.date||'','placeholder="YYYY-MM-DD"')}</td>
     <td class="bec-pages">${inpHtml('pages','number',d.pages??'','min="1" placeholder="—"')}</td>
     <td class="bec-lic">${selHtml('licensed',[['No','No'],['Yes','Yes']],d.licensed||'No')}</td>
@@ -2109,7 +2230,8 @@ function makeBulkRow(d, isNew) {
     <td class="bec-conf">${selHtml('conf',[['stojr verified','stojr Verified'],['verified','Verified (Wikipedia)'],['sourced','Sourced (Community)'],['estimated','Estimated']],d.conf||'sourced')}</td>
     <td class="bec-isbn"><input class="be-input" data-field="isbn" data-row="${rowId}" type="text" value="${escHtml(d.isbn||'')}" placeholder="978-…" oninput="markBulkDirty('${rowId}');scheduleBulkIsbn(this,'${rowId}')"></td>
     <td class="bec-writers">${inpHtml('writers','text',d.writers||'','placeholder="—"')}</td>
-    <td class="bec-artists">${inpHtml('artists','text',d.artists||'','placeholder="—"')}</td>`;
+    <td class="bec-artists">${inpHtml('artists','text',d.artists||'','placeholder="—"')}</td>
+    <td class="bec-sec-issues">${inpHtml('secondary_issues_covered','text',d.secondary_issues_covered||'','placeholder="—"')}</td>`;
   return tr;
 }
 
@@ -2140,8 +2262,8 @@ function bulkAddRow() {
   const tbody = document.getElementById('bulkTbody');
   const tempId = _beRowIdCounter--;
   const d = { _tempId: tempId, pub:'Marvel', type:'Epic', series:'', vol:null,
-    subtitle:'', years:'', date:'', pages:null, licensed:'No', reprint:'No',
-    conf:'sourced', isbn:'', writers:'', artists:'' };
+    subtitle:'', years:'', issues_covered:'', date:'', pages:null, licensed:'No', reprint:'No',
+    conf:'sourced', isbn:'', writers:'', artists:'', secondary_issues_covered:'' };
   const tr = makeBulkRow(d, true);
   tbody.appendChild(tr);
   setTimeout(() => {
@@ -2168,10 +2290,63 @@ function updateBulkStatus() {
   if (fi) fi.textContent = `${total} rows`;
 }
 
-function filterBulkRows(query) {
-  const q = query.trim().toLowerCase();
+function filterBulkRows(_query) {
+  // Delegate to the unified filter function that handles both global + column filters
+  applyBulkColFilters();
+}
+
+// ── Bulk Edit Column Sort ──────────────────────
+let _beSortCol = null, _beSortDir = 1;
+
+function sortBulkBy(col) {
+  if (_beSortCol === col) _beSortDir *= -1;
+  else { _beSortCol = col; _beSortDir = 1; }
+
+  // Update header arrow UI
+  document.querySelectorAll('.bulk-tbl thead th[data-sort]').forEach(th => {
+    const c = th.dataset.sort;
+    th.classList.toggle('be-sorted', c === _beSortCol);
+    const arrow = document.getElementById('bsa-' + c);
+    if (arrow) arrow.textContent = c === _beSortCol ? (_beSortDir === 1 ? ' ▼' : ' ▲') : '';
+  });
+
+  // Re-order rows in the DOM (preserves input values / modification state)
+  const tbody = document.getElementById('bulkTbody');
+  const rows = [...tbody.querySelectorAll('tr')];
+  rows.sort((a, b) => {
+    const aEl = a.querySelector(`[data-field="${col}"]`);
+    const bEl = b.querySelector(`[data-field="${col}"]`);
+    let av = aEl ? aEl.value : '';
+    let bv = bEl ? bEl.value : '';
+    const isNum = col === 'vol' || col === 'pages';
+    if (isNum) { av = parseFloat(av) || 0; bv = parseFloat(bv) || 0; return (av - bv) * _beSortDir; }
+    av = av.toLowerCase(); bv = bv.toLowerCase();
+    return av < bv ? -_beSortDir : av > bv ? _beSortDir : 0;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+  applyBulkColFilters();
+}
+
+// ── Bulk Edit Column Filters ───────────────────
+function applyBulkColFilters() {
+  const filters = [...document.querySelectorAll('.be-col-filter')]
+    .map(el => ({ col: el.dataset.colFilter, q: el.value.trim().toLowerCase() }))
+    .filter(f => f.q);
+  const globalQ = document.getElementById('bulkSearch').value.trim().toLowerCase();
+
   document.querySelectorAll('#bulkTbody tr').forEach(tr => {
-    tr.style.display = (!q || tr.textContent.toLowerCase().includes(q)) ? '' : 'none';
+    // Global search
+    if (globalQ) {
+      const hay = [...tr.querySelectorAll('input,select')].map(el => el.value).join(' ').toLowerCase();
+      if (!hay.includes(globalQ)) { tr.style.display = 'none'; return; }
+    }
+    // Column filters
+    for (const { col, q } of filters) {
+      const el = tr.querySelector(`[data-field="${col}"]`);
+      const val = el ? el.value.toLowerCase() : '';
+      if (!val.includes(q)) { tr.style.display = 'none'; return; }
+    }
+    tr.style.display = '';
   });
   updateBulkStatus();
 }
@@ -2181,25 +2356,55 @@ function scheduleBulkIsbn(input, rowId) {
   _beIsbnTimers[rowId] = setTimeout(() => autofillBulkIsbn(input, rowId), 900);
 }
 
+function onBulkFieldChange(rowId) {
+  markBulkDirty(rowId);
+  // DC Finest: try ISBN auto-population when series + years are filled
+  const tr = document.querySelector(`#bulkTbody tr[data-row-id="${rowId}"]`);
+  if (!tr) return;
+  const type   = tr.querySelector('[data-field="type"]')?.value;
+  const series = tr.querySelector('[data-field="series"]')?.value.trim();
+  const years  = tr.querySelector('[data-field="years"]')?.value.trim();
+  const isbnEl = tr.querySelector('[data-field="isbn"]');
+  if (type !== 'DC Finest' || !series || !years || !isbnEl) return;
+  if (isbnEl.value.trim()) return; // already set
+  const isbn = lookupDcFinestIsbn(series, years);
+  if (isbn) {
+    isbnEl.value = isbn;
+    markBulkDirty(rowId);
+    showToast('✓ DC Finest ISBN auto-populated');
+  }
+}
+
 async function autofillBulkIsbn(input, rowId) {
   const isbn = input.value.trim().replace(/-/g,'');
   if (isbn.length < 10) return;
   const tr = document.querySelector(`#bulkTbody tr[data-row-id="${rowId}"]`);
   if (!tr) return;
-  const seriesEl = tr.querySelector('[data-field="series"]');
-  const pagesEl  = tr.querySelector('[data-field="pages"]');
-  const dateEl   = tr.querySelector('[data-field="date"]');
-  // Only auto-fill if series is still blank
-  if (seriesEl && seriesEl.value.trim()) return;
+
+  const getEl = f => tr.querySelector(`[data-field="${f}"]`);
+  const setIfBlank = (field, val) => {
+    if (!val) return;
+    const el = getEl(field);
+    if (el && !el.value.trim()) el.value = val;
+  };
+
+  // Only proceed if at least series or pages is blank (same guard as form view)
+  const hasData = getEl('series')?.value.trim() && getEl('pages')?.value.trim();
+  if (hasData) return;
+
   try {
     const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
     if (!r.ok) return;
     const data = await r.json();
     const info = data?.items?.[0]?.volumeInfo;
     if (!info) return;
-    if (seriesEl && !seriesEl.value.trim() && info.title)       seriesEl.value = info.title;
-    if (pagesEl  && !pagesEl.value.trim()  && info.pageCount)   pagesEl.value  = info.pageCount;
-    if (dateEl   && !dateEl.value.trim()   && info.publishedDate) dateEl.value  = info.publishedDate.slice(0,10);
+
+    setIfBlank('series',   info.title);
+    setIfBlank('subtitle', info.subtitle);
+    setIfBlank('pages',    info.pageCount);
+    if (info.publishedDate) setIfBlank('date', info.publishedDate.slice(0,10));
+    if (info.authors?.length) setIfBlank('writers', info.authors.join(', '));
+
     markBulkDirty(rowId);
     showToast('✓ ISBN fields populated');
   } catch(e) {}
@@ -2208,20 +2413,22 @@ async function autofillBulkIsbn(input, rowId) {
 function readBulkRowData(tr) {
   const get = f => { const el = tr.querySelector(`[data-field="${f}"]`); return el ? el.value.trim() : ''; };
   return {
-    pub:      get('pub'),
-    type:     get('type'),
-    series:   get('series'),
-    vol:      get('vol')   ? parseInt(get('vol'))   : null,
-    subtitle: get('subtitle') || null,
-    years:    get('years')    || null,
-    date:     get('date')     || null,
-    pages:    get('pages') ? parseInt(get('pages')) : null,
-    licensed: get('licensed'),
-    reprint:  get('reprint'),
-    conf:     get('conf'),
-    isbn:     get('isbn')     || null,
-    writers:  get('writers')  || null,
-    artists:  get('artists')  || null,
+    pub:                       get('pub'),
+    type:                      get('type'),
+    series:                    get('series'),
+    vol:                       get('vol')   ? parseInt(get('vol'))   : null,
+    subtitle:                  get('subtitle') || null,
+    years:                     get('years')    || null,
+    issues_covered:            get('issues_covered') || null,
+    date:                      get('date')     || null,
+    pages:                     get('pages') ? parseInt(get('pages')) : null,
+    licensed:                  get('licensed'),
+    reprint:                   get('reprint'),
+    conf:                      get('conf'),
+    isbn:                      get('isbn')     || null,
+    writers:                   get('writers')  || null,
+    artists:                   get('artists')  || null,
+    secondary_issues_covered:  get('secondary_issues_covered') || null,
   };
 }
 
