@@ -344,6 +344,46 @@ footer a{color:var(--gold);text-decoration:none}
 .ft-hosts{margin-top:3px;color:var(--muted);font-size:13px}
 .ft-hosts .fs{color:var(--stojr)}.ft-hosts .fn{color:var(--nick)}
 
+/* ─── BULK EDIT SCREEN ─── */
+.bulk-overlay{position:fixed;inset:0;background:var(--bg);z-index:150;display:none;flex-direction:column;overflow:hidden}
+.bulk-overlay.open{display:flex}
+.bulk-hdr{background:var(--surface);border-bottom:2px solid var(--border2);padding:12px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.bulk-hdr-title{font-family:var(--hf);font-size:26px;letter-spacing:1px;color:var(--gold)}
+.bulk-hdr-sub{font-family:var(--cf);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.bulk-hdr-spacer{flex:1;min-width:8px}
+.bulk-status{font-family:var(--cf);font-size:12px;letter-spacing:1px;color:var(--muted);white-space:nowrap}
+.bulk-status.dirty{color:var(--orange)}
+.bulk-body{flex:1;overflow:auto}
+.bulk-tbl{border-collapse:collapse;font-size:13px;min-width:max-content;width:100%}
+.bulk-tbl thead th{position:sticky;top:0;z-index:5;background:var(--surface2);border-bottom:2px solid var(--border2);border-right:1px solid var(--border);padding:7px 6px;font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;text-align:left}
+.bulk-tbl tbody tr{border-bottom:1px solid var(--border)}
+.bulk-tbl tbody tr:hover{background:var(--surface2)}
+.bulk-tbl tbody tr.be-modified{background:rgba(255,210,52,.05)}
+.bulk-tbl tbody tr.be-modified td:first-child{border-left:3px solid var(--gold)}
+.bulk-tbl tbody tr.be-new{background:rgba(62,255,138,.04)}
+.bulk-tbl tbody tr.be-new td:first-child{border-left:3px solid var(--green)}
+.bulk-tbl tbody tr.be-delete{opacity:.3}
+.bulk-tbl tbody tr.be-delete td:first-child{border-left:3px solid var(--red)}
+.bulk-tbl td{padding:2px 3px;vertical-align:middle;border-right:1px solid var(--border)}
+.be-input,.be-select{background:transparent;border:1px solid transparent;border-radius:3px;color:var(--text);font-family:var(--bf);font-size:13px;padding:3px 5px;height:28px;width:100%;box-sizing:border-box;transition:border-color .1s}
+.be-input:focus,.be-select:focus{outline:none;border-color:var(--gold);background:var(--surface2)}
+.be-input.required-empty{border-color:var(--red)!important;background:rgba(255,65,54,.08)!important}
+.be-select{cursor:pointer}
+.bec-del{width:36px;text-align:center}
+.bec-pub{min-width:78px}.bec-type{min-width:110px}
+.bec-series{min-width:180px}.bec-vol{min-width:54px}
+.bec-sub{min-width:160px}.bec-years{min-width:90px}
+.bec-date{min-width:104px}.bec-pages{min-width:62px}
+.bec-lic{min-width:72px}.bec-rep{min-width:72px}
+.bec-conf{min-width:140px}.bec-isbn{min-width:132px}
+.bec-writers{min-width:150px}.bec-artists{min-width:150px}
+.be-del-btn{width:26px;height:26px;border-radius:3px;border:1.5px solid var(--border2);background:transparent;cursor:pointer;color:var(--dimtext);display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s;margin:0 auto;flex-shrink:0}
+.be-del-btn:hover{border-color:var(--red);color:var(--red)}
+.be-del-btn.undo-del{border-color:var(--orange);color:var(--orange)}
+.bulk-footer{background:var(--surface);border-top:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.bulk-search{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:13px;padding:5px 10px;height:32px;width:180px}
+.bulk-search:focus{outline:none;border-color:var(--gold)}
+
 /* ─── LOADING OVERLAY ─── */
 .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s}
 .loading-overlay.hidden{opacity:0;pointer-events:none}
@@ -546,6 +586,7 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="fbar-break"></div>
     <!-- Desktop "Add Entry" button — hidden on mobile (FAB takes over) -->
     <button class="rbtn primary add-desktop" onclick="openAddModal()" title="Add new entry">＋ Add Entry</button>
+    <button class="rbtn add-desktop" onclick="openBulkEdit()" title="Bulk edit all entries">✎ Bulk Edit</button>
     <button class="rbtn" onclick="exportCSV(false)">⬇ Export View</button>
     <button class="rbtn" onclick="exportCSV(true)">⬇ Export All</button>
     <button class="rbtn" onclick="resetAll()">↺ Reset</button>
@@ -792,6 +833,53 @@ footer a{color:var(--gold);text-decoration:none}
   </div>
 </div>
 
+<!-- ═══ BULK EDIT SCREEN ═══ -->
+<div class="bulk-overlay" id="bulkOverlay">
+  <div class="bulk-hdr">
+    <div>
+      <div class="bulk-hdr-title">Bulk Edit</div>
+      <div class="bulk-hdr-sub">Spreadsheet · All Entries</div>
+    </div>
+    <input type="text" class="bulk-search" id="bulkSearch" placeholder="Filter rows…" oninput="filterBulkRows(this.value)">
+    <span class="bulk-status" id="bulkStatus">0 rows</span>
+    <div class="bulk-hdr-spacer"></div>
+    <button class="rbtn" onclick="bulkAddRow()">＋ Add Row</button>
+    <button class="rbtn primary" id="bulkSaveBtn" onclick="saveBulkEdits()">Save All</button>
+    <button class="rbtn" onclick="closeBulkEdit()">✕ Close</button>
+  </div>
+  <div class="bulk-body" id="bulkBody">
+    <table class="bulk-tbl">
+      <thead>
+        <tr>
+          <th class="bec-del">Del</th>
+          <th class="bec-pub">Publisher</th>
+          <th class="bec-type">Type</th>
+          <th class="bec-series">Series *</th>
+          <th class="bec-vol">Vol</th>
+          <th class="bec-sub">Subtitle</th>
+          <th class="bec-years">Years</th>
+          <th class="bec-date">Release Date</th>
+          <th class="bec-pages">Pages</th>
+          <th class="bec-lic">Licensed</th>
+          <th class="bec-rep">Reprint</th>
+          <th class="bec-conf">Confidence</th>
+          <th class="bec-isbn">ISBN</th>
+          <th class="bec-writers">Writers</th>
+          <th class="bec-artists">Artists</th>
+        </tr>
+      </thead>
+      <tbody id="bulkTbody"></tbody>
+    </table>
+  </div>
+  <div class="bulk-footer">
+    <button class="rbtn" onclick="bulkAddRow()">＋ Add Row</button>
+    <span style="font-family:var(--cf);font-size:12px;color:var(--muted)" id="bulkFooterInfo"></span>
+    <div style="flex:1"></div>
+    <button class="rbtn primary" onclick="saveBulkEdits()">Save All Changes</button>
+    <button class="rbtn" onclick="closeBulkEdit()">Close</button>
+  </div>
+</div>
+
 <!-- ═══ CONFIRM DELETE ═══ -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
@@ -1017,6 +1105,22 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('entryModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
+  });
+
+  // Bulk edit: Enter key moves focus to same column in next row
+  document.getElementById('bulkBody').addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeBulkEdit(); return; }
+    if (e.key === 'Enter' && (e.target.tagName === 'INPUT')) {
+      e.preventDefault();
+      const td = e.target.closest('td');
+      const tr = e.target.closest('tr');
+      const nextTr = tr?.nextElementSibling;
+      if (nextTr && !nextTr.classList.contains('be-delete')) {
+        const idx = [...tr.cells].indexOf(td);
+        const nextInput = nextTr.cells[idx]?.querySelector('input,select');
+        if (nextInput) { nextInput.focus(); nextInput.select?.(); }
+      }
+    }
   });
 });
 
@@ -1943,6 +2047,259 @@ function exportCSV(all) {
   const a=document.createElement('a');a.href=url;
   a.download=`bce_epic_database_${all?'all':'filtered'}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();URL.revokeObjectURL(url);
+}
+
+// ── Bulk Edit ──────────────────────────────────
+let _beRowIdCounter = -1; // negative temp IDs for new rows
+let _beIsbnTimers = {};
+
+function openBulkEdit() {
+  _beRowIdCounter = -1;
+  _beIsbnTimers = {};
+  document.getElementById('bulkSearch').value = '';
+  const rows = [...ALL_DATA].sort(defaultSort);
+  buildBulkTable(rows);
+  document.getElementById('bulkOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBulkEdit() {
+  const dirty = document.querySelectorAll('#bulkTbody tr.be-modified, #bulkTbody tr.be-new, #bulkTbody tr.be-delete').length;
+  if (dirty > 0 && !confirm(`You have ${dirty} unsaved change(s). Discard and close?`)) return;
+  document.getElementById('bulkOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function buildBulkTable(rows) {
+  const tbody = document.getElementById('bulkTbody');
+  const frag = document.createDocumentFragment();
+  rows.forEach(d => frag.appendChild(makeBulkRow(d, false)));
+  tbody.innerHTML = '';
+  tbody.appendChild(frag);
+  updateBulkStatus();
+}
+
+function makeBulkRow(d, isNew) {
+  const tr = document.createElement('tr');
+  const rowId = isNew ? d._tempId : d.id;
+  tr.dataset.rowId = rowId;
+  tr.dataset.isNew = isNew ? '1' : '0';
+  if (isNew) tr.classList.add('be-new');
+
+  const selHtml = (field, opts, val) =>
+    `<select class="be-select" data-field="${field}" data-row="${rowId}" onchange="markBulkDirty('${rowId}')">${
+      opts.map(([v,l]) => `<option value="${v}"${val===v?' selected':''}>${l}</option>`).join('')
+    }</select>`;
+
+  const inpHtml = (field, type, val, extra='') =>
+    `<input class="be-input" data-field="${field}" data-row="${rowId}" type="${type}" value="${escHtml(String(val??''))}" ${extra} oninput="markBulkDirty('${rowId}')">`;
+
+  tr.innerHTML = `
+    <td class="bec-del"><button class="be-del-btn" onclick="bulkToggleDelete(this,'${rowId}')" title="Delete row">✕</button></td>
+    <td class="bec-pub">${selHtml('pub',[['Marvel','Marvel'],['DC','DC']],d.pub||'Marvel')}</td>
+    <td class="bec-type">${selHtml('type',[['Epic','Classic Epic'],['Modern','Modern Era'],['Ultimate','Ultimate'],['DC Finest','DC Finest'],['Omnibus','Omnibus']],d.type||'Epic')}</td>
+    <td class="bec-series">${inpHtml('series','text',d.series||'','placeholder="Series title *"')}</td>
+    <td class="bec-vol">${inpHtml('vol','number',d.vol??'','min="1" placeholder="—"')}</td>
+    <td class="bec-sub">${inpHtml('subtitle','text',d.subtitle||'','placeholder="—"')}</td>
+    <td class="bec-years">${inpHtml('years','text',d.years||'','placeholder="e.g. 1966-1971"')}</td>
+    <td class="bec-date">${inpHtml('date','text',d.date||'','placeholder="YYYY-MM-DD"')}</td>
+    <td class="bec-pages">${inpHtml('pages','number',d.pages??'','min="1" placeholder="—"')}</td>
+    <td class="bec-lic">${selHtml('licensed',[['No','No'],['Yes','Yes']],d.licensed||'No')}</td>
+    <td class="bec-rep">${selHtml('reprint',[['No','No'],['Yes','Yes']],d.reprint||'No')}</td>
+    <td class="bec-conf">${selHtml('conf',[['stojr verified','stojr Verified'],['verified','Verified (Wikipedia)'],['sourced','Sourced (Community)'],['estimated','Estimated']],d.conf||'sourced')}</td>
+    <td class="bec-isbn"><input class="be-input" data-field="isbn" data-row="${rowId}" type="text" value="${escHtml(d.isbn||'')}" placeholder="978-…" oninput="markBulkDirty('${rowId}');scheduleBulkIsbn(this,'${rowId}')"></td>
+    <td class="bec-writers">${inpHtml('writers','text',d.writers||'','placeholder="—"')}</td>
+    <td class="bec-artists">${inpHtml('artists','text',d.artists||'','placeholder="—"')}</td>`;
+  return tr;
+}
+
+function markBulkDirty(rowId) {
+  const tr = document.querySelector(`#bulkTbody tr[data-row-id="${rowId}"]`);
+  if (!tr || tr.dataset.isNew === '1' || tr.classList.contains('be-delete')) return;
+  tr.classList.add('be-modified');
+  updateBulkStatus();
+}
+
+function bulkToggleDelete(btn, rowId) {
+  const tr = document.querySelector(`#bulkTbody tr[data-row-id="${rowId}"]`);
+  if (!tr) return;
+  if (tr.dataset.isNew === '1') {
+    tr.remove();
+    updateBulkStatus();
+    return;
+  }
+  const deleting = !tr.classList.contains('be-delete');
+  tr.classList.toggle('be-delete', deleting);
+  btn.classList.toggle('undo-del', deleting);
+  btn.title = deleting ? 'Undo delete' : 'Delete row';
+  tr.querySelectorAll('.be-input,.be-select').forEach(el => el.disabled = deleting);
+  updateBulkStatus();
+}
+
+function bulkAddRow() {
+  const tbody = document.getElementById('bulkTbody');
+  const tempId = _beRowIdCounter--;
+  const d = { _tempId: tempId, pub:'Marvel', type:'Epic', series:'', vol:null,
+    subtitle:'', years:'', date:'', pages:null, licensed:'No', reprint:'No',
+    conf:'sourced', isbn:'', writers:'', artists:'' };
+  const tr = makeBulkRow(d, true);
+  tbody.appendChild(tr);
+  setTimeout(() => {
+    tr.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    tr.querySelector('[data-field="series"]')?.focus();
+  }, 50);
+  updateBulkStatus();
+}
+
+function updateBulkStatus() {
+  const tbody = document.getElementById('bulkTbody');
+  const total   = tbody.querySelectorAll('tr').length;
+  const modified = tbody.querySelectorAll('tr.be-modified').length;
+  const newRows  = tbody.querySelectorAll('tr.be-new').length;
+  const delRows  = tbody.querySelectorAll('tr.be-delete').length;
+  const parts = [];
+  if (modified) parts.push(`${modified} modified`);
+  if (newRows)  parts.push(`${newRows} new`);
+  if (delRows)  parts.push(`${delRows} to delete`);
+  const el = document.getElementById('bulkStatus');
+  const fi = document.getElementById('bulkFooterInfo');
+  if (parts.length) { el.textContent = parts.join(' · '); el.classList.add('dirty'); }
+  else              { el.textContent = `${total} rows`;  el.classList.remove('dirty'); }
+  if (fi) fi.textContent = `${total} rows`;
+}
+
+function filterBulkRows(query) {
+  const q = query.trim().toLowerCase();
+  document.querySelectorAll('#bulkTbody tr').forEach(tr => {
+    tr.style.display = (!q || tr.textContent.toLowerCase().includes(q)) ? '' : 'none';
+  });
+  updateBulkStatus();
+}
+
+function scheduleBulkIsbn(input, rowId) {
+  clearTimeout(_beIsbnTimers[rowId]);
+  _beIsbnTimers[rowId] = setTimeout(() => autofillBulkIsbn(input, rowId), 900);
+}
+
+async function autofillBulkIsbn(input, rowId) {
+  const isbn = input.value.trim().replace(/-/g,'');
+  if (isbn.length < 10) return;
+  const tr = document.querySelector(`#bulkTbody tr[data-row-id="${rowId}"]`);
+  if (!tr) return;
+  const seriesEl = tr.querySelector('[data-field="series"]');
+  const pagesEl  = tr.querySelector('[data-field="pages"]');
+  const dateEl   = tr.querySelector('[data-field="date"]');
+  // Only auto-fill if series is still blank
+  if (seriesEl && seriesEl.value.trim()) return;
+  try {
+    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
+    if (!r.ok) return;
+    const data = await r.json();
+    const info = data?.items?.[0]?.volumeInfo;
+    if (!info) return;
+    if (seriesEl && !seriesEl.value.trim() && info.title)       seriesEl.value = info.title;
+    if (pagesEl  && !pagesEl.value.trim()  && info.pageCount)   pagesEl.value  = info.pageCount;
+    if (dateEl   && !dateEl.value.trim()   && info.publishedDate) dateEl.value  = info.publishedDate.slice(0,10);
+    markBulkDirty(rowId);
+    showToast('✓ ISBN fields populated');
+  } catch(e) {}
+}
+
+function readBulkRowData(tr) {
+  const get = f => { const el = tr.querySelector(`[data-field="${f}"]`); return el ? el.value.trim() : ''; };
+  return {
+    pub:      get('pub'),
+    type:     get('type'),
+    series:   get('series'),
+    vol:      get('vol')   ? parseInt(get('vol'))   : null,
+    subtitle: get('subtitle') || null,
+    years:    get('years')    || null,
+    date:     get('date')     || null,
+    pages:    get('pages') ? parseInt(get('pages')) : null,
+    licensed: get('licensed'),
+    reprint:  get('reprint'),
+    conf:     get('conf'),
+    isbn:     get('isbn')     || null,
+    writers:  get('writers')  || null,
+    artists:  get('artists')  || null,
+  };
+}
+
+async function saveBulkEdits() {
+  const tbody = document.getElementById('bulkTbody');
+  const modRows = [...tbody.querySelectorAll('tr.be-modified')];
+  const newRows  = [...tbody.querySelectorAll('tr.be-new')];
+  const delRows  = [...tbody.querySelectorAll('tr.be-delete')];
+
+  if (!modRows.length && !newRows.length && !delRows.length) {
+    showToast('No changes to save'); return;
+  }
+  // Validate series required for changed/new rows
+  for (const tr of [...modRows, ...newRows]) {
+    const inp = tr.querySelector('[data-field="series"]');
+    if (!inp || !inp.value.trim()) {
+      inp?.classList.add('required-empty'); inp?.focus();
+      showToast('Series title is required', true); return;
+    }
+    inp.classList.remove('required-empty');
+  }
+  if (delRows.length && !confirm(`Permanently delete ${delRows.length} row(s)? This cannot be undone.`)) return;
+
+  const saveBtn = document.getElementById('bulkSaveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+  setSyncing(true);
+  let saved = 0, errors = 0;
+
+  // 1. Deletes
+  for (const tr of delRows) {
+    const id = parseInt(tr.dataset.rowId);
+    try {
+      await sbDelete('comic_entries', `id=eq.${id}`);
+      try { await sbDelete('user_data', `entry_id=eq.${id}`); } catch(e){}
+      const idx = ALL_DATA.findIndex(x=>x.id===id);
+      if (idx !== -1) ALL_DATA.splice(idx, 1);
+      delete USER_DATA[id];
+      tr.remove(); saved++;
+    } catch(e) { console.error('Bulk delete failed:', e); errors++; }
+  }
+
+  // 2. Updates
+  for (const tr of modRows) {
+    const id = parseInt(tr.dataset.rowId);
+    const body = readBulkRowData(tr);
+    try {
+      const result = await sbUpdate('comic_entries', `id=eq.${id}`, body);
+      const updated = Array.isArray(result) ? result[0] : result;
+      const idx = ALL_DATA.findIndex(x=>x.id===id);
+      if (idx !== -1) ALL_DATA[idx] = updated || { ...ALL_DATA[idx], ...body, id };
+      tr.classList.remove('be-modified'); saved++;
+    } catch(e) { console.error('Bulk update failed:', e); errors++; }
+  }
+
+  // 3. Inserts
+  for (const tr of newRows) {
+    const body = readBulkRowData(tr);
+    if (!body.series) continue;
+    const insertBody = Object.fromEntries(Object.entries(body).filter(([,v]) => v !== null));
+    try {
+      const result = await sbInsert('comic_entries', insertBody);
+      const newEntry = Array.isArray(result) ? result[0] : result;
+      ALL_DATA.push(newEntry);
+      const realTr = makeBulkRow(newEntry, false);
+      tr.replaceWith(realTr); saved++;
+    } catch(e) { console.error('Bulk insert failed:', e); errors++; }
+  }
+
+  saveBtn.disabled = false; saveBtn.textContent = 'Save All';
+  setSyncing(false);
+
+  if (errors) {
+    showToast(`${saved} saved · ${errors} failed`, true);
+  } else {
+    showToast(`✓ ${saved} change(s) saved`);
+    populateYearFilter(); applyFilters();
+  }
+  updateBulkStatus();
 }
 
 // ── Reset ──────────────────────────────────────
