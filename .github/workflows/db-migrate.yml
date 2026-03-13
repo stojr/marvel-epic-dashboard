@@ -57,12 +57,12 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PGCONNECT_TIMEOUT: 15
         run: |
           CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
           echo "Testing connection…"
           psql "$CONN" \
             -c "SELECT version();" \
-            --connect-timeout=15 \
             -v ON_ERROR_STOP=1
           echo "✓ Connection successful"
 
@@ -70,21 +70,21 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PGCONNECT_TIMEOUT: 15
         run: |
           CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
           psql "$CONN" \
             --file=supabase-migration.sql \
-            --connect-timeout=15 \
             -v ON_ERROR_STOP=1
 
       - name: Confirm columns exist
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PGCONNECT_TIMEOUT: 15
         run: |
           CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
           psql "$CONN" \
-            --connect-timeout=15 \
             -c "SELECT column_name, data_type FROM information_schema.columns
                 WHERE table_name='comic_entries'
                   AND column_name IN (
