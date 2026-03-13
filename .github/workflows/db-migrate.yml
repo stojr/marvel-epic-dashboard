@@ -22,24 +22,45 @@ jobs:
       - name: Install psql
         run: sudo apt-get install -y postgresql-client
 
-      - name: Verify SUPABASE_DB_PASSWORD secret is set
+      # ---------------------------------------------------------------------------
+      # Connection notes:
+      #   Newer Supabase projects use IPv6-only for direct connections, but
+      #   GitHub Actions runners are IPv4-only — causing psql exit code 2.
+      #
+      #   RECOMMENDED FIX: set SUPABASE_DB_URL to the Session Pooler connection
+      #   string from your Supabase dashboard (IPv4 + IPv6 compatible):
+      #     Project Settings → Database → Connection string → Session mode
+      #     e.g. postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres
+      #
+      #   If SUPABASE_DB_URL is not set, the workflow falls back to the direct
+      #   connection using SUPABASE_DB_PASSWORD (works only on IPv6-capable runners).
+      # ---------------------------------------------------------------------------
+
+      - name: Verify database credentials are set
         run: |
-          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
-            echo "::error::SUPABASE_DB_PASSWORD secret is not set."
+          if [ -z "${{ secrets.SUPABASE_DB_URL }}" ] && [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+            echo "::error::No database credentials found. Set either:"
+            echo "  SUPABASE_DB_URL  — full Session Pooler connection string from Supabase dashboard (recommended)"
+            echo "  SUPABASE_DB_PASSWORD — Supabase database password (direct connection, may fail on IPv4 runners)"
+            echo ""
             echo "Go to: Settings → Secrets and variables → Actions → New repository secret"
-            echo "Name: SUPABASE_DB_PASSWORD"
-            echo "Value: your Supabase database password (found in Project Settings → Database → Connection string)"
             exit 1
           fi
-          echo "✓ SUPABASE_DB_PASSWORD secret is present"
+          if [ -n "${{ secrets.SUPABASE_DB_URL }}" ]; then
+            echo "✓ SUPABASE_DB_URL is set (Session Pooler — IPv4 compatible)"
+          else
+            echo "⚠ SUPABASE_DB_URL not set — using direct connection with SUPABASE_DB_PASSWORD"
+            echo "  If the workflow fails with exit code 2, set SUPABASE_DB_URL to the Session Pooler URL."
+          fi
 
       - name: Test database connectivity
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          echo "Testing connection to Supabase…"
-          psql \
-            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require" \
+          CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
+          echo "Testing connection…"
+          psql "$CONN" \
             -c "SELECT version();" \
             --connect-timeout=15 \
             -v ON_ERROR_STOP=1
@@ -48,9 +69,10 @@ jobs:
       - name: Run migration
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          psql \
-            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require" \
+          CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
+          psql "$CONN" \
             --file=supabase-migration.sql \
             --connect-timeout=15 \
             -v ON_ERROR_STOP=1
@@ -58,9 +80,10 @@ jobs:
       - name: Confirm columns exist
         env:
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          psql \
-            "postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require" \
+          CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
+          psql "$CONN" \
             --connect-timeout=15 \
             -c "SELECT column_name, data_type FROM information_schema.columns
                 WHERE table_name='comic_entries'
