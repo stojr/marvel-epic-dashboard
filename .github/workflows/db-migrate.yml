@@ -19,7 +19,7 @@ jobs:
     # direct host (db.*.supabase.co) is IPv6-only and GitHub Actions runners are
     # IPv4-only. Session Pooler supports both IPv4 and IPv6.
     env:
-      DB_URL: "postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
+      DB_URL: "postgresql://postgres.quxuidnmewcmovjbnfgy@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
       PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       PGCONNECT_TIMEOUT: 15
 
