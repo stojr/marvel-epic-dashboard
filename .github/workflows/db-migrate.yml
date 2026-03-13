@@ -24,16 +24,11 @@ jobs:
 
       # ---------------------------------------------------------------------------
       # Connection notes:
-      #   Newer Supabase projects use IPv6-only for direct connections, but
-      #   GitHub Actions runners are IPv4-only — causing psql exit code 2.
-      #
-      #   RECOMMENDED FIX: set SUPABASE_DB_URL to the Session Pooler connection
-      #   string from your Supabase dashboard (IPv4 + IPv6 compatible):
-      #     Project Settings → Database → Connection string → Session mode
-      #     e.g. postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres
-      #
-      #   If SUPABASE_DB_URL is not set, the workflow falls back to the direct
-      #   connection using SUPABASE_DB_PASSWORD (works only on IPv6-capable runners).
+      #   The direct host (db.*.supabase.co) is IPv6-only for this project.
+      #   GitHub Actions runners are IPv4-only, so we use the Session Pooler
+      #   (aws-0-us-east-1.pooler.supabase.com) which supports IPv4 + IPv6.
+      #   SUPABASE_DB_PASSWORD is used for auth; SUPABASE_DB_URL overrides
+      #   the entire connection string if set.
       # ---------------------------------------------------------------------------
 
       - name: Verify database credentials are set
@@ -49,8 +44,7 @@ jobs:
           if [ -n "${{ secrets.SUPABASE_DB_URL }}" ]; then
             echo "✓ SUPABASE_DB_URL is set (Session Pooler — IPv4 compatible)"
           else
-            echo "⚠ SUPABASE_DB_URL not set — using direct connection with SUPABASE_DB_PASSWORD"
-            echo "  If the workflow fails with exit code 2, set SUPABASE_DB_URL to the Session Pooler URL."
+            echo "✓ Using Session Pooler with SUPABASE_DB_PASSWORD"
           fi
 
       - name: Test database connectivity
@@ -59,7 +53,7 @@ jobs:
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           PGCONNECT_TIMEOUT: 15
         run: |
-          CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
+          CONN="${DB_URL:-postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require}"
           echo "Testing connection…"
           psql "$CONN" \
             -c "SELECT version();" \
@@ -72,7 +66,7 @@ jobs:
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           PGCONNECT_TIMEOUT: 15
         run: |
-          CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
+          CONN="${DB_URL:-postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require}"
           psql "$CONN" \
             --file=supabase-migration.sql \
             -v ON_ERROR_STOP=1
@@ -83,7 +77,7 @@ jobs:
           DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           PGCONNECT_TIMEOUT: 15
         run: |
-          CONN="${DB_URL:-postgresql://postgres@db.quxuidnmewcmovjbnfgy.supabase.co:5432/postgres?sslmode=require}"
+          CONN="${DB_URL:-postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require}"
           psql "$CONN" \
             -c "SELECT column_name, data_type FROM information_schema.columns
                 WHERE table_name='comic_entries'
