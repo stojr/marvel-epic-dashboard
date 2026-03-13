@@ -494,13 +494,13 @@ footer a{color:var(--gold);text-decoration:none}
 .rv-overlay.open{display:flex}
 .rv-hdr{background:var(--surface);border-bottom:2px solid var(--border2);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
 .rv-title{font-family:var(--hf);font-size:26px;letter-spacing:1px;color:var(--gold);white-space:nowrap}
-.rv-search-wrap{position:relative;flex:1;min-width:180px;max-width:380px}
-.rv-search{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:5px 10px;height:34px;width:100%}
-.rv-search:focus{outline:none;border-color:var(--gold)}
-.rv-autocomplete{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--surface3);border:1px solid var(--border2);border-radius:var(--r);max-height:240px;overflow-y:auto;z-index:20;display:none}
-.rv-autocomplete.open{display:block}
-.rv-ac-item{padding:6px 10px;font-family:var(--bf);font-size:13px;cursor:pointer;border-bottom:1px solid var(--border)}
-.rv-ac-item:hover,.rv-ac-item.focused{background:var(--surface2);color:var(--gold)}
+/* Dropdown selector */
+.rv-select-wrap{position:relative;flex:1;min-width:200px;max-width:420px}
+.rv-select-wrap select{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:5px 30px 5px 10px;height:34px;width:100%;cursor:pointer;appearance:none;-webkit-appearance:none}
+.rv-select-wrap select:focus{outline:none;border-color:var(--gold)}
+.rv-select-wrap::after{content:'▾';position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:12px}
+.rv-select-wrap select option{background:var(--surface3);color:var(--text)}
+/* Type filter pills */
 .rv-type-pills{display:flex;gap:6px;flex-wrap:wrap}
 .rv-pill{padding:4px 12px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1.5px solid;cursor:pointer;transition:all .15s;user-select:none;opacity:.4}
 .rv-pill.on{opacity:1}
@@ -508,35 +508,91 @@ footer a{color:var(--gold);text-decoration:none}
 .rv-pill.modern{color:var(--gold);border-color:var(--gold)}.rv-pill.modern.on{background:#221c00}
 .rv-pill.omni{color:#c97ef5;border-color:#c97ef5}.rv-pill.omni.on{background:#1e0a28}
 .rv-pill.dc{color:var(--blue);border-color:var(--blue)}.rv-pill.dc.on{background:#0a1528}
+/* Multi-series mode toggle */
+.rv-mode-btn{padding:4px 12px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;background:transparent;white-space:nowrap}
+.rv-mode-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.1)}
 .rv-hdr-spacer{flex:1;min-width:4px}
+/* Body */
 .rv-body{flex:1;overflow-y:auto;padding:16px 20px}
 .rv-empty{color:var(--muted);font-family:var(--cf);font-size:14px;letter-spacing:2px;text-align:center;padding:60px 20px}
-.rv-group{margin-bottom:28px}
-.rv-group-label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid var(--border)}
-.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px 0}
-.rv-spine{background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:10px 12px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;width:170px;flex-shrink:0;display:flex;flex-direction:column;gap:3px}
-.rv-spine:hover{border-color:var(--gold);background:var(--surface2);transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.4)}
-.rv-spine-vol{font-family:var(--hf);font-size:22px;line-height:1;color:var(--text)}
-.rv-spine-series{font-family:var(--cf);font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rv-spine-years{font-family:var(--cf);font-size:10px;color:var(--dimtext)}
-.rv-spine-issues{font-family:var(--cf);font-size:11px;font-weight:700;color:var(--text)}
-.rv-spine-date{font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-top:auto;padding-top:3px}
-.rv-connector{display:flex;align-items:center;justify-content:center;width:22px;flex-shrink:0;align-self:stretch;position:relative;margin-top:4px;margin-bottom:4px}
+/* Group */
+.rv-group{margin-bottom:32px}
+.rv-group-label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+/* Card row */
+.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px 0}
+/* Volume card */
+.rv-spine{background:var(--surface);border:1px solid var(--border2);border-radius:6px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;width:180px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.rv-spine:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.rv-spine.placeholder{opacity:.55;cursor:default;border-style:dashed}
+.rv-spine.placeholder:hover{transform:none;box-shadow:none;border-color:var(--border2)}
+.rv-spine.highlighted{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,210,52,.35)}
+/* Cover section */
+.rv-spine-cover{width:100%;height:110px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.rv-spine-cover img{width:100%;height:100%;object-fit:cover}
+.rv-spine-cover-placeholder{font-family:var(--cf);font-size:9px;letter-spacing:1px;color:var(--dimtext);text-align:center}
+/* Card body */
+.rv-spine-body{padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+/* Top section: vol number + title */
+.rv-spine-top{display:flex;flex-direction:column;gap:1px;margin-bottom:4px}
+.rv-spine-vol{font-family:var(--hf);font-size:28px;line-height:1;color:var(--text)}
+.rv-spine-subtitle{font-family:var(--cf);font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+/* Middle section: issues + years big */
+.rv-spine-mid{display:flex;flex-direction:column;gap:3px;margin-top:4px}
+.rv-spine-issues{font-family:var(--cf);font-size:18px;font-weight:700;color:var(--text);letter-spacing:.5px;line-height:1}
+.rv-spine-years{font-family:var(--cf);font-size:15px;font-weight:600;color:var(--gold);letter-spacing:.5px;line-height:1}
+/* Missing label */
+.rv-spine-missing{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dimtext);margin-top:auto;padding-top:6px;border-top:1px dashed var(--border)}
+/* Connector between cards */
+.rv-connector{display:flex;align-items:center;justify-content:center;width:24px;flex-shrink:0;align-self:stretch;position:relative;margin-top:6px;margin-bottom:6px}
 .rv-connector-line{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--border)}
 .rv-connector.ok .rv-connector-line{background:var(--green)}
 .rv-connector.gap .rv-connector-line{background:repeating-linear-gradient(to bottom,var(--red) 0,var(--red) 5px,transparent 5px,transparent 9px)}
 .rv-connector.overlap .rv-connector-line{background:var(--orange)}
+.rv-connector.placeholder-conn .rv-connector-line{background:var(--border);opacity:.4}
 .rv-connector-badge{position:relative;z-index:1;font-family:var(--cf);font-size:8px;font-weight:700;padding:2px 3px;border-radius:2px;text-align:center;white-space:nowrap}
 .rv-connector.ok .rv-connector-badge{background:rgba(62,255,138,.18);color:var(--green);border:1px solid rgba(62,255,138,.35)}
 .rv-connector.gap .rv-connector-badge{background:rgba(255,65,54,.18);color:var(--red);border:1px dashed rgba(255,65,54,.5)}
 .rv-connector.overlap .rv-connector-badge{background:rgba(255,159,42,.18);color:var(--orange);border:1px solid rgba(255,159,42,.35)}
-.rv-footer{background:var(--surface);border-top:1px solid var(--border);padding:10px 20px;flex-shrink:0;display:flex;align-items:center;gap:12px}
-.rv-footer-label{font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
-.rv-cov-bar{flex:1;height:16px;background:var(--surface2);border-radius:3px;overflow:hidden;display:flex}
-.rv-cov-seg{height:100%}
-.rv-cov-seg.epic{background:#3a6fa8}.rv-cov-seg.modern{background:#a07800}
-.rv-cov-seg.omni{background:#8050b0}.rv-cov-seg.dc{background:#1a6db5}
-.rv-footer-info{font-family:var(--cf);font-size:11px;color:var(--muted);white-space:nowrap}
+/* ─── TIMELINE BAR ─── */
+.rv-timeline-wrap{background:var(--surface);border-top:1px solid var(--border);padding:14px 20px;flex-shrink:0}
+.rv-timeline-label{font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.rv-timeline-info{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0}
+.rv-timeline-outer{position:relative;margin-bottom:4px}
+/* Issue axis labels */
+.rv-timeline-axis{display:flex;justify-content:space-between;font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-bottom:3px;padding:0 2px}
+/* Year axis labels below bar */
+.rv-timeline-years{display:flex;justify-content:space-between;font-family:var(--cf);font-size:10px;color:var(--muted);margin-top:3px;padding:0 2px}
+/* The bar itself */
+.rv-tl-bar{width:100%;height:36px;background:var(--surface2);border-radius:4px;position:relative;overflow:visible;display:flex;align-items:stretch}
+/* Segments */
+.rv-tl-seg{position:absolute;top:0;bottom:0;border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:filter .15s,box-shadow .15s}
+.rv-tl-seg:hover{filter:brightness(1.25);box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.rv-tl-seg.highlighted{filter:brightness(1.3);box-shadow:0 0 0 2px var(--gold)}
+.rv-tl-seg.epic{background:#3a6fa8}.rv-tl-seg.modern{background:#a07800}
+.rv-tl-seg.omni{background:#8050b0}.rv-tl-seg.dc{background:#1a6db5}
+.rv-tl-seg-label{font-family:var(--cf);font-size:9px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 4px;pointer-events:none}
+/* Gap regions */
+.rv-tl-gap{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(255,65,54,.07) 0,rgba(255,65,54,.07) 4px,transparent 4px,transparent 8px);border-left:1px dashed rgba(255,65,54,.3);border-right:1px dashed rgba(255,65,54,.3);pointer-events:none}
+/* Tooltip */
+.rv-tl-tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:7px 10px;font-family:var(--cf);font-size:12px;color:var(--text);pointer-events:none;z-index:300;white-space:nowrap;display:none;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.rv-tl-tooltip.show{display:block}
+.rv-tl-tooltip-vol{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:3px}
+/* ─── MULTI-SERIES TIMELINE ─── */
+.rv-multi-wrap{padding:16px 20px}
+.rv-multi-select-wrap{margin-bottom:16px}
+.rv-multi-select-wrap label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.rv-multi-series-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.rv-ms-chip{padding:4px 12px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
+.rv-ms-chip.on{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.1)}
+.rv-multi-timeline{display:flex;flex-direction:column;gap:12px}
+.rv-mt-row{display:flex;align-items:center;gap:10px}
+.rv-mt-label{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--muted);width:160px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.rv-mt-bar-wrap{flex:1;position:relative;height:28px;background:var(--surface2);border-radius:3px}
+.rv-mt-seg{position:absolute;top:2px;bottom:2px;border-radius:2px;cursor:pointer;transition:filter .15s}
+.rv-mt-seg:hover{filter:brightness(1.3)}
+.rv-mt-seg.epic{background:#3a6fa8}.rv-mt-seg.modern{background:#a07800}
+.rv-mt-seg.omni{background:#8050b0}.rv-mt-seg.dc{background:#1a6db5}
+.rv-mt-axis{display:flex;justify-content:space-between;padding:0 0 0 170px;font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-top:-4px}
 </style>
 </head>
 <body>
@@ -952,29 +1008,54 @@ footer a{color:var(--gold);text-decoration:none}
 </div>
 
 <!-- ═══ RUN VIEW ═══ -->
+<div class="rv-tl-tooltip" id="rvTooltip"></div>
 <div class="rv-overlay" id="rvOverlay">
   <div class="rv-hdr">
     <div class="rv-title">📚 Run View</div>
-    <div class="rv-search-wrap">
-      <input type="text" class="rv-search" id="rvSearch" placeholder="Search series…" oninput="rvOnSearch(this.value)" onkeydown="rvKeyDown(event)" autocomplete="off">
-      <div class="rv-autocomplete" id="rvAC"></div>
+    <div class="rv-select-wrap">
+      <select id="rvSeriesSelect" onchange="rvSelectSeries(this.value)">
+        <option value="">— Select a series —</option>
+      </select>
     </div>
-    <div class="rv-type-pills">
+    <div class="rv-type-pills" id="rvTypePills">
       <span class="rv-pill epic on" data-type="Epic" onclick="rvTogglePill(this)">Classic Epic</span>
       <span class="rv-pill modern on" data-type="Modern" onclick="rvTogglePill(this)">Modern Era</span>
       <span class="rv-pill omni on" data-type="Omnibus" onclick="rvTogglePill(this)">Omnibus</span>
       <span class="rv-pill dc on" data-type="DC Finest" onclick="rvTogglePill(this)">DC Finest</span>
     </div>
+    <button class="rv-mode-btn" id="rvMultiBtn" onclick="rvToggleMultiMode()">⊞ Multi-Series</button>
     <div class="rv-hdr-spacer"></div>
     <button class="rbtn" onclick="rvClose()">✕ Close</button>
   </div>
-  <div class="rv-body" id="rvBody">
-    <div class="rv-empty">Search for a series above to view its issue run</div>
+  <!-- Single-series view -->
+  <div id="rvSingleView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="rv-body" id="rvBody">
+      <div class="rv-empty">Select a series above to view its issue run</div>
+    </div>
+    <div class="rv-timeline-wrap" id="rvTimelineWrap" style="display:none">
+      <div class="rv-timeline-label">
+        <span>Issue Coverage Timeline</span>
+        <span class="rv-timeline-info" id="rvTimelineInfo"></span>
+      </div>
+      <div class="rv-timeline-axis" id="rvTimelineAxisTop"></div>
+      <div class="rv-timeline-outer">
+        <div class="rv-tl-bar" id="rvTlBar"></div>
+      </div>
+      <div class="rv-timeline-years" id="rvTimelineYears"></div>
+    </div>
   </div>
-  <div class="rv-footer" id="rvFooter" style="display:none">
-    <span class="rv-footer-label">Coverage</span>
-    <div class="rv-cov-bar" id="rvCovBar"></div>
-    <span class="rv-footer-info" id="rvFooterInfo"></span>
+  <!-- Multi-series view -->
+  <div id="rvMultiView" style="display:none;flex:1;overflow-y:auto">
+    <div class="rv-multi-wrap">
+      <div class="rv-multi-select-wrap">
+        <label>Select series to compare</label>
+        <div class="rv-multi-series-list" id="rvMultiList"></div>
+      </div>
+      <div id="rvMultiTimelineWrap">
+        <div class="rv-mt-axis" id="rvMtAxis"></div>
+        <div class="rv-multi-timeline" id="rvMultiTimeline"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2589,177 +2670,335 @@ async function saveBulkEdits() {
 // ── RUN VIEW ────────────────────────────────────────────
 const RV = {
   series: null,
-  acItems: [],
-  acIdx: -1,
-  typeFilters: { 'Epic': true, 'Modern': true, 'Omnibus': true, 'DC Finest': true }
+  typeFilters: { 'Epic': true, 'Modern': true, 'Omnibus': true, 'DC Finest': true },
+  multiMode: false,
+  multiSelected: new Set(),
+  // Map: entryId -> timeline segment element (for hover cross-link)
+  segMap: {},
+  cardMap: {}
 };
 const RV_TYPE_ORDER  = ['Epic', 'Modern', 'Omnibus', 'DC Finest'];
 const RV_TYPE_CLASS  = { 'Epic':'epic', 'Modern':'modern', 'Omnibus':'omni', 'DC Finest':'dc' };
 const RV_TYPE_LABEL  = { 'Epic':'Classic Epic', 'Modern':'Modern Era', 'Omnibus':'Omnibus', 'DC Finest':'DC Finest' };
 
-function rvOpen() {
-  document.getElementById('rvOverlay').classList.add('open');
-  // Build the autocomplete list from live data
-  const seriesSet = new Set(
-    ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series)
-  );
-  RV.acItems = [...seriesSet].sort((a,b) => a.localeCompare(b));
-  RV.series = null;
-  RV.acIdx = -1;
-  document.getElementById('rvSearch').value = '';
-  document.getElementById('rvAC').classList.remove('open');
-  document.getElementById('rvBody').innerHTML = '<div class="rv-empty">Search for a series above to view its issue run</div>';
-  document.getElementById('rvFooter').style.display = 'none';
-  setTimeout(() => document.getElementById('rvSearch').focus(), 80);
-}
-
-function rvClose() {
-  document.getElementById('rvOverlay').classList.remove('open');
-  document.getElementById('rvAC').classList.remove('open');
-  RV.series = null;
-}
-
-function rvOnSearch(val) {
-  const q = val.trim().toLowerCase();
-  RV.acIdx = -1;
-  const ac = document.getElementById('rvAC');
-  if (!q) { ac.classList.remove('open'); return; }
-  const matches = RV.acItems.filter(s => s.toLowerCase().includes(q));
-  if (!matches.length) { ac.classList.remove('open'); return; }
-  ac.innerHTML = matches.slice(0, 30).map(s =>
-    `<div class="rv-ac-item" data-s="${rvEsc(s)}" onmousedown="rvSelectSeries('${rvEsc(s)}')">${rvHighlight(s, q)}</div>`
-  ).join('');
-  ac.classList.add('open');
-}
-
-function rvHighlight(str, q) {
-  const i = str.toLowerCase().indexOf(q);
-  if (i < 0) return str;
-  return str.slice(0,i) + `<b style="color:var(--gold)">${str.slice(i, i+q.length)}</b>` + str.slice(i+q.length);
-}
-
-function rvEsc(s) { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-
-function rvKeyDown(e) {
-  const ac = document.getElementById('rvAC');
-  const items = ac.querySelectorAll('.rv-ac-item');
-  if (e.key === 'Escape') { rvClose(); return; }
-  if (!items.length) return;
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    RV.acIdx = Math.min(RV.acIdx + 1, items.length - 1);
-    items.forEach((el,i) => el.classList.toggle('focused', i === RV.acIdx));
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    RV.acIdx = Math.max(RV.acIdx - 1, 0);
-    items.forEach((el,i) => el.classList.toggle('focused', i === RV.acIdx));
-  } else if (e.key === 'Enter') {
-    if (RV.acIdx >= 0 && items[RV.acIdx]) {
-      rvSelectSeries(items[RV.acIdx].dataset.s);
-    } else {
-      const val = document.getElementById('rvSearch').value.trim().toLowerCase();
-      const match = RV.acItems.find(s => s.toLowerCase().includes(val));
-      if (match) rvSelectSeries(match);
-    }
-  }
-}
-
-function rvSelectSeries(series) {
-  RV.series = series;
-  document.getElementById('rvSearch').value = series;
-  document.getElementById('rvAC').classList.remove('open');
-  rvRender();
-}
-
-function rvTogglePill(el) {
-  el.classList.toggle('on');
-  RV.typeFilters[el.dataset.type] = el.classList.contains('on');
-  rvRender();
-}
-
+// ── helpers ──
 function rvParseIssues(str) {
   if (!str) return null;
   const m = str.trim().match(/^#?(\d+)\s*[-\u2013\u2014]\s*(\d+)$/);
   if (!m) return null;
   return { start: parseInt(m[1]), end: parseInt(m[2]) };
 }
-
 function rvYearStart(yearsStr) {
   if (!yearsStr) return 9999;
   const m = yearsStr.match(/(\d{4})/);
   return m ? parseInt(m[1]) : 9999;
 }
+function rvYearEnd(yearsStr) {
+  if (!yearsStr) return 0;
+  const all = yearsStr.match(/\d{4}/g);
+  return all ? parseInt(all[all.length-1]) : 0;
+}
+function rvEsc(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;'); }
 
+// ── open / close ──
+function rvOpen() {
+  document.getElementById('rvOverlay').classList.add('open');
+  rvPopulateSelect();
+  RV.series = null;
+  document.getElementById('rvSeriesSelect').value = '';
+  document.getElementById('rvBody').innerHTML = '<div class="rv-empty">Select a series above to view its issue run</div>';
+  document.getElementById('rvTimelineWrap').style.display = 'none';
+  rvSetMultiMode(false);
+}
+function rvClose() {
+  document.getElementById('rvOverlay').classList.remove('open');
+  RV.series = null;
+}
+
+// Populate dropdown from live data
+function rvPopulateSelect() {
+  const sel = document.getElementById('rvSeriesSelect');
+  const seriesSet = new Set(
+    ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series)
+  );
+  const sorted = [...seriesSet].sort((a,b) => a.localeCompare(b));
+  // Preserve selection if possible
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Select a series —</option>' +
+    sorted.map(s => `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}</option>`).join('');
+  // Also populate multi-series chips
+  const list = document.getElementById('rvMultiList');
+  list.innerHTML = sorted.map(s =>
+    `<span class="rv-ms-chip${RV.multiSelected.has(s)?' on':''}" onclick="rvToggleMultiSeries('${rvEsc(s)}')">${rvEsc(s)}</span>`
+  ).join('');
+}
+
+function rvSelectSeries(series) {
+  if (!series) return;
+  RV.series = series;
+  rvRender();
+}
+
+function rvTogglePill(el) {
+  el.classList.toggle('on');
+  RV.typeFilters[el.dataset.type] = el.classList.contains('on');
+  if (RV.multiMode) rvRenderMulti();
+  else rvRender();
+}
+
+// ── Multi-series mode ──
+function rvToggleMultiMode() {
+  rvSetMultiMode(!RV.multiMode);
+}
+function rvSetMultiMode(on) {
+  RV.multiMode = on;
+  document.getElementById('rvMultiBtn').classList.toggle('on', on);
+  document.getElementById('rvSingleView').style.display = on ? 'none' : 'flex';
+  document.getElementById('rvMultiView').style.display  = on ? 'block' : 'none';
+  document.getElementById('rvTypePills').style.display  = on ? 'none' : '';
+  if (on) rvRenderMulti();
+}
+function rvToggleMultiSeries(s) {
+  if (RV.multiSelected.has(s)) RV.multiSelected.delete(s);
+  else RV.multiSelected.add(s);
+  document.getElementById('rvMultiList').querySelectorAll('.rv-ms-chip').forEach(el => {
+    el.classList.toggle('on', RV.multiSelected.has(el.textContent));
+  });
+  rvRenderMulti();
+}
+
+// ── Missing-volume detection ──
+function rvBuildAllItems(vols, cls) {
+  // Sort by vol number
+  const sorted = vols.slice().sort((a,b) => (a.vol||0) - (b.vol||0));
+  if (!sorted.length) return [];
+  const result = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0) {
+      const prev = sorted[i-1].vol || 0;
+      const curr = sorted[i].vol || 0;
+      // Insert placeholders for gap in volume numbers
+      for (let missing = prev + 1; missing < curr; missing++) {
+        result.push({ __placeholder: true, vol: missing, series: sorted[i].series, type: sorted[i].type, cls });
+      }
+    }
+    result.push({ ...sorted[i], cls });
+  }
+  return result;
+}
+
+// ── Main render ──
 function rvRender() {
   const body = document.getElementById('rvBody');
-  const footer = document.getElementById('rvFooter');
+  const tlWrap = document.getElementById('rvTimelineWrap');
   if (!RV.series) {
-    body.innerHTML = '<div class="rv-empty">Search for a series above to view its issue run</div>';
-    footer.style.display = 'none';
+    body.innerHTML = '<div class="rv-empty">Select a series above to view its issue run</div>';
+    tlWrap.style.display = 'none';
     return;
   }
   const vols = ALL_DATA.filter(d =>
     d.series === RV.series && d.issues_covered && d.issues_covered.trim()
   );
   if (!vols.length) {
-    body.innerHTML = `<div class="rv-empty">No <em>issues_covered</em> data for "${RV.series}" yet — use Bulk Edit to populate it.</div>`;
-    footer.style.display = 'none';
+    body.innerHTML = `<div class="rv-empty">No <em>issues_covered</em> data for "${rvEsc(RV.series)}" yet — use Bulk Edit to populate it.</div>`;
+    tlWrap.style.display = 'none';
     return;
   }
-  // Group by type, sort chronologically within each group
+
+  // Group by type
   const groups = {};
   RV_TYPE_ORDER.forEach(t => { groups[t] = []; });
   vols.forEach(v => { const t = v.type || 'Epic'; if (groups[t]) groups[t].push(v); });
-  RV_TYPE_ORDER.forEach(t => {
-    groups[t].sort((a,b) => rvYearStart(a.years) - rvYearStart(b.years) || (a.vol||0) - (b.vol||0));
-  });
 
+  // Collect all real volumes with parsed issues for the timeline
+  const allForTimeline = []; // { id, cls, iss, vol, years, series }
   let html = '';
-  let totalIssues = 0;
-  const covSegs = [];
+  RV.segMap = {}; RV.cardMap = {};
 
   RV_TYPE_ORDER.forEach(type => {
     if (!RV.typeFilters[type]) return;
-    const items = groups[type];
-    if (!items.length) return;
+    const rawItems = groups[type];
+    if (!rawItems.length) return;
     const cls = RV_TYPE_CLASS[type];
-    html += `<div class="rv-group"><div class="rv-group-label">${RV_TYPE_LABEL[type]} &mdash; ${items.length} vol${items.length>1?'s':''}</div><div class="rv-run">`;
-    items.forEach((v, i) => {
-      const iss = rvParseIssues(v.issues_covered);
-      const issLabel = iss ? `#${iss.start}&ndash;${iss.end}` : (v.issues_covered || '?');
-      const issCount = iss ? (iss.end - iss.start + 1) : 0;
-      if (iss) { totalIssues += issCount; covSegs.push({ cls, count: issCount }); }
-      if (i > 0) html += rvConnectorHTML(rvParseIssues(items[i-1].issues_covered), iss);
-      const dateFmt = v.date ? v.date.replace(/^(\d{4})-(\d{2})-\d{2}$/, (_,y,mo) => {
-        const mo2 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo-1];
-        return mo2 + ' ' + y;
-      }) : 'TBD';
-      html += `<div class="rv-spine" onclick="rvJumpTo(${v.id})">
-        <span class="type-badge tb-${cls}" style="align-self:flex-start;margin-bottom:3px">${RV_TYPE_LABEL[type]}</span>
-        <div class="rv-spine-vol">Vol ${v.vol||'?'}</div>
-        <div class="rv-spine-series" title="${v.series.replace(/"/g,'&quot;')}">${v.series}</div>
-        <div class="rv-spine-years">${v.years||''}</div>
-        <div class="rv-spine-issues">${issLabel}</div>
-        <div class="rv-spine-date">${dateFmt}</div>
-      </div>`;
+    const allItems = rvBuildAllItems(rawItems, cls);
+    const realCount = rawItems.length;
+    html += `<div class="rv-group"><div class="rv-group-label">${RV_TYPE_LABEL[type]} &mdash; ${realCount} vol${realCount>1?'s':''}</div><div class="rv-run">`;
+
+    allItems.forEach((v, i) => {
+      const isPlaceholder = !!v.__placeholder;
+      const iss = isPlaceholder ? null : rvParseIssues(v.issues_covered);
+
+      if (i > 0) {
+        // Connector between items
+        const prevV = allItems[i-1];
+        const prevIss = prevV.__placeholder ? null : rvParseIssues(prevV.issues_covered);
+        if (isPlaceholder || prevV.__placeholder) {
+          html += `<div class="rv-connector placeholder-conn"><div class="rv-connector-line"></div></div>`;
+        } else {
+          html += rvConnectorHTML(prevIss, iss);
+        }
+      }
+
+      if (isPlaceholder) {
+        html += `<div class="rv-spine placeholder">
+          <div class="rv-spine-body">
+            <div class="rv-spine-top">
+              <div class="rv-spine-vol">Vol ${v.vol}</div>
+              <div class="rv-spine-subtitle">${rvEsc(v.series)}</div>
+            </div>
+            <div class="rv-spine-missing">Not in collection</div>
+          </div>
+        </div>`;
+      } else {
+        const issLabel = iss ? `#${iss.start}–${iss.end}` : (v.issues_covered || '?');
+        if (iss) allForTimeline.push({ id: v.id, cls, iss, vol: v.vol, years: v.years, series: v.series });
+        const coverSrc = (USER_DATA[v.id] && USER_DATA[v.id].cover_url) || v.cover_url || '';
+        const coverHTML = coverSrc
+          ? `<div class="rv-spine-cover"><img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="this.parentNode.innerHTML='<span class=rv-spine-cover-placeholder>No cover</span>'"></div>`
+          : `<div class="rv-spine-cover"><span class="rv-spine-cover-placeholder">Vol ${v.vol||'?'}</span></div>`;
+        html += `<div class="rv-spine" id="rvCard_${v.id}" onclick="rvJumpTo(${v.id})"
+            onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false)">
+          ${coverHTML}
+          <div class="rv-spine-body">
+            <div class="rv-spine-top">
+              <div class="rv-spine-vol">Vol ${v.vol||'?'}</div>
+              ${v.subtitle ? `<div class="rv-spine-subtitle" title="${rvEsc(v.subtitle)}">${rvEsc(v.subtitle)}</div>` : ''}
+            </div>
+            <div class="rv-spine-mid">
+              <div class="rv-spine-issues">${issLabel}</div>
+              <div class="rv-spine-years">${v.years||''}</div>
+            </div>
+          </div>
+        </div>`;
+      }
     });
     html += '</div></div>';
   });
 
   body.innerHTML = html || '<div class="rv-empty">No volumes match the active type filters</div>';
 
-  // Coverage bar
-  if (covSegs.length && totalIssues) {
-    document.getElementById('rvCovBar').innerHTML = covSegs.map(s =>
-      `<div class="rv-cov-seg ${s.cls}" style="width:${(s.count/totalIssues*100).toFixed(2)}%" title="${s.count} issues"></div>`
-    ).join('');
-    document.getElementById('rvFooterInfo').textContent = `${totalIssues} issues · ${vols.length} vol${vols.length>1?'s':''}`;
-    footer.style.display = 'flex';
+  // Build timeline
+  if (allForTimeline.length) {
+    rvRenderTimeline(allForTimeline);
+    tlWrap.style.display = 'block';
   } else {
-    footer.style.display = 'none';
+    tlWrap.style.display = 'none';
   }
 }
 
+// ── Timeline bar rendering ──
+function rvRenderTimeline(items) {
+  if (!items.length) return;
+  const minIss = Math.min(...items.map(d => d.iss.start));
+  const maxIss = Math.max(...items.map(d => d.iss.end));
+  const totalSpan = maxIss - minIss + 1;
+
+  const bar = document.getElementById('rvTlBar');
+  bar.innerHTML = '';
+  RV.segMap = {};
+
+  // Draw gap regions first (behind segments)
+  const sorted = items.slice().sort((a,b) => a.iss.start - b.iss.start);
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i-1].iss.end;
+    const curr = sorted[i].iss.start;
+    if (curr > prev + 1) {
+      const gapLeft  = ((prev + 1 - minIss) / totalSpan * 100).toFixed(3);
+      const gapWidth = ((curr - prev - 1) / totalSpan * 100).toFixed(3);
+      const gap = document.createElement('div');
+      gap.className = 'rv-tl-gap';
+      gap.style.left  = gapLeft + '%';
+      gap.style.width = gapWidth + '%';
+      gap.title = `Gap: issues ${prev+1}–${curr-1} (${curr-prev-1} issues uncovered)`;
+      bar.appendChild(gap);
+    }
+  }
+
+  // Draw volume segments
+  items.forEach(d => {
+    const left  = ((d.iss.start - minIss) / totalSpan * 100).toFixed(3);
+    const width = ((d.iss.end - d.iss.start + 1) / totalSpan * 100).toFixed(3);
+    const seg = document.createElement('div');
+    seg.className = `rv-tl-seg ${d.cls}`;
+    seg.style.left  = left + '%';
+    seg.style.width = `max(${width}%, 3px)`;
+    seg.dataset.id  = d.id;
+    const labelText = `V${d.vol}`;
+    seg.innerHTML = `<span class="rv-tl-seg-label">${labelText}</span>`;
+    seg.addEventListener('mouseenter', e => rvHoverSeg(d, e, true));
+    seg.addEventListener('mousemove',  e => rvMoveTooltip(e));
+    seg.addEventListener('mouseleave', e => rvHoverSeg(d, e, false));
+    seg.addEventListener('click', () => rvJumpTo(d.id));
+    bar.appendChild(seg);
+    RV.segMap[d.id] = seg;
+  });
+
+  // Issue axis (top labels)
+  const axisTop = document.getElementById('rvTimelineAxisTop');
+  const tickCount = Math.min(10, totalSpan);
+  const step = Math.ceil(totalSpan / tickCount);
+  let axisTicks = '';
+  for (let i = minIss; i <= maxIss; i += step) {
+    axisTicks += `<span>#${i}</span>`;
+  }
+  axisTicks += `<span>#${maxIss}</span>`;
+  axisTop.innerHTML = axisTicks;
+
+  // Year axis (bottom labels) — map issue number to year using items
+  // Build a rough issue→year map from sorted items
+  const yearAxis = document.getElementById('rvTimelineYears');
+  const yearTicks = [];
+  // Use items sorted by issue start; assign year labels at segment boundaries
+  sorted.forEach(d => {
+    if (d.years) {
+      const pct = ((d.iss.start - minIss) / totalSpan * 100).toFixed(1);
+      const yr = d.years.match(/\d{4}/);
+      if (yr) yearTicks.push({ pct: parseFloat(pct), label: yr[0] });
+    }
+  });
+  // Deduplicate nearby ticks
+  const filtered = yearTicks.filter((t, i) =>
+    i === 0 || Math.abs(t.pct - yearTicks[i-1].pct) > 8
+  );
+  yearAxis.innerHTML = filtered.length >= 2
+    ? filtered.map(t => `<span>${t.label}</span>`).join('')
+    : '';
+
+  // Info line
+  const totalCovered = items.reduce((s, d) => s + (d.iss.end - d.iss.start + 1), 0);
+  document.getElementById('rvTimelineInfo').textContent =
+    `#${minIss}–#${maxIss} · ${totalCovered} issues covered · ${items.length} vol${items.length>1?'s':''}`;
+}
+
+// ── Hover cross-linking ──
+function rvHoverCard(id, on) {
+  const seg = RV.segMap[id];
+  if (seg) seg.classList.toggle('highlighted', on);
+}
+function rvHoverSeg(d, e, on) {
+  const card = document.getElementById(`rvCard_${d.id}`);
+  if (card) {
+    card.classList.toggle('highlighted', on);
+    if (on) card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  const tooltip = document.getElementById('rvTooltip');
+  if (on) {
+    tooltip.innerHTML = `<div class="rv-tl-tooltip-vol">Vol ${d.vol}</div>
+      <div>Issues: #${d.iss.start}–${d.iss.end} (${d.iss.end - d.iss.start + 1})</div>
+      ${d.years ? `<div>Years: ${d.years}</div>` : ''}`;
+    rvMoveTooltip(e);
+    tooltip.classList.add('show');
+  } else {
+    tooltip.classList.remove('show');
+  }
+}
+function rvMoveTooltip(e) {
+  const t = document.getElementById('rvTooltip');
+  t.style.left = (e.clientX + 12) + 'px';
+  t.style.top  = (e.clientY - 10) + 'px';
+}
+
+// ── Connector HTML ──
 function rvConnectorHTML(prevIss, currIss) {
   if (!prevIss || !currIss) {
     return `<div class="rv-connector"><div class="rv-connector-line"></div></div>`;
@@ -2775,6 +3014,67 @@ function rvConnectorHTML(prevIss, currIss) {
   }
 }
 
+// ── Multi-series timeline render ──
+function rvRenderMulti() {
+  const wrap = document.getElementById('rvMultiTimeline');
+  const axis = document.getElementById('rvMtAxis');
+  if (!RV.multiSelected.size) {
+    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">Select series above to compare</div>';
+    axis.innerHTML = '';
+    return;
+  }
+
+  // Gather all items across selected series
+  let globalMinYear = 9999, globalMaxYear = 0;
+  const seriesData = [];
+  for (const series of RV.multiSelected) {
+    const vols = ALL_DATA.filter(d =>
+      d.series === series && d.issues_covered && d.issues_covered.trim()
+    );
+    const items = vols.map(v => {
+      const iss = rvParseIssues(v.issues_covered);
+      const yStart = rvYearStart(v.years);
+      const yEnd   = rvYearEnd(v.years) || yStart;
+      return { id: v.id, cls: RV_TYPE_CLASS[v.type||'Epic'], iss, vol: v.vol, yStart, yEnd };
+    }).filter(d => d.iss && d.yStart < 9999);
+    if (!items.length) continue;
+    items.forEach(d => {
+      if (d.yStart < globalMinYear) globalMinYear = d.yStart;
+      if (d.yEnd   > globalMaxYear) globalMaxYear = d.yEnd;
+    });
+    seriesData.push({ series, items });
+  }
+
+  if (!seriesData.length || globalMinYear > globalMaxYear) {
+    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">No year data available for selected series</div>';
+    axis.innerHTML = ''; return;
+  }
+
+  const yearSpan = globalMaxYear - globalMinYear + 1;
+
+  // Year axis ticks
+  const tickStep = Math.ceil(yearSpan / 8);
+  let axisTicks = '';
+  for (let y = globalMinYear; y <= globalMaxYear; y += tickStep) axisTicks += `<span>${y}</span>`;
+  axisTicks += `<span>${globalMaxYear}</span>`;
+  axis.innerHTML = axisTicks;
+
+  // Rows per series
+  wrap.innerHTML = seriesData.map(({ series, items }) => {
+    const segs = items.map(d => {
+      const left  = ((d.yStart - globalMinYear) / yearSpan * 100).toFixed(2);
+      const width = Math.max(((d.yEnd - d.yStart + 1) / yearSpan * 100), 1.5).toFixed(2);
+      return `<div class="rv-mt-seg ${d.cls}" style="left:${left}%;width:${width}%"
+        title="Vol ${d.vol} · ${d.yStart}–${d.yEnd}" onclick="rvJumpTo(${d.id})"></div>`;
+    }).join('');
+    return `<div class="rv-mt-row">
+      <div class="rv-mt-label" title="${rvEsc(series)}">${rvEsc(series)}</div>
+      <div class="rv-mt-bar-wrap">${segs}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Jump to entry ──
 function rvJumpTo(id) {
   rvClose();
   const entry = ALL_DATA.find(d => d.id == id);
