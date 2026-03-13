@@ -15,6 +15,14 @@ jobs:
     name: Apply SQL migration to Supabase
     runs-on: ubuntu-latest
 
+    # Uses the Session Pooler (aws-0-us-east-1.pooler.supabase.com) because the
+    # direct host (db.*.supabase.co) is IPv6-only and GitHub Actions runners are
+    # IPv4-only. Session Pooler supports both IPv4 and IPv6.
+    env:
+      DB_URL: "postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
+      PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PGCONNECT_TIMEOUT: 15
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,67 +30,34 @@ jobs:
       - name: Install psql
         run: sudo apt-get install -y postgresql-client
 
-      # ---------------------------------------------------------------------------
-      # Connection notes:
-      #   The direct host (db.*.supabase.co) is IPv6-only for this project.
-      #   GitHub Actions runners are IPv4-only, so we use the Session Pooler
-      #   (aws-0-us-east-1.pooler.supabase.com) which supports IPv4 + IPv6.
-      #   SUPABASE_DB_PASSWORD is used for auth; SUPABASE_DB_URL overrides
-      #   the entire connection string if set.
-      # ---------------------------------------------------------------------------
-
-      - name: Verify database credentials are set
+      - name: Verify SUPABASE_DB_PASSWORD secret is set
         run: |
-          if [ -z "${{ secrets.SUPABASE_DB_URL }}" ] && [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
-            echo "::error::No database credentials found. Set either:"
-            echo "  SUPABASE_DB_URL  — full Session Pooler connection string from Supabase dashboard (recommended)"
-            echo "  SUPABASE_DB_PASSWORD — Supabase database password (direct connection, may fail on IPv4 runners)"
-            echo ""
+          if [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ]; then
+            echo "::error::SUPABASE_DB_PASSWORD secret is not set."
             echo "Go to: Settings → Secrets and variables → Actions → New repository secret"
+            echo "Name:  SUPABASE_DB_PASSWORD"
+            echo "Value: your Supabase database password (Project Settings → Database → Database password)"
             exit 1
           fi
-          if [ -n "${{ secrets.SUPABASE_DB_URL }}" ]; then
-            echo "✓ SUPABASE_DB_URL is set (Session Pooler — IPv4 compatible)"
-          else
-            echo "✓ Using Session Pooler with SUPABASE_DB_PASSWORD"
-          fi
+          echo "✓ SUPABASE_DB_PASSWORD is set"
 
       - name: Test database connectivity
-        env:
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          PGCONNECT_TIMEOUT: 15
         run: |
-          CONN="${DB_URL:-postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require}"
-          echo "Testing connection…"
-          psql "$CONN" \
-            -c "SELECT version();" \
-            -v ON_ERROR_STOP=1
+          echo "Testing connection via Session Pooler…"
+          psql "$DB_URL" -c "SELECT version();" -v ON_ERROR_STOP=1
           echo "✓ Connection successful"
 
       - name: Run migration
-        env:
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          PGCONNECT_TIMEOUT: 15
         run: |
-          CONN="${DB_URL:-postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require}"
-          psql "$CONN" \
-            --file=supabase-migration.sql \
-            -v ON_ERROR_STOP=1
+          psql "$DB_URL" --file=supabase-migration.sql -v ON_ERROR_STOP=1
 
       - name: Confirm columns exist
-        env:
-          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          PGCONNECT_TIMEOUT: 15
         run: |
-          CONN="${DB_URL:-postgresql://postgres.quxuidnmewcmovjbnfgy@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require}"
-          psql "$CONN" \
-            -c "SELECT column_name, data_type FROM information_schema.columns
-                WHERE table_name='comic_entries'
-                  AND column_name IN (
-                    'isbn','writers','artists','description',
-                    'issues_covered','secondary_issues_covered'
-                  )
-                ORDER BY column_name;"
+          psql "$DB_URL" -c "SELECT column_name, data_type
+              FROM information_schema.columns
+              WHERE table_name='comic_entries'
+                AND column_name IN (
+                  'isbn','writers','artists','description',
+                  'issues_covered','secondary_issues_covered'
+                )
+              ORDER BY column_name;"
