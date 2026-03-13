@@ -518,32 +518,96 @@ footer a{color:var(--gold);text-decoration:none}
 /* Group */
 .rv-group{margin-bottom:32px}
 .rv-group-label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-/* Card row */
-.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px 0}
-/* Volume card */
-.rv-spine{background:var(--surface);border:1px solid var(--border2);border-radius:6px;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;width:180px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;position:relative}
-.rv-spine:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.5)}
-.rv-spine.placeholder{opacity:.55;cursor:default;border-style:dashed}
-.rv-spine.placeholder:hover{transform:none;box-shadow:none;border-color:var(--border2)}
-.rv-spine.highlighted{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,210,52,.35)}
-/* Cover section */
-.rv-spine-cover{width:100%;height:110px;overflow:hidden;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.rv-spine-cover img{width:100%;height:100%;object-fit:cover}
-.rv-spine-cover-placeholder{font-family:var(--cf);font-size:9px;letter-spacing:1px;color:var(--dimtext);text-align:center}
-/* Card body */
-.rv-spine-body{padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
-/* Top section: vol number + title */
-.rv-spine-top{display:flex;flex-direction:column;gap:1px;margin-bottom:4px}
-.rv-spine-vol{font-family:var(--hf);font-size:28px;line-height:1;color:var(--text)}
-.rv-spine-subtitle{font-family:var(--cf);font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-/* Middle section: issues + years big */
-.rv-spine-mid{display:flex;flex-direction:column;gap:3px;margin-top:4px}
-.rv-spine-issues{font-family:var(--cf);font-size:18px;font-weight:700;color:var(--text);letter-spacing:.5px;line-height:1}
-.rv-spine-years{font-family:var(--cf);font-size:15px;font-weight:600;color:var(--gold);letter-spacing:.5px;line-height:1}
-/* Missing label */
-.rv-spine-missing{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--dimtext);margin-top:auto;padding-top:6px;border-top:1px dashed var(--border)}
+/* ─── CARD ROW ─── */
+.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:14px 0}
+/* ─── 1990s TRADING CARD ─── */
+/* Scene: perspective container + animated gradient border */
+.rv-card-scene{width:160px;height:224px;flex-shrink:0;perspective:900px;cursor:pointer;position:relative;user-select:none}
+.rv-card-scene.placeholder-scene{cursor:default}
+/* Gradient foil border: background shows through 2px padding */
+.rv-card-border{width:100%;height:100%;padding:2px;border-radius:10px;background:linear-gradient(135deg,#ffd234 0%,#c97fff 25%,#3aa8ff 50%,#3eff8a 75%,#ffd234 100%);background-size:300% 300%;transform-style:preserve-3d;position:relative}
+.rv-card-scene:hover .rv-card-border{animation:rv-holo-border 2.2s linear infinite;box-shadow:0 10px 36px rgba(0,0,0,.7),0 0 24px rgba(180,60,255,.25)}
+.rv-card-scene.highlighted .rv-card-border{animation:rv-holo-border 1s linear infinite;box-shadow:0 0 0 2px var(--gold),0 10px 36px rgba(255,210,52,.2)}
+.rv-card-scene.placeholder-scene .rv-card-border{background:var(--border2);animation:none !important;box-shadow:none !important}
+@keyframes rv-holo-border{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+/* 3-D flip inner */
+.rv-card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.4,0,.2,1);border-radius:8px}
+.rv-card-inner.flipped{transform:rotateY(180deg)}
+/* Front & back faces */
+.rv-card-front,.rv-card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.rv-card-back{transform:rotateY(180deg)}
+/* Per-type card backgrounds */
+.rv-card-front.tc-epic  {background:linear-gradient(165deg,#0c1a2e 0%,#0e2040 60%,#0a1830 100%)}
+.rv-card-front.tc-modern{background:linear-gradient(165deg,#1a1100 0%,#221600 60%,#180e00 100%)}
+.rv-card-front.tc-omni  {background:linear-gradient(165deg,#14082a 0%,#1c0a38 60%,#0e0620 100%)}
+.rv-card-front.tc-dc    {background:linear-gradient(165deg,#080e22 0%,#0a1530 60%,#060c1c 100%)}
+.rv-card-back.tc-epic   {background:linear-gradient(165deg,#0e2040 0%,#0a1428 100%)}
+.rv-card-back.tc-modern {background:linear-gradient(165deg,#221600 0%,#130e00 100%)}
+.rv-card-back.tc-omni   {background:linear-gradient(165deg,#1c0a38 0%,#0e0620 100%)}
+.rv-card-back.tc-dc     {background:linear-gradient(165deg,#0a1530 0%,#060c1c 100%)}
+/* Header strip */
+.rv-card-header,.rv-card-back-header{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;flex-shrink:0}
+.tc-epic   .rv-card-header,.tc-epic   .rv-card-back-header{background:linear-gradient(90deg,#1a3a6a,#2a5090);border-bottom:1px solid #3a6fa8}
+.tc-modern .rv-card-header,.tc-modern .rv-card-back-header{background:linear-gradient(90deg,#3a2400,#503000);border-bottom:1px solid #a07800}
+.tc-omni   .rv-card-header,.tc-omni   .rv-card-back-header{background:linear-gradient(90deg,#2a0a50,#3c1260);border-bottom:1px solid #8050b0}
+.tc-dc     .rv-card-header,.tc-dc     .rv-card-back-header{background:linear-gradient(90deg,#0a1e50,#103068);border-bottom:1px solid #1a6db5}
+.rv-card-type-lbl{font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.65)}
+.rv-card-vol-badge{font-family:var(--hf);font-size:15px;line-height:1;color:#fff;text-shadow:0 0 8px rgba(255,255,255,.3)}
+/* Image area */
+.rv-card-img{flex:1;overflow:hidden;position:relative;display:block}
+.rv-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.rv-card-img-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.tc-epic   .rv-card-img-ph{background:radial-gradient(ellipse at center,#1a3060 0%,#091428 100%)}
+.tc-modern .rv-card-img-ph{background:radial-gradient(ellipse at center,#3a2800 0%,#191000 100%)}
+.tc-omni   .rv-card-img-ph{background:radial-gradient(ellipse at center,#280c50 0%,#100618 100%)}
+.tc-dc     .rv-card-img-ph{background:radial-gradient(ellipse at center,#0e2050 0%,#06080e 100%)}
+.rv-card-img-ph-icon{font-size:32px;opacity:.25}
+.rv-card-img-ph-vol{font-family:var(--hf);font-size:30px;letter-spacing:3px;opacity:.3;color:#fff}
+/* Holographic shimmer overlay on image */
+.rv-card-holo{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:linear-gradient(115deg,transparent 20%,transparent 30%,rgba(255,255,255,.05) 35%,rgba(180,60,255,.14) 43%,rgba(60,180,255,.14) 51%,rgba(255,210,52,.14) 59%,rgba(255,255,255,.05) 65%,transparent 70%,transparent 100%);background-size:300% 100%;animation:rv-holo-shine 2.8s ease-in-out infinite paused}
+.rv-card-scene:hover .rv-card-holo{opacity:1;animation-play-state:running}
+@keyframes rv-holo-shine{0%{background-position:200% 0}100%{background-position:-100% 0}}
+/* Footer strip */
+.rv-card-footer{padding:6px 8px 5px;flex-shrink:0}
+.tc-epic  .rv-card-footer{background:linear-gradient(0deg,#08101c 0%,rgba(10,20,40,.6) 100%);border-top:1px solid rgba(58,111,168,.35)}
+.tc-modern .rv-card-footer{background:linear-gradient(0deg,#0c0800 0%,rgba(26,18,0,.6) 100%);border-top:1px solid rgba(160,120,0,.35)}
+.tc-omni  .rv-card-footer{background:linear-gradient(0deg,#0a0414 0%,rgba(20,8,40,.6) 100%);border-top:1px solid rgba(128,80,176,.35)}
+.tc-dc    .rv-card-footer{background:linear-gradient(0deg,#04060e 0%,rgba(8,14,30,.6) 100%);border-top:1px solid rgba(26,109,181,.35)}
+.rv-card-series-name{font-family:var(--cf);font-size:11px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:.3px}
+.rv-card-badges{display:flex;gap:4px;align-items:center}
+.rv-card-issue-pill{font-family:var(--cf);font-size:11px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;white-space:nowrap}
+.tc-epic   .rv-card-issue-pill{background:rgba(58,111,168,.35);color:#7ab8f5;border:1px solid rgba(58,111,168,.5)}
+.tc-modern .rv-card-issue-pill{background:rgba(160,120,0,.35);color:var(--gold);border:1px solid rgba(160,120,0,.5)}
+.tc-omni   .rv-card-issue-pill{background:rgba(128,80,176,.35);color:#c97ef5;border:1px solid rgba(128,80,176,.5)}
+.tc-dc     .rv-card-issue-pill{background:rgba(26,109,181,.35);color:var(--blue);border:1px solid rgba(26,109,181,.5)}
+.rv-card-year-pill{font-family:var(--cf);font-size:10px;color:rgba(255,255,255,.4);flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ─── CARD BACK ─── */
+.rv-card-back-body{flex:1;padding:7px 8px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.rv-card-back-series{font-family:var(--cf);font-size:12px;font-weight:700;color:#fff;letter-spacing:.4px;line-height:1.2}
+.rv-card-back-sub{font-family:var(--cf);font-size:9px;color:rgba(255,255,255,.45);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rv-card-divider{height:1px;background:rgba(255,255,255,.1);flex-shrink:0;margin:2px 0}
+/* Stat grid */
+.rv-cs-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 4px}
+.rv-cs-item{display:flex;flex-direction:column;gap:1px;min-width:0}
+.rv-cs-item.wide{grid-column:1/-1}
+.rv-cs-l{font-family:var(--cf);font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.rv-cs-v{font-family:var(--cf);font-size:10px;font-weight:700;color:rgba(255,255,255,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc-epic   .rv-cs-v.accent{color:#7ab8f5}
+.tc-modern .rv-cs-v.accent{color:var(--gold)}
+.tc-omni   .rv-cs-v.accent{color:#c97ef5}
+.tc-dc     .rv-cs-v.accent{color:var(--blue)}
+/* Back footer */
+.rv-card-back-footer{padding:5px 8px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.08)}
+.rv-card-jump-btn{padding:3px 7px;border-radius:3px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.rv-card-jump-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.08)}
+.rv-card-bce{font-family:var(--cf);font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.18)}
+/* ─── PLACEHOLDER CARD ─── */
+.rv-card-placeholder-wrap{width:100%;height:100%;padding:2px;border-radius:10px;background:var(--surface2);border:1.5px dashed var(--border)}
+.rv-card-placeholder-inner{width:100%;height:100%;border-radius:8px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;opacity:.45}
+.rv-card-ph-vol{font-family:var(--hf);font-size:34px;color:var(--muted)}
+.rv-card-ph-label{font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext);text-align:center;padding:0 8px;line-height:1.5}
 /* Connector between cards */
-.rv-connector{display:flex;align-items:center;justify-content:center;width:24px;flex-shrink:0;align-self:stretch;position:relative;margin-top:6px;margin-bottom:6px}
+.rv-connector{display:flex;align-items:center;justify-content:center;width:12px;flex-shrink:0;align-self:stretch;position:relative;margin-top:8px;margin-bottom:8px}
 .rv-connector-line{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--border)}
 .rv-connector.ok .rv-connector-line{background:var(--green)}
 .rv-connector.gap .rv-connector-line{background:repeating-linear-gradient(to bottom,var(--red) 0,var(--red) 5px,transparent 5px,transparent 9px)}
@@ -2718,17 +2782,23 @@ function rvClose() {
 // Populate dropdown from live data
 function rvPopulateSelect() {
   const sel = document.getElementById('rvSeriesSelect');
-  const seriesSet = new Set(
+  // Show ALL series; the series with issues_covered data get a ✓ marker
+  const hasCoverage = new Set(
     ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series)
   );
-  const sorted = [...seriesSet].sort((a,b) => a.localeCompare(b));
+  const allSeries = new Set(ALL_DATA.map(d => d.series));
+  const sorted = [...allSeries].sort((a,b) => a.localeCompare(b));
   // Preserve selection if possible
   const prev = sel.value;
   sel.innerHTML = '<option value="">— Select a series —</option>' +
-    sorted.map(s => `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}</option>`).join('');
-  // Also populate multi-series chips
+    sorted.map(s => {
+      const marker = hasCoverage.has(s) ? ' ✓' : '';
+      return `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}${marker}</option>`;
+    }).join('');
+  // Multi-series chips: only show series that have coverage data (useful for timeline)
+  const covSorted = [...hasCoverage].sort((a,b) => a.localeCompare(b));
   const list = document.getElementById('rvMultiList');
-  list.innerHTML = sorted.map(s =>
+  list.innerHTML = covSorted.map(s =>
     `<span class="rv-ms-chip${RV.multiSelected.has(s)?' on':''}" onclick="rvToggleMultiSeries('${rvEsc(s)}')">${rvEsc(s)}</span>`
   ).join('');
 }
@@ -2840,33 +2910,64 @@ function rvRender() {
       }
 
       if (isPlaceholder) {
-        html += `<div class="rv-spine placeholder">
-          <div class="rv-spine-body">
-            <div class="rv-spine-top">
-              <div class="rv-spine-vol">Vol ${v.vol}</div>
-              <div class="rv-spine-subtitle">${rvEsc(v.series)}</div>
+        html += `<div class="rv-card-scene placeholder-scene">
+          <div class="rv-card-placeholder-wrap">
+            <div class="rv-card-placeholder-inner">
+              <div class="rv-card-ph-vol">Vol ${v.vol}</div>
+              <div class="rv-card-ph-label">Not in<br>collection</div>
             </div>
-            <div class="rv-spine-missing">Not in collection</div>
           </div>
         </div>`;
       } else {
         const issLabel = iss ? `#${iss.start}–${iss.end}` : (v.issues_covered || '?');
         if (iss) allForTimeline.push({ id: v.id, cls, iss, vol: v.vol, years: v.years, series: v.series });
         const coverSrc = (USER_DATA[v.id] && USER_DATA[v.id].cover_url) || v.cover_url || '';
-        const coverHTML = coverSrc
-          ? `<div class="rv-spine-cover"><img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="this.parentNode.innerHTML='<span class=rv-spine-cover-placeholder>No cover</span>'"></div>`
-          : `<div class="rv-spine-cover"><span class="rv-spine-cover-placeholder">Vol ${v.vol||'?'}</span></div>`;
-        html += `<div class="rv-spine" id="rvCard_${v.id}" onclick="rvJumpTo(${v.id})"
+        const coverImgHTML = coverSrc
+          ? `<img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rv-card-img-ph><span class=rv-card-img-ph-icon>📚</span><span class=rv-card-img-ph-vol>VOL ${v.vol||'?'}</span></div>'">`
+          : `<div class="rv-card-img-ph"><span class="rv-card-img-ph-icon">📚</span><span class="rv-card-img-ph-vol">VOL ${v.vol||'?'}</span></div>`;
+        const issLabelEsc = issLabel.replace(/</g,'&lt;');
+        html += `<div class="rv-card-scene" id="rvCard_${v.id}"
             onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false)">
-          ${coverHTML}
-          <div class="rv-spine-body">
-            <div class="rv-spine-top">
-              <div class="rv-spine-vol">Vol ${v.vol||'?'}</div>
-              ${v.subtitle ? `<div class="rv-spine-subtitle" title="${rvEsc(v.subtitle)}">${rvEsc(v.subtitle)}</div>` : ''}
-            </div>
-            <div class="rv-spine-mid">
-              <div class="rv-spine-issues">${issLabel}</div>
-              <div class="rv-spine-years">${v.years||''}</div>
+          <div class="rv-card-border">
+            <div class="rv-card-inner" onclick="rvFlipCard(this)">
+              <div class="rv-card-front tc-${cls}">
+                <div class="rv-card-header">
+                  <span class="rv-card-type-lbl">${RV_TYPE_LABEL[type]}</span>
+                  <span class="rv-card-vol-badge">Vol ${v.vol||'?'}</span>
+                </div>
+                <div class="rv-card-img">${coverImgHTML}</div>
+                <div class="rv-card-footer">
+                  <div class="rv-card-series-name" title="${rvEsc(v.series)}">${rvEsc(v.series)}</div>
+                  <div class="rv-card-badges">
+                    <span class="rv-card-issue-pill">${issLabelEsc}</span>
+                    <span class="rv-card-year-pill">${rvEsc(v.years||'')}</span>
+                  </div>
+                </div>
+                <div class="rv-card-holo"></div>
+              </div>
+              <div class="rv-card-back tc-${cls}">
+                <div class="rv-card-back-header">
+                  <span class="rv-card-type-lbl">${RV_TYPE_LABEL[type]}</span>
+                  <span class="rv-card-vol-badge">Vol ${v.vol||'?'}</span>
+                </div>
+                <div class="rv-card-back-body">
+                  <div class="rv-card-back-series">${rvEsc(v.series)}</div>
+                  ${v.subtitle ? `<div class="rv-card-back-sub">${rvEsc(v.subtitle)}</div>` : ''}
+                  <div class="rv-card-divider"></div>
+                  <div class="rv-cs-grid">
+                    <div class="rv-cs-item"><span class="rv-cs-l">Issues</span><span class="rv-cs-v accent">${issLabelEsc}</span></div>
+                    <div class="rv-cs-item"><span class="rv-cs-l">Years</span><span class="rv-cs-v accent">${rvEsc(v.years||'—')}</span></div>
+                    ${v.pages ? `<div class="rv-cs-item"><span class="rv-cs-l">Pages</span><span class="rv-cs-v">${v.pages}</span></div>` : ''}
+                    ${v.writers ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Writers</span><span class="rv-cs-v">${rvEsc(v.writers)}</span></div>` : ''}
+                    ${v.artists ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Artists</span><span class="rv-cs-v">${rvEsc(v.artists)}</span></div>` : ''}
+                    ${v.isbn ? `<div class="rv-cs-item wide"><span class="rv-cs-l">ISBN</span><span class="rv-cs-v" style="font-size:9px">${rvEsc(v.isbn)}</span></div>` : ''}
+                  </div>
+                </div>
+                <div class="rv-card-back-footer">
+                  <button class="rv-card-jump-btn" onclick="event.stopPropagation();rvJumpTo(${v.id})">View in table ↗</button>
+                  <span class="rv-card-bce">BCE COMICS</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>`;
@@ -2975,6 +3076,10 @@ function rvHoverCard(id, on) {
   const seg = RV.segMap[id];
   if (seg) seg.classList.toggle('highlighted', on);
 }
+function rvFlipCard(inner) {
+  inner.classList.toggle('flipped');
+}
+
 function rvHoverSeg(d, e, on) {
   const card = document.getElementById(`rvCard_${d.id}`);
   if (card) {
