@@ -519,22 +519,22 @@ footer a{color:var(--gold);text-decoration:none}
 .rv-group{margin-bottom:32px}
 .rv-group-label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 /* ─── CARD ROW ─── */
-.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:14px 0}
+.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:16px 0}
 /* ─── 1990s TRADING CARD ─── */
 /* Scene: perspective container + animated gradient border */
-.rv-card-scene{width:160px;height:224px;flex-shrink:0;perspective:900px;cursor:pointer;position:relative;user-select:none}
+.rv-card-scene{width:210px;height:310px;flex-shrink:0;perspective:1100px;cursor:pointer;position:relative;user-select:none}
 .rv-card-scene.placeholder-scene{cursor:default}
-/* Gradient foil border: background shows through 2px padding */
-.rv-card-border{width:100%;height:100%;padding:2px;border-radius:10px;background:linear-gradient(135deg,#ffd234 0%,#c97fff 25%,#3aa8ff 50%,#3eff8a 75%,#ffd234 100%);background-size:300% 300%;transform-style:preserve-3d;position:relative}
-.rv-card-scene:hover .rv-card-border{animation:rv-holo-border 2.2s linear infinite;box-shadow:0 10px 36px rgba(0,0,0,.7),0 0 24px rgba(180,60,255,.25)}
-.rv-card-scene.highlighted .rv-card-border{animation:rv-holo-border 1s linear infinite;box-shadow:0 0 0 2px var(--gold),0 10px 36px rgba(255,210,52,.2)}
+/* Gradient foil border: background shows through padding — thick 90s card border */
+.rv-card-border{width:100%;height:100%;padding:3px;border-radius:12px;background:linear-gradient(135deg,#ffd234 0%,#e8352a 15%,#c97fff 30%,#3aa8ff 50%,#3eff8a 65%,#ffd234 80%,#e8352a 100%);background-size:400% 400%;position:relative;transition:transform .7s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.rv-card-scene:hover .rv-card-border{animation:rv-holo-border 2.2s linear infinite;box-shadow:0 12px 40px rgba(0,0,0,.8),0 0 30px rgba(180,60,255,.3)}
+.rv-card-scene.highlighted .rv-card-border{animation:rv-holo-border 1s linear infinite;box-shadow:0 0 0 3px var(--gold),0 12px 40px rgba(255,210,52,.25)}
 .rv-card-scene.placeholder-scene .rv-card-border{background:var(--border2);animation:none !important;box-shadow:none !important}
+.rv-card-border.flipped{transform:rotateY(180deg)}
 @keyframes rv-holo-border{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-/* 3-D flip inner */
-.rv-card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.4,0,.2,1);border-radius:8px}
-.rv-card-inner.flipped{transform:rotateY(180deg)}
+/* Inner wrapper preserves 3D for front/back faces */
+.rv-card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;border-radius:9px}
 /* Front & back faces */
-.rv-card-front,.rv-card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.rv-card-front,.rv-card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
 .rv-card-back{transform:rotateY(180deg)}
 /* Per-type card backgrounds */
 .rv-card-front.tc-epic  {background:linear-gradient(165deg,#0c1a2e 0%,#0e2040 60%,#0a1830 100%)}
@@ -546,48 +546,54 @@ footer a{color:var(--gold);text-decoration:none}
 .rv-card-back.tc-omni   {background:linear-gradient(165deg,#1c0a38 0%,#0e0620 100%)}
 .rv-card-back.tc-dc     {background:linear-gradient(165deg,#0a1530 0%,#060c1c 100%)}
 /* Header strip */
-.rv-card-header,.rv-card-back-header{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;flex-shrink:0}
+.rv-card-header,.rv-card-back-header{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;flex-shrink:0}
 .tc-epic   .rv-card-header,.tc-epic   .rv-card-back-header{background:linear-gradient(90deg,#1a3a6a,#2a5090);border-bottom:1px solid #3a6fa8}
 .tc-modern .rv-card-header,.tc-modern .rv-card-back-header{background:linear-gradient(90deg,#3a2400,#503000);border-bottom:1px solid #a07800}
 .tc-omni   .rv-card-header,.tc-omni   .rv-card-back-header{background:linear-gradient(90deg,#2a0a50,#3c1260);border-bottom:1px solid #8050b0}
 .tc-dc     .rv-card-header,.tc-dc     .rv-card-back-header{background:linear-gradient(90deg,#0a1e50,#103068);border-bottom:1px solid #1a6db5}
-.rv-card-type-lbl{font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.65)}
-.rv-card-vol-badge{font-family:var(--hf);font-size:15px;line-height:1;color:#fff;text-shadow:0 0 8px rgba(255,255,255,.3)}
-/* Image area */
+.rv-card-type-lbl{font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.rv-card-vol-badge{font-family:var(--hf);font-size:18px;line-height:1;color:#fff;text-shadow:0 0 10px rgba(255,255,255,.4)}
+/* Image area — full art display */
 .rv-card-img{flex:1;overflow:hidden;position:relative;display:block}
-.rv-card-img img{width:100%;height:100%;object-fit:cover;display:block}
-.rv-card-img-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.rv-card-img img{width:100%;height:100%;object-fit:contain;display:block;background:#000}
+.rv-card-img-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .tc-epic   .rv-card-img-ph{background:radial-gradient(ellipse at center,#1a3060 0%,#091428 100%)}
 .tc-modern .rv-card-img-ph{background:radial-gradient(ellipse at center,#3a2800 0%,#191000 100%)}
 .tc-omni   .rv-card-img-ph{background:radial-gradient(ellipse at center,#280c50 0%,#100618 100%)}
 .tc-dc     .rv-card-img-ph{background:radial-gradient(ellipse at center,#0e2050 0%,#06080e 100%)}
-.rv-card-img-ph-icon{font-size:32px;opacity:.25}
-.rv-card-img-ph-vol{font-family:var(--hf);font-size:30px;letter-spacing:3px;opacity:.3;color:#fff}
+.rv-card-img-ph-icon{font-size:38px;opacity:.25}
+.rv-card-img-ph-vol{font-family:var(--hf);font-size:36px;letter-spacing:3px;opacity:.3;color:#fff}
 /* Holographic shimmer overlay on image */
 .rv-card-holo{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:linear-gradient(115deg,transparent 20%,transparent 30%,rgba(255,255,255,.05) 35%,rgba(180,60,255,.14) 43%,rgba(60,180,255,.14) 51%,rgba(255,210,52,.14) 59%,rgba(255,255,255,.05) 65%,transparent 70%,transparent 100%);background-size:300% 100%;animation:rv-holo-shine 2.8s ease-in-out infinite paused}
 .rv-card-scene:hover .rv-card-holo{opacity:1;animation-play-state:running}
 @keyframes rv-holo-shine{0%{background-position:200% 0}100%{background-position:-100% 0}}
-/* Footer strip */
-.rv-card-footer{padding:6px 8px 5px;flex-shrink:0}
-.tc-epic  .rv-card-footer{background:linear-gradient(0deg,#08101c 0%,rgba(10,20,40,.6) 100%);border-top:1px solid rgba(58,111,168,.35)}
-.tc-modern .rv-card-footer{background:linear-gradient(0deg,#0c0800 0%,rgba(26,18,0,.6) 100%);border-top:1px solid rgba(160,120,0,.35)}
-.tc-omni  .rv-card-footer{background:linear-gradient(0deg,#0a0414 0%,rgba(20,8,40,.6) 100%);border-top:1px solid rgba(128,80,176,.35)}
-.tc-dc    .rv-card-footer{background:linear-gradient(0deg,#04060e 0%,rgba(8,14,30,.6) 100%);border-top:1px solid rgba(26,109,181,.35)}
-.rv-card-series-name{font-family:var(--cf);font-size:11px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:.3px}
-.rv-card-badges{display:flex;gap:4px;align-items:center}
-.rv-card-issue-pill{font-family:var(--cf);font-size:11px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;white-space:nowrap}
-.tc-epic   .rv-card-issue-pill{background:rgba(58,111,168,.35);color:#7ab8f5;border:1px solid rgba(58,111,168,.5)}
-.tc-modern .rv-card-issue-pill{background:rgba(160,120,0,.35);color:var(--gold);border:1px solid rgba(160,120,0,.5)}
-.tc-omni   .rv-card-issue-pill{background:rgba(128,80,176,.35);color:#c97ef5;border:1px solid rgba(128,80,176,.5)}
-.tc-dc     .rv-card-issue-pill{background:rgba(26,109,181,.35);color:var(--blue);border:1px solid rgba(26,109,181,.5)}
-.rv-card-year-pill{font-family:var(--cf);font-size:10px;color:rgba(255,255,255,.4);flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Card name banner — 90s bold bottom strip */
+.rv-card-footer{padding:7px 10px 6px;flex-shrink:0}
+.tc-epic  .rv-card-footer{background:linear-gradient(0deg,#08101c 0%,rgba(10,20,40,.85) 100%);border-top:2px solid rgba(58,111,168,.5)}
+.tc-modern .rv-card-footer{background:linear-gradient(0deg,#0c0800 0%,rgba(26,18,0,.85) 100%);border-top:2px solid rgba(160,120,0,.5)}
+.tc-omni  .rv-card-footer{background:linear-gradient(0deg,#0a0414 0%,rgba(20,8,40,.85) 100%);border-top:2px solid rgba(128,80,176,.5)}
+.tc-dc    .rv-card-footer{background:linear-gradient(0deg,#04060e 0%,rgba(8,14,30,.85) 100%);border-top:2px solid rgba(26,109,181,.5)}
+.rv-card-series-name{font-family:var(--hf);font-size:15px;color:rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:.5px;line-height:1}
+.rv-card-badges{display:flex;gap:5px;align-items:center}
+.rv-card-issue-pill{font-family:var(--cf);font-size:12px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;white-space:nowrap}
+.tc-epic   .rv-card-issue-pill{background:rgba(58,111,168,.4);color:#7ab8f5;border:1px solid rgba(58,111,168,.6)}
+.tc-modern .rv-card-issue-pill{background:rgba(160,120,0,.4);color:var(--gold);border:1px solid rgba(160,120,0,.6)}
+.tc-omni   .rv-card-issue-pill{background:rgba(128,80,176,.4);color:#c97ef5;border:1px solid rgba(128,80,176,.6)}
+.tc-dc     .rv-card-issue-pill{background:rgba(26,109,181,.4);color:var(--blue);border:1px solid rgba(26,109,181,.6)}
+.rv-card-year-pill{font-family:var(--cf);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Card number badge (e.g. "3 of 12") */
+.rv-card-num{position:absolute;bottom:52px;right:6px;font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35);pointer-events:none;z-index:2}
 /* ─── CARD BACK ─── */
-.rv-card-back-body{flex:1;padding:7px 8px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
-.rv-card-back-series{font-family:var(--cf);font-size:12px;font-weight:700;color:#fff;letter-spacing:.4px;line-height:1.2}
-.rv-card-back-sub{font-family:var(--cf);font-size:9px;color:rgba(255,255,255,.45);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.rv-card-divider{height:1px;background:rgba(255,255,255,.1);flex-shrink:0;margin:2px 0}
+.rv-card-back-body{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.rv-card-back-series{font-family:var(--hf);font-size:16px;color:#fff;letter-spacing:.5px;line-height:1}
+.rv-card-back-sub{font-family:var(--cf);font-size:10px;color:rgba(255,255,255,.5);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rv-card-divider{height:1px;background:rgba(255,255,255,.12);flex-shrink:0;margin:3px 0}
+/* Description area — takes up most of the back */
+.rv-card-back-desc{font-family:var(--bf);font-size:9px;line-height:1.45;color:rgba(255,255,255,.7);flex:1;overflow-y:auto;overflow-x:hidden;margin:2px 0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+.rv-card-back-desc::-webkit-scrollbar{width:3px}
+.rv-card-back-desc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
 /* Stat grid */
-.rv-cs-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 4px}
+.rv-cs-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 6px;flex-shrink:0}
 .rv-cs-item{display:flex;flex-direction:column;gap:1px;min-width:0}
 .rv-cs-item.wide{grid-column:1/-1}
 .rv-cs-l{font-family:var(--cf);font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3)}
@@ -597,15 +603,15 @@ footer a{color:var(--gold);text-decoration:none}
 .tc-omni   .rv-cs-v.accent{color:#c97ef5}
 .tc-dc     .rv-cs-v.accent{color:var(--blue)}
 /* Back footer */
-.rv-card-back-footer{padding:5px 8px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.08)}
-.rv-card-jump-btn{padding:3px 7px;border-radius:3px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.rv-card-back-footer{padding:5px 10px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.1)}
+.rv-card-jump-btn{padding:3px 8px;border-radius:3px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
 .rv-card-jump-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.08)}
-.rv-card-bce{font-family:var(--cf);font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.18)}
+.rv-card-bce{font-family:var(--cf);font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.2)}
 /* ─── PLACEHOLDER CARD ─── */
-.rv-card-placeholder-wrap{width:100%;height:100%;padding:2px;border-radius:10px;background:var(--surface2);border:1.5px dashed var(--border)}
-.rv-card-placeholder-inner{width:100%;height:100%;border-radius:8px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;opacity:.45}
-.rv-card-ph-vol{font-family:var(--hf);font-size:34px;color:var(--muted)}
-.rv-card-ph-label{font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext);text-align:center;padding:0 8px;line-height:1.5}
+.rv-card-placeholder-wrap{width:100%;height:100%;padding:3px;border-radius:12px;background:var(--surface2);border:1.5px dashed var(--border)}
+.rv-card-placeholder-inner{width:100%;height:100%;border-radius:9px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.45}
+.rv-card-ph-vol{font-family:var(--hf);font-size:38px;color:var(--muted)}
+.rv-card-ph-label{font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext);text-align:center;padding:0 10px;line-height:1.5}
 /* Connector between cards */
 .rv-connector{display:flex;align-items:center;justify-content:center;width:12px;flex-shrink:0;align-self:stretch;position:relative;margin-top:8px;margin-bottom:8px}
 .rv-connector-line{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--border)}
@@ -618,45 +624,54 @@ footer a{color:var(--gold);text-decoration:none}
 .rv-connector.gap .rv-connector-badge{background:rgba(255,65,54,.18);color:var(--red);border:1px dashed rgba(255,65,54,.5)}
 .rv-connector.overlap .rv-connector-badge{background:rgba(255,159,42,.18);color:var(--orange);border:1px solid rgba(255,159,42,.35)}
 /* ─── TIMELINE BAR ─── */
-.rv-timeline-wrap{background:var(--surface);border-top:1px solid var(--border);padding:14px 20px;flex-shrink:0}
-.rv-timeline-label{font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.rv-timeline-info{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0}
-.rv-timeline-outer{position:relative;margin-bottom:4px}
+.rv-timeline-wrap{background:var(--surface);border-top:2px solid var(--border2);padding:18px 24px 20px;flex-shrink:0}
+.rv-timeline-label{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.rv-timeline-info{font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0}
+.rv-timeline-outer{position:relative;margin-bottom:6px}
 /* Issue axis labels */
-.rv-timeline-axis{display:flex;justify-content:space-between;font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-bottom:3px;padding:0 2px}
+.rv-timeline-axis{display:flex;justify-content:space-between;font-family:var(--cf);font-size:11px;font-weight:600;color:var(--dimtext);margin-bottom:4px;padding:0 2px}
 /* Year axis labels below bar */
-.rv-timeline-years{display:flex;justify-content:space-between;font-family:var(--cf);font-size:10px;color:var(--muted);margin-top:3px;padding:0 2px}
+.rv-timeline-years{display:flex;justify-content:space-between;font-family:var(--cf);font-size:11px;font-weight:600;color:var(--muted);margin-top:5px;padding:0 2px}
 /* The bar itself */
-.rv-tl-bar{width:100%;height:36px;background:var(--surface2);border-radius:4px;position:relative;overflow:visible;display:flex;align-items:stretch}
+.rv-tl-bar{width:100%;height:52px;background:var(--surface2);border-radius:6px;position:relative;overflow:visible;display:flex;align-items:stretch;border:1px solid var(--border)}
 /* Segments */
-.rv-tl-seg{position:absolute;top:0;bottom:0;border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:filter .15s,box-shadow .15s}
-.rv-tl-seg:hover{filter:brightness(1.25);box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.rv-tl-seg{position:absolute;top:0;bottom:0;border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:filter .15s,box-shadow .15s}
+.rv-tl-seg:hover{filter:brightness(1.25);box-shadow:0 0 0 2px rgba(255,255,255,.3)}
 .rv-tl-seg.highlighted{filter:brightness(1.3);box-shadow:0 0 0 2px var(--gold)}
 .rv-tl-seg.epic{background:#3a6fa8}.rv-tl-seg.modern{background:#a07800}
 .rv-tl-seg.omni{background:#8050b0}.rv-tl-seg.dc{background:#1a6db5}
-.rv-tl-seg-label{font-family:var(--cf);font-size:9px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 4px;pointer-events:none}
+.rv-tl-seg-label{font-family:var(--cf);font-size:11px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 5px;pointer-events:none}
+/* Issue sub-label inside segment */
+.rv-tl-seg-issues{font-family:var(--cf);font-size:8px;font-weight:600;color:rgba(255,255,255,.55);white-space:nowrap;pointer-events:none;position:absolute;bottom:3px;left:0;right:0;text-align:center;overflow:hidden;text-overflow:clip}
 /* Gap regions */
 .rv-tl-gap{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(255,65,54,.07) 0,rgba(255,65,54,.07) 4px,transparent 4px,transparent 8px);border-left:1px dashed rgba(255,65,54,.3);border-right:1px dashed rgba(255,65,54,.3);pointer-events:none}
 /* Tooltip */
-.rv-tl-tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:7px 10px;font-family:var(--cf);font-size:12px;color:var(--text);pointer-events:none;z-index:300;white-space:nowrap;display:none;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+.rv-tl-tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:8px 12px;font-family:var(--cf);font-size:13px;color:var(--text);pointer-events:none;z-index:300;white-space:nowrap;display:none;box-shadow:0 4px 16px rgba(0,0,0,.6)}
 .rv-tl-tooltip.show{display:block}
-.rv-tl-tooltip-vol{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:3px}
+.rv-tl-tooltip-vol{font-size:15px;font-weight:700;color:var(--gold);margin-bottom:3px}
 /* ─── MULTI-SERIES TIMELINE ─── */
-.rv-multi-wrap{padding:16px 20px}
-.rv-multi-select-wrap{margin-bottom:16px}
-.rv-multi-select-wrap label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.rv-multi-wrap{padding:20px 24px}
+.rv-multi-select-wrap{margin-bottom:18px}
+.rv-multi-select-wrap label{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px}
 .rv-multi-series-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.rv-ms-chip{padding:4px 12px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
+.rv-ms-chip{padding:5px 14px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
 .rv-ms-chip.on{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.1)}
-.rv-multi-timeline{display:flex;flex-direction:column;gap:12px}
-.rv-mt-row{display:flex;align-items:center;gap:10px}
-.rv-mt-label{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--muted);width:160px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
-.rv-mt-bar-wrap{flex:1;position:relative;height:28px;background:var(--surface2);border-radius:3px}
-.rv-mt-seg{position:absolute;top:2px;bottom:2px;border-radius:2px;cursor:pointer;transition:filter .15s}
+.rv-multi-timeline{display:flex;flex-direction:column;gap:14px}
+.rv-mt-row{display:flex;align-items:center;gap:12px}
+.rv-mt-label{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--muted);width:170px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.rv-mt-bar-wrap{flex:1;position:relative;height:32px;background:var(--surface2);border-radius:4px;border:1px solid var(--border)}
+.rv-mt-seg{position:absolute;top:2px;bottom:2px;border-radius:3px;cursor:pointer;transition:filter .15s}
 .rv-mt-seg:hover{filter:brightness(1.3)}
 .rv-mt-seg.epic{background:#3a6fa8}.rv-mt-seg.modern{background:#a07800}
 .rv-mt-seg.omni{background:#8050b0}.rv-mt-seg.dc{background:#1a6db5}
-.rv-mt-axis{display:flex;justify-content:space-between;padding:0 0 0 170px;font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-top:-4px}
+.rv-mt-axis{display:flex;justify-content:space-between;padding:0 0 0 182px;font-family:var(--cf);font-size:11px;color:var(--dimtext);margin-top:-4px}
+/* Multi-series totals */
+.rv-mt-totals{display:flex;gap:8px;flex-shrink:0;align-items:center;min-width:180px}
+.rv-mt-stat{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:.5px;padding:2px 8px;border-radius:3px;white-space:nowrap}
+.rv-mt-stat.total{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)}
+.rv-mt-stat.released{background:rgba(62,255,138,.08);color:var(--green);border:1px solid rgba(62,255,138,.25)}
+.rv-mt-stat.owned{background:rgba(255,210,52,.08);color:var(--gold);border:1px solid rgba(255,210,52,.25)}
+.rv-mt-series-years{font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-top:-2px;text-align:right;width:170px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -2926,10 +2941,17 @@ function rvRender() {
           ? `<img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rv-card-img-ph><span class=rv-card-img-ph-icon>📚</span><span class=rv-card-img-ph-vol>VOL ${v.vol||'?'}</span></div>'">`
           : `<div class="rv-card-img-ph"><span class="rv-card-img-ph-icon">📚</span><span class="rv-card-img-ph-vol">VOL ${v.vol||'?'}</span></div>`;
         const issLabelEsc = issLabel.replace(/</g,'&lt;');
+        // Card number (e.g. "3 of 12")
+        const cardNum = v.vol ? `${v.vol} of ${rawItems.length}` : '';
+        // Description for back
+        const descText = v.description ? rvEsc(v.description) : '';
+        // Ownership badge
+        const owned = isOwned(v.id, activeProfile);
+        const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
         html += `<div class="rv-card-scene" id="rvCard_${v.id}"
-            onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false)">
-          <div class="rv-card-border">
-            <div class="rv-card-inner" onclick="rvFlipCard(this)">
+            onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false);rvResetTilt(this)" onmousemove="rvTiltCard(event)">
+          <div class="rv-card-border" onclick="rvFlipCard(this)">
+            <div class="rv-card-inner">
               <div class="rv-card-front tc-${cls}">
                 <div class="rv-card-header">
                   <span class="rv-card-type-lbl">${RV_TYPE_LABEL[type]}</span>
@@ -2943,17 +2965,19 @@ function rvRender() {
                     <span class="rv-card-year-pill">${rvEsc(v.years||'')}</span>
                   </div>
                 </div>
+                ${cardNum ? `<div class="rv-card-num">${cardNum}</div>` : ''}
                 <div class="rv-card-holo"></div>
               </div>
               <div class="rv-card-back tc-${cls}">
                 <div class="rv-card-back-header">
                   <span class="rv-card-type-lbl">${RV_TYPE_LABEL[type]}</span>
-                  <span class="rv-card-vol-badge">Vol ${v.vol||'?'}</span>
+                  <span class="rv-card-vol-badge" style="display:flex;align-items:center;gap:6px">Vol ${v.vol||'?'}${ownedBadge}</span>
                 </div>
                 <div class="rv-card-back-body">
                   <div class="rv-card-back-series">${rvEsc(v.series)}</div>
                   ${v.subtitle ? `<div class="rv-card-back-sub">${rvEsc(v.subtitle)}</div>` : ''}
                   <div class="rv-card-divider"></div>
+                  ${descText ? `<div class="rv-card-back-desc">${descText}</div><div class="rv-card-divider"></div>` : ''}
                   <div class="rv-cs-grid">
                     <div class="rv-cs-item"><span class="rv-cs-l">Issues</span><span class="rv-cs-v accent">${issLabelEsc}</span></div>
                     <div class="rv-cs-item"><span class="rv-cs-l">Years</span><span class="rv-cs-v accent">${rvEsc(v.years||'—')}</span></div>
@@ -2961,6 +2985,8 @@ function rvRender() {
                     ${v.writers ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Writers</span><span class="rv-cs-v">${rvEsc(v.writers)}</span></div>` : ''}
                     ${v.artists ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Artists</span><span class="rv-cs-v">${rvEsc(v.artists)}</span></div>` : ''}
                     ${v.isbn ? `<div class="rv-cs-item wide"><span class="rv-cs-l">ISBN</span><span class="rv-cs-v" style="font-size:9px">${rvEsc(v.isbn)}</span></div>` : ''}
+                    ${v.pub ? `<div class="rv-cs-item"><span class="rv-cs-l">Publisher</span><span class="rv-cs-v">${rvEsc(v.pub)}</span></div>` : ''}
+                    ${cardNum ? `<div class="rv-cs-item"><span class="rv-cs-l">Card</span><span class="rv-cs-v">${cardNum}</span></div>` : ''}
                   </div>
                 </div>
                 <div class="rv-card-back-footer">
@@ -3022,10 +3048,11 @@ function rvRenderTimeline(items) {
     const seg = document.createElement('div');
     seg.className = `rv-tl-seg ${d.cls}`;
     seg.style.left  = left + '%';
-    seg.style.width = `max(${width}%, 3px)`;
+    seg.style.width = `max(${width}%, 4px)`;
     seg.dataset.id  = d.id;
     const labelText = `V${d.vol}`;
-    seg.innerHTML = `<span class="rv-tl-seg-label">${labelText}</span>`;
+    const issRange = `#${d.iss.start}–${d.iss.end}`;
+    seg.innerHTML = `<span class="rv-tl-seg-label">${labelText}</span><span class="rv-tl-seg-issues">${issRange}</span>`;
     seg.addEventListener('mouseenter', e => rvHoverSeg(d, e, true));
     seg.addEventListener('mousemove',  e => rvMoveTooltip(e));
     seg.addEventListener('mouseleave', e => rvHoverSeg(d, e, false));
@@ -3046,29 +3073,60 @@ function rvRenderTimeline(items) {
   axisTop.innerHTML = axisTicks;
 
   // Year axis (bottom labels) — map issue number to year using items
-  // Build a rough issue→year map from sorted items
   const yearAxis = document.getElementById('rvTimelineYears');
   const yearTicks = [];
-  // Use items sorted by issue start; assign year labels at segment boundaries
   sorted.forEach(d => {
     if (d.years) {
-      const pct = ((d.iss.start - minIss) / totalSpan * 100).toFixed(1);
-      const yr = d.years.match(/\d{4}/);
-      if (yr) yearTicks.push({ pct: parseFloat(pct), label: yr[0] });
+      const pctStart = ((d.iss.start - minIss) / totalSpan * 100).toFixed(1);
+      const pctEnd   = ((d.iss.end - minIss) / totalSpan * 100).toFixed(1);
+      const yrStart  = d.years.match(/\d{4}/);
+      const yrAll    = d.years.match(/\d{4}/g);
+      const yrEnd    = yrAll ? yrAll[yrAll.length - 1] : null;
+      if (yrStart) yearTicks.push({ pct: parseFloat(pctStart), label: yrStart[0] });
+      if (yrEnd && yrEnd !== yrStart[0]) yearTicks.push({ pct: parseFloat(pctEnd), label: yrEnd });
     }
   });
-  // Deduplicate nearby ticks
+  // Deduplicate nearby ticks (keep unique year labels with minimum spacing)
+  yearTicks.sort((a, b) => a.pct - b.pct);
   const filtered = yearTicks.filter((t, i) =>
-    i === 0 || Math.abs(t.pct - yearTicks[i-1].pct) > 8
+    i === 0 || (Math.abs(t.pct - yearTicks[i-1].pct) > 6 && t.label !== yearTicks[i-1].label)
   );
-  yearAxis.innerHTML = filtered.length >= 2
+  yearAxis.innerHTML = filtered.length >= 1
     ? filtered.map(t => `<span>${t.label}</span>`).join('')
     : '';
 
-  // Info line
+  // Info line — show issues and year range
   const totalCovered = items.reduce((s, d) => s + (d.iss.end - d.iss.start + 1), 0);
+  const allYearStarts = items.map(d => rvYearStart(d.years)).filter(y => y < 9999);
+  const allYearEnds   = items.map(d => rvYearEnd(d.years)).filter(y => y > 0);
+  const minYear = allYearStarts.length ? Math.min(...allYearStarts) : null;
+  const maxYear = allYearEnds.length ? Math.max(...allYearEnds) : null;
+  const yearRange = minYear && maxYear ? ` · ${minYear}–${maxYear}` : '';
   document.getElementById('rvTimelineInfo').textContent =
-    `#${minIss}–#${maxIss} · ${totalCovered} issues covered · ${items.length} vol${items.length>1?'s':''}`;
+    `#${minIss}–#${maxIss} · ${totalCovered} issues covered · ${items.length} vol${items.length>1?'s':''}${yearRange}`;
+}
+
+// ── 3D parallax tilt on card hover ──
+function rvTiltCard(e) {
+  const scene = e.currentTarget;
+  const border = scene.querySelector('.rv-card-border');
+  if (!border || border.classList.contains('flipped')) return;
+  const rect = scene.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+  const tiltX = (y - 0.5) * -18;
+  const tiltY = (x - 0.5) * 18;
+  border.style.transition = 'transform .08s ease-out, box-shadow .3s';
+  border.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+}
+function rvResetTilt(scene) {
+  const border = scene.querySelector('.rv-card-border');
+  if (border && !border.classList.contains('flipped')) {
+    border.style.transition = 'transform .4s ease-out, box-shadow .3s';
+    border.style.transform = '';
+    // Restore default transition after settle
+    setTimeout(() => { border.style.transition = ''; }, 400);
+  }
 }
 
 // ── Hover cross-linking ──
@@ -3076,8 +3134,9 @@ function rvHoverCard(id, on) {
   const seg = RV.segMap[id];
   if (seg) seg.classList.toggle('highlighted', on);
 }
-function rvFlipCard(inner) {
-  inner.classList.toggle('flipped');
+function rvFlipCard(border) {
+  border.style.transform = ''; // reset any tilt
+  border.classList.toggle('flipped');
 }
 
 function rvHoverSeg(d, e, on) {
@@ -3164,7 +3223,7 @@ function rvRenderMulti() {
   axisTicks += `<span>${globalMaxYear}</span>`;
   axis.innerHTML = axisTicks;
 
-  // Rows per series
+  // Rows per series — with totals
   wrap.innerHTML = seriesData.map(({ series, items }) => {
     const segs = items.map(d => {
       const left  = ((d.yStart - globalMinYear) / yearSpan * 100).toFixed(2);
@@ -3172,9 +3231,26 @@ function rvRenderMulti() {
       return `<div class="rv-mt-seg ${d.cls}" style="left:${left}%;width:${width}%"
         title="Vol ${d.vol} · ${d.yStart}–${d.yEnd}" onclick="rvJumpTo(${d.id})"></div>`;
     }).join('');
+    // Count totals for this series: all volumes (including ones without issues_covered), released (with coverage), owned
+    const allSeriesVols = ALL_DATA.filter(d => d.series === series);
+    const totalVols = allSeriesVols.length;
+    const releasedVols = items.length;
+    const ownedVols = allSeriesVols.filter(d => isOwned(d.id, activeProfile)).length;
+    // Year range for the series
+    const sMinY = Math.min(...items.map(d => d.yStart));
+    const sMaxY = Math.max(...items.map(d => d.yEnd));
+    const seriesYears = sMinY === sMaxY ? `${sMinY}` : `${sMinY}–${sMaxY}`;
     return `<div class="rv-mt-row">
-      <div class="rv-mt-label" title="${rvEsc(series)}">${rvEsc(series)}</div>
+      <div style="flex-shrink:0;width:170px;text-align:right">
+        <div class="rv-mt-label" style="width:auto" title="${rvEsc(series)}">${rvEsc(series)}</div>
+        <div class="rv-mt-series-years" style="width:auto">${seriesYears}</div>
+      </div>
       <div class="rv-mt-bar-wrap">${segs}</div>
+      <div class="rv-mt-totals">
+        <span class="rv-mt-stat total" title="Total volumes">${totalVols} Total</span>
+        <span class="rv-mt-stat released" title="Released with issue data">${releasedVols} Released</span>
+        <span class="rv-mt-stat owned" title="Owned by ${activeProfile}">${ownedVols} Owned</span>
+      </div>
     </div>`;
   }).join('');
 }
