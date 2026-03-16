@@ -1590,6 +1590,13 @@ async function loadData() {
     buildOwnerFilters();
     applyFilters();
     runDataQualityChecks();
+    // Reset lazy-init flags so new views pick up fresh data
+    browseInited = false;
+    inlineRvInited = false;
+    eraInited = false;
+    roInited = false;
+    // If currently on a non-dashboard view, refresh it
+    if (currentView !== 'dashboard') switchView(currentView);
     hideLoading();
   } catch(e) {
     console.error('Load error:', e);
@@ -2050,6 +2057,9 @@ function setPub(pub, el) {
     typeWrap.style.display = '';
   }
   applyFilters();
+  // Refresh non-dashboard views on publisher change
+  if (currentView === 'browse') { browseInited = false; initBrowseView(); }
+  if (currentView === 'era') { eraInited = false; initEraView(); }
 }
 
 // ── Filters ───────────────────────────────────
@@ -2683,7 +2693,7 @@ function buildRowEl(d, cols) {
     <td>${pubBadge}</td>
     <td class="col-type">${typeBadge(d)}</td>
     <td class="td-vol">${volTxt}</td>
-    <td class="td-series">${d.series||'–'}${licIcon}</td>
+    <td class="td-series">${d.series||'–'}${licIcon}${d.series_group && d.series_group !== d.series ? ` <span class="bc-group-badge" style="display:inline;font-size:9px;vertical-align:middle">${escHtml(d.series_group)}</span>` : ''}</td>
     <td class="td-sub" title="${subTxt}">${subTxt}</td>
     <td class="td-years">${d.years||'–'}</td>
     <td class="td-date">${dateHtml}</td>
@@ -4356,6 +4366,671 @@ function showDataQualityPanel() {
 function closeDataQualityPanel() {
   const overlay = document.getElementById('dqOverlay');
   if (overlay) overlay.style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  VIEW NAVIGATION
+// ═══════════════════════════════════════════════════
+let currentView = 'dashboard';
+
+function switchView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.main-nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+  const viewMap = {
+    'dashboard': 'viewDashboard',
+    'browse': 'viewBrowse',
+    'runs': 'viewRuns',
+    'era': 'viewEra',
+    'reading-order': 'viewReadingOrder'
+  };
+  const target = document.getElementById(viewMap[view]);
+  if (target) target.classList.add('active');
+
+  // Lazy-init views on first switch
+  if (view === 'browse') initBrowseView();
+  if (view === 'runs') initRunsView();
+  if (view === 'era') initEraView();
+  if (view === 'reading-order') initReadingOrderView();
+}
+
+// ═══════════════════════════════════════════════════
+//  BROWSE VIEW — Grid/Card + Table toggle
+// ═══════════════════════════════════════════════════
+let browseMode = 'grid';
+let browseInited = false;
+let browseFiltered = [];
+
+function initBrowseView() {
+  if (browseInited) return;
+  browseInited = true;
+  // Populate group filter
+  const gSel = document.getElementById('browseGroup');
+  const groups = [...new Set(ALL_DATA.map(d => getEffectiveGroup(d)).filter(Boolean))].sort();
+  gSel.innerHTML = '<option value="">All Groups</option>' + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+  // Populate owner filter
+  const oSel = document.getElementById('browseOwner');
+  oSel.innerHTML = '<option value="">Anyone</option>' + ALL_USERS.map(u => `<option value="${u.id}">${escHtml(u.display_name)}</option>`).join('');
+  applyBrowseFilters();
+}
+
+function setBrowseMode(mode, btn) {
+  browseMode = mode;
+  document.querySelectorAll('.grid-toggle-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderBrowse();
+}
+
+function applyBrowseFilters() {
+  const search = (document.getElementById('browseSearch')?.value || '').toLowerCase().trim();
+  const group = document.getElementById('browseGroup')?.value || '';
+  const type = document.getElementById('browseType')?.value || '';
+  const owner = document.getElementById('browseOwner')?.value || '';
+  const hideRep = document.getElementById('browseHideReprints')?.checked;
+
+  browseFiltered = ALL_DATA.filter(d => {
+    if (activePub === 'marvel' && d.pub !== 'Marvel') return false;
+    if (activePub === 'dc' && d.type !== 'DC Finest') return false;
+    if (activePub === 'omni' && d.type !== 'Omnibus') return false;
+    if (hideRep && d.reprint === 'Yes') return false;
+    if (type && d.type !== type) return false;
+    if (group && getEffectiveGroup(d) !== group) return false;
+    if (owner && !isOwned(d.id, owner)) return false;
+    if (search) {
+      const hay = `${d.series||''} ${d.subtitle||''} ${d.years||''} ${d.series_group||''}`.toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Sort by series then vol
+  browseFiltered.sort(defaultSort);
+
+  const banner = document.getElementById('browseBanner');
+  const btxt = document.getElementById('browseBannerText');
+  if (search || group || type || owner) {
+    banner.style.display = 'flex';
+    banner.classList.add('show');
+    btxt.textContent = `Showing ${browseFiltered.length} of ${ALL_DATA.length} releases`;
+  } else {
+    banner.style.display = 'none';
+    banner.classList.remove('show');
+  }
+  renderBrowse();
+}
+
+function renderBrowse() {
+  const container = document.getElementById('browseContent');
+  if (browseMode === 'grid') {
+    container.innerHTML = '<div class="browse-grid" id="browseGrid"></div>';
+    renderBrowseGrid();
+  } else {
+    container.innerHTML = '<div class="tpanel"><div class="tscroll"><table><thead><tr>' +
+      '<th>Pub</th><th>Type</th><th>Vol</th><th>Series</th><th>Subtitle</th><th>Years</th><th>Release</th><th>Group</th>' +
+      '</tr></thead><tbody id="browseTableBody"></tbody></table></div></div>';
+    renderBrowseTable();
+  }
+}
+
+function renderBrowseGrid() {
+  const grid = document.getElementById('browseGrid');
+  if (!grid) return;
+  const limit = Math.min(browseFiltered.length, 500); // cap for performance
+  let html = '';
+  for (let i = 0; i < limit; i++) {
+    const d = browseFiltered[i];
+    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
+    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
+    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+    const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : 'tb-omnibus';
+    const group = getEffectiveGroup(d);
+    const ownedDots = ALL_USERS.filter(u => isOwned(d.id, u.id)).map(u =>
+      `<span class="bc-owned-dot" style="background:${u.color}" title="${escHtml(u.display_name)} owns"></span>`
+    ).join('');
+
+    html += `<div class="browse-card" onclick="openEditModal(${d.id})" title="${escHtml(d.series)} Vol ${d.vol||'?'}">`;
+    if (coverUrl && !coverUrl.startsWith('data:')) {
+      html += `<img class="bc-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'bc-cover-ph',textContent:'Vol ${d.vol||'?'}'}))">`;
+    } else if (coverUrl) {
+      html += `<img class="bc-cover" src="${coverUrl}" alt="" loading="lazy">`;
+    } else {
+      html += `<div class="bc-cover-ph">Vol ${d.vol||'?'}</div>`;
+    }
+    html += `<div class="bc-info">`;
+    html += `<div class="bc-series">${escHtml(d.series||'')} ${d.vol ? 'Vol '+d.vol : ''}</div>`;
+    html += `<div class="bc-sub">${escHtml(d.subtitle||d.years||'')}</div>`;
+    html += `<div class="bc-meta"><span class="bc-type-badge ${typeClass}">${escHtml(d.type||'')}</span>${ownedDots}</div>`;
+    if (group && group !== d.series) {
+      html += `<div class="bc-group-badge">${escHtml(group)}</div>`;
+    }
+    html += `</div></div>`;
+  }
+  if (limit < browseFiltered.length) {
+    html += `<div style="grid-column:1/-1;text-align:center;padding:20px;font-family:var(--cf);font-size:12px;color:var(--muted)">Showing ${limit} of ${browseFiltered.length} — use filters to narrow results</div>`;
+  }
+  grid.innerHTML = html || '<div class="rv-empty">No entries match your filters</div>';
+}
+
+function renderBrowseTable() {
+  const tbody = document.getElementById('browseTableBody');
+  if (!tbody) return;
+  const limit = Math.min(browseFiltered.length, 500);
+  let html = '';
+  for (let i = 0; i < limit; i++) {
+    const d = browseFiltered[i];
+    const pubCls = d.pub === 'Marvel' ? 'm' : 'd';
+    const group = getEffectiveGroup(d);
+    html += `<tr class="data-row" onclick="openEditModal(${d.id})" style="cursor:pointer">
+      <td><span class="pub-badge ${pubCls}">${d.pub||''}</span></td>
+      <td><span class="type-badge ${d.type==='Epic'?'tb-epic':d.type==='Modern'?'tb-modern':d.type==='Ultimate'?'tb-ultimate':d.type==='DC Finest'?'tb-dcfinest':'tb-omnibus'}">${escHtml(d.type||'')}</span></td>
+      <td class="td-vol">${d.vol||''}</td>
+      <td class="td-series">${escHtml(d.series||'')}</td>
+      <td class="td-sub">${escHtml(d.subtitle||'')}</td>
+      <td class="td-years">${escHtml(d.years||'')}</td>
+      <td class="td-date">${d.date||'TBD'}</td>
+      <td style="font-size:11px;color:var(--dimtext)">${group !== d.series ? escHtml(group) : ''}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════
+//  RUN COMPLETENESS INDICATORS
+// ═══════════════════════════════════════════════════
+function buildRunCompleteness() {
+  const grid = document.getElementById('rcGrid');
+  if (!grid) return;
+
+  // Group by effective group, compute per-group stats
+  const groups = {};
+  ALL_DATA.forEach(d => {
+    if (d.reprint === 'Yes') return;
+    const g = getEffectiveGroup(d);
+    if (!g) return;
+    if (!groups[g]) groups[g] = { total: 0, owned: 0, name: g };
+    groups[g].total++;
+    // Check if any user owns it
+    if (currentUser && isOwned(d.id, currentUser.id)) groups[g].owned++;
+    else if (!currentUser) {
+      // If not signed in, check if any user owns
+      const anyOwned = ALL_USERS.some(u => isOwned(d.id, u.id));
+      if (anyOwned) groups[g].owned++;
+    }
+  });
+
+  const sorted = Object.values(groups).filter(g => g.total >= 2).sort((a, b) => {
+    const pa = a.total ? a.owned / a.total : 0;
+    const pb = b.total ? b.owned / b.total : 0;
+    return pb - pa || b.total - a.total;
+  });
+
+  grid.innerHTML = sorted.slice(0, 50).map(g => {
+    const pct = g.total ? Math.round(g.owned / g.total * 100) : 0;
+    const color = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : pct > 0 ? 'var(--orange)' : 'var(--dimtext)';
+    return `<div class="rc-row" onclick="jumpToRunSeries('${escHtml(g.name).replace(/'/g,"\\'")}')">
+      <span class="rc-name">${escHtml(g.name)}</span>
+      <div class="rc-bar"><div class="rc-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="rc-pct" style="color:${color}">${pct}%</span>
+      <span class="rc-count">${g.owned}/${g.total}</span>
+    </div>`;
+  }).join('') || '<div class="rv-empty">No run data available</div>';
+}
+
+function jumpToRunSeries(name) {
+  const sel = document.getElementById('inlineRvSelect');
+  if (sel) {
+    sel.value = name;
+    inlineRvSelectSeries(name);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  INLINE RUNS VIEW (mirrors Run View overlay logic)
+// ═══════════════════════════════════════════════════
+let inlineRvInited = false;
+let inlineRvGroupMode = false;
+let inlineRvHideReprints = false;
+let inlineRvActiveTypes = new Set(['Epic', 'Modern', 'Omnibus', 'DC Finest']);
+
+function initRunsView() {
+  if (!inlineRvInited) {
+    inlineRvInited = true;
+    populateInlineRvSelect();
+    buildRunCompleteness();
+  }
+}
+
+function populateInlineRvSelect() {
+  const sel = document.getElementById('inlineRvSelect');
+  if (!sel) return;
+  const items = new Set();
+  ALL_DATA.forEach(d => {
+    const key = inlineRvGroupMode ? getEffectiveGroup(d) : d.series;
+    if (key) items.add(key);
+  });
+  const sorted = [...items].sort((a, b) => a.localeCompare(b));
+  sel.innerHTML = '<option value="">— Select a ' + (inlineRvGroupMode ? 'group' : 'series') + ' —</option>' +
+    sorted.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+function inlineRvToggleGroupMode() {
+  inlineRvGroupMode = !inlineRvGroupMode;
+  const btn = document.getElementById('inlineRvGroupToggle');
+  btn.textContent = 'By: ' + (inlineRvGroupMode ? 'Group' : 'Series');
+  btn.classList.toggle('on', inlineRvGroupMode);
+  populateInlineRvSelect();
+  document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">Select a ' + (inlineRvGroupMode ? 'group' : 'series') + ' above to view its issue run</div>';
+}
+
+function inlineRvTogglePill(el) {
+  el.classList.toggle('on');
+  const type = el.dataset.type;
+  if (inlineRvActiveTypes.has(type)) inlineRvActiveTypes.delete(type);
+  else inlineRvActiveTypes.add(type);
+  const current = document.getElementById('inlineRvSelect')?.value;
+  if (current) inlineRvSelectSeries(current);
+}
+
+function inlineRvToggleReprints(el) {
+  inlineRvHideReprints = !inlineRvHideReprints;
+  el.classList.toggle('on', inlineRvHideReprints);
+  el.textContent = inlineRvHideReprints ? 'Show Reprints' : 'Hide Reprints';
+  const current = document.getElementById('inlineRvSelect')?.value;
+  if (current) inlineRvSelectSeries(current);
+}
+
+function inlineRvToggleMultiMode() {
+  // Delegate to the full overlay for multi-series comparison
+  rvOpen();
+  const btn = document.getElementById('rvMultiBtn');
+  if (btn) btn.click();
+}
+
+function inlineRvSelectSeries(name) {
+  if (!name) {
+    document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">Select a series above to view its issue run</div>';
+    return;
+  }
+  // Filter entries matching the selected series/group
+  let entries = ALL_DATA.filter(d => {
+    const key = inlineRvGroupMode ? getEffectiveGroup(d) : d.series;
+    return key === name;
+  });
+  if (inlineRvHideReprints) entries = entries.filter(d => d.reprint !== 'Yes');
+  entries = entries.filter(d => inlineRvActiveTypes.has(d.type));
+  entries.sort((a, b) => (a.vol || 0) - (b.vol || 0));
+
+  if (!entries.length) {
+    document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">No matching entries for this selection</div>';
+    return;
+  }
+
+  // Build a card-based run display (reuse rv-run/rv-card-scene styles)
+  let html = '<div class="rv-run" style="padding:10px 0">';
+  entries.forEach((d, i) => {
+    const typeKey = d.type === 'Epic' ? 'epic' : d.type === 'Modern' ? 'modern' : d.type === 'Omnibus' ? 'omni' : 'dc';
+    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
+    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
+    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+
+    // Connector between cards
+    if (i > 0) {
+      const prev = entries[i - 1];
+      const prevEnd = prev.issue_end || prev.issue_start;
+      const curStart = d.issue_start;
+      let connType = 'ok', connLabel = '→';
+      if (prevEnd && curStart) {
+        if (curStart === prevEnd + 1) { connType = 'ok'; connLabel = '✓'; }
+        else if (curStart > prevEnd + 1) { connType = 'gap'; connLabel = `${curStart - prevEnd - 1}`; }
+        else { connType = 'overlap'; connLabel = '⊘'; }
+      }
+      html += `<div class="rv-connector ${connType}"><div class="rv-connector-line"></div><div class="rv-connector-badge">${connLabel}</div></div>`;
+    }
+
+    html += `<div class="rv-card-scene" onclick="openEditModal(${d.id})">
+      <div class="rv-card-border">
+        <div class="rv-card-inner">
+          <div class="rv-card-front tc-${typeKey}">
+            <div class="rv-card-header">
+              <span class="rv-card-type-lbl">${escHtml(d.type||'')}</span>
+              <span class="rv-card-vol-badge">${d.vol||'?'}</span>
+            </div>
+            <div class="rv-card-img">
+              ${coverUrl ? `<img src="${escHtml(coverUrl)}" alt="" loading="lazy">` : `<div class="rv-card-img-ph"><div class="rv-card-img-ph-icon">📖</div><div class="rv-card-img-ph-vol">Vol ${d.vol||'?'}</div></div>`}
+              <div class="rv-card-holo"></div>
+            </div>
+            <div class="rv-card-footer">
+              <div class="rv-card-series-name">${escHtml(d.series||'')}</div>
+              <div class="rv-card-badges">
+                <span class="rv-card-issue-pill">${escHtml(d.issues_covered||'')}</span>
+                <span class="rv-card-year-pill">${escHtml(d.years||'')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+
+  document.getElementById('inlineRvBody').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════
+//  ERA EXPLORER
+// ═══════════════════════════════════════════════════
+let eraDecade = 1980;
+let eraInited = false;
+let eraSelectedGroup = '';
+
+function initEraView() {
+  if (eraInited) { renderEra(); return; }
+  eraInited = true;
+  renderEra();
+}
+
+function setEraDecade(decade, btn) {
+  eraDecade = decade;
+  document.querySelectorAll('.era-decade-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('eraSliderStart').value = 0;
+  document.getElementById('eraSliderEnd').value = 9;
+  eraSelectedGroup = '';
+  renderEra();
+}
+
+function updateEraSlider() {
+  renderEra();
+}
+
+function toggleEraGroup(name, el) {
+  if (eraSelectedGroup === name) {
+    eraSelectedGroup = '';
+    el.classList.remove('active');
+  } else {
+    eraSelectedGroup = name;
+    document.querySelectorAll('.era-group-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  }
+  renderEraGrid();
+}
+
+function renderEra() {
+  const startOffset = parseInt(document.getElementById('eraSliderStart').value);
+  const endOffset = parseInt(document.getElementById('eraSliderEnd').value);
+  const yearStart = eraDecade + Math.min(startOffset, endOffset);
+  const yearEnd = eraDecade + Math.max(startOffset, endOffset);
+
+  document.getElementById('eraRangeLabel').textContent = `${yearStart} – ${yearEnd}`;
+
+  // Filter entries whose year range intersects the selected range
+  const eraEntries = ALL_DATA.filter(d => {
+    if (d.reprint === 'Yes') return false;
+    if (activePub === 'marvel' && d.pub !== 'Marvel') return false;
+    if (activePub === 'dc' && d.type !== 'DC Finest') return false;
+    if (activePub === 'omni' && d.type !== 'Omnibus') return false;
+    const ys = d.year_start || parseYearStart(d.years);
+    const ye = d.year_end || parseYearEnd(d.years);
+    if (!ys) return false;
+    const entryEnd = ye || ys;
+    return ys <= yearEnd && entryEnd >= yearStart;
+  });
+
+  document.getElementById('eraCount').textContent = `${eraEntries.length} books`;
+
+  // Build group pills
+  const groups = {};
+  eraEntries.forEach(d => {
+    const g = getEffectiveGroup(d);
+    if (g) groups[g] = (groups[g] || 0) + 1;
+  });
+  const sortedGroups = Object.entries(groups).sort((a, b) => b[1] - a[1]);
+  document.getElementById('eraGroups').innerHTML = sortedGroups.slice(0, 30).map(([g, cnt]) =>
+    `<button class="era-group-pill${eraSelectedGroup === g ? ' active' : ''}" onclick="toggleEraGroup('${g.replace(/'/g,"\\'")}',this)">${escHtml(g)} (${cnt})</button>`
+  ).join('');
+
+  renderEraGrid();
+}
+
+function renderEraGrid() {
+  const startOffset = parseInt(document.getElementById('eraSliderStart').value);
+  const endOffset = parseInt(document.getElementById('eraSliderEnd').value);
+  const yearStart = eraDecade + Math.min(startOffset, endOffset);
+  const yearEnd = eraDecade + Math.max(startOffset, endOffset);
+
+  let entries = ALL_DATA.filter(d => {
+    if (d.reprint === 'Yes') return false;
+    if (activePub === 'marvel' && d.pub !== 'Marvel') return false;
+    if (activePub === 'dc' && d.type !== 'DC Finest') return false;
+    if (activePub === 'omni' && d.type !== 'Omnibus') return false;
+    const ys = d.year_start || parseYearStart(d.years);
+    const ye = d.year_end || parseYearEnd(d.years);
+    if (!ys) return false;
+    const entryEnd = ye || ys;
+    if (!(ys <= yearEnd && entryEnd >= yearStart)) return false;
+    if (eraSelectedGroup && getEffectiveGroup(d) !== eraSelectedGroup) return false;
+    return true;
+  });
+
+  entries.sort((a, b) => {
+    const ya = a.year_start || parseYearStart(a.years) || 0;
+    const yb = b.year_start || parseYearStart(b.years) || 0;
+    return ya - yb || (a.series||'').localeCompare(b.series||'') || (a.vol||0) - (b.vol||0);
+  });
+
+  const grid = document.getElementById('eraGrid');
+  const limit = Math.min(entries.length, 300);
+  let html = '';
+  for (let i = 0; i < limit; i++) {
+    const d = entries[i];
+    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
+    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
+    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+    const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : 'tb-omnibus';
+
+    html += `<div class="browse-card" onclick="openEditModal(${d.id})">`;
+    if (coverUrl && !coverUrl.startsWith('data:')) {
+      html += `<img class="bc-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'bc-cover-ph',textContent:'Vol ${d.vol||'?'}'}))">`;
+    } else if (coverUrl) {
+      html += `<img class="bc-cover" src="${coverUrl}" alt="" loading="lazy">`;
+    } else {
+      html += `<div class="bc-cover-ph">Vol ${d.vol||'?'}</div>`;
+    }
+    html += `<div class="bc-info">`;
+    html += `<div class="bc-series">${escHtml(d.series||'')} ${d.vol ? 'Vol '+d.vol : ''}</div>`;
+    html += `<div class="bc-sub">${escHtml(d.years||'')} · ${escHtml(d.issues_covered||'')}</div>`;
+    html += `<div class="bc-meta"><span class="bc-type-badge ${typeClass}">${escHtml(d.type||'')}</span></div>`;
+    html += `</div></div>`;
+  }
+  grid.innerHTML = html || '<div class="rv-empty" style="grid-column:1/-1">No entries match this era range</div>';
+}
+
+// ═══════════════════════════════════════════════════
+//  READING ORDER
+// ═══════════════════════════════════════════════════
+let roInited = false;
+let roCurrentGroup = '';
+let roEntries = []; // ordered list of entry IDs
+
+function initReadingOrderView() {
+  if (roInited) { return; }
+  roInited = true;
+  const gSel = document.getElementById('roGroupSelect');
+  const groups = [...new Set(ALL_DATA.map(d => getEffectiveGroup(d)).filter(Boolean))].sort();
+  gSel.innerHTML = '<option value="">— Select a Group —</option>' + groups.map(g => `<option value="${g}">${g}</option>`).join('');
+}
+
+function roSelectGroup(name) {
+  roCurrentGroup = name;
+  document.getElementById('roAutoBtn').style.display = name ? '' : 'none';
+  if (!name) {
+    document.getElementById('roContent').innerHTML = '<div class="ro-empty">Select a Series Group to view or create a reading order</div>';
+    return;
+  }
+  // Check for saved reading order in localStorage
+  const saved = roLoadSaved(name);
+  if (saved && saved.length) {
+    roEntries = saved;
+    renderReadingOrder();
+  } else {
+    roAutoGenerate();
+  }
+}
+
+function roAutoGenerate() {
+  if (!roCurrentGroup) return;
+  // Get all entries for this group, sorted by year_start then issue_start
+  let entries = ALL_DATA.filter(d => getEffectiveGroup(d) === roCurrentGroup && d.reprint !== 'Yes');
+  entries.sort((a, b) => {
+    const ya = a.year_start || parseYearStart(a.years) || 9999;
+    const yb = b.year_start || parseYearStart(b.years) || 9999;
+    if (ya !== yb) return ya - yb;
+    const ia = a.issue_start || 0;
+    const ib = b.issue_start || 0;
+    return ia - ib;
+  });
+  roEntries = entries.map(d => d.id);
+  roSave(roCurrentGroup, roEntries);
+  renderReadingOrder();
+}
+
+function renderReadingOrder() {
+  const container = document.getElementById('roContent');
+  if (!roEntries.length) {
+    container.innerHTML = '<div class="ro-empty">No entries to display. Try auto-generating.</div>';
+    return;
+  }
+
+  let html = '<div class="ro-list" id="roList">';
+  roEntries.forEach((id, i) => {
+    const d = ALL_DATA.find(e => e.id === id);
+    if (!d) return;
+    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
+    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
+    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+
+    html += `<div class="ro-item" draggable="true" data-ro-idx="${i}" data-ro-id="${id}"
+      ondragstart="roDragStart(event)" ondragover="roDragOver(event)" ondrop="roDrop(event)" ondragend="roDragEnd(event)">
+      <span class="ro-drag">⠿</span>
+      <span class="ro-pos">${i + 1}</span>
+      ${coverUrl ? `<img class="ro-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy">` : `<div class="ro-cover" style="display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--dimtext)">📖</div>`}
+      <div class="ro-info">
+        <div class="ro-info-title">${escHtml(d.series||'')} ${d.vol ? 'Vol ' + d.vol : ''}</div>
+        <div class="ro-info-sub">${escHtml(d.type||'')} · ${escHtml(d.years||'')} · ${escHtml(d.issues_covered||'')}</div>
+      </div>
+      <button class="ro-remove" onclick="event.stopPropagation();roRemove(${i})" title="Remove">✕</button>
+    </div>`;
+  });
+  html += '</div>';
+  html += '<div class="ro-actions">';
+  html += `<button class="rbtn" onclick="roAutoGenerate()">↺ Re-generate</button>`;
+  html += `<span style="font-family:var(--cf);font-size:12px;color:var(--muted)">${roEntries.length} entries</span>`;
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Drag and drop
+let roDragIdx = null;
+function roDragStart(e) {
+  roDragIdx = parseInt(e.currentTarget.dataset.roIdx);
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function roDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function roDrop(e) {
+  e.preventDefault();
+  const targetIdx = parseInt(e.currentTarget.dataset.roIdx);
+  if (roDragIdx === null || roDragIdx === targetIdx) return;
+  const item = roEntries.splice(roDragIdx, 1)[0];
+  roEntries.splice(targetIdx, 0, item);
+  roSave(roCurrentGroup, roEntries);
+  renderReadingOrder();
+}
+function roDragEnd(e) { e.currentTarget.classList.remove('dragging'); roDragIdx = null; }
+
+function roRemove(idx) {
+  roEntries.splice(idx, 1);
+  roSave(roCurrentGroup, roEntries);
+  renderReadingOrder();
+}
+
+// Local storage for reading orders
+function roSave(group, entries) {
+  try {
+    const all = JSON.parse(localStorage.getItem('bce_reading_orders') || '{}');
+    all[group] = entries;
+    localStorage.setItem('bce_reading_orders', JSON.stringify(all));
+  } catch(e) {}
+}
+function roLoadSaved(group) {
+  try {
+    const all = JSON.parse(localStorage.getItem('bce_reading_orders') || '{}');
+    return all[group] || null;
+  } catch(e) { return null; }
+}
+
+// ═══════════════════════════════════════════════════
+//  DATABASE MIGRATION HELPER (ISBN index + reading order tables)
+// ═══════════════════════════════════════════════════
+function getSchemaV5Migration() {
+  return `
+-- v5: ISBN index + reading order tables + ISBN failure logging
+-- Run this in the Supabase SQL Editor
+
+-- 1. Index on ISBN for faster lookups
+CREATE INDEX IF NOT EXISTS idx_comic_entries_isbn ON comic_entries (isbn) WHERE isbn IS NOT NULL;
+
+-- 2. Index on series for faster filtering
+CREATE INDEX IF NOT EXISTS idx_comic_entries_series ON comic_entries (series);
+
+-- 3. Index on series_group for group queries
+CREATE INDEX IF NOT EXISTS idx_comic_entries_series_group ON comic_entries (series_group) WHERE series_group IS NOT NULL;
+
+-- 4. Reading order groups
+CREATE TABLE IF NOT EXISTS reading_order_groups (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  series_group TEXT,
+  description TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 5. Reading order entries (ordered list within a group)
+CREATE TABLE IF NOT EXISTS reading_order_entries (
+  id SERIAL PRIMARY KEY,
+  group_id INTEGER REFERENCES reading_order_groups(id) ON DELETE CASCADE,
+  entry_id INTEGER REFERENCES comic_entries(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ro_entries_group ON reading_order_entries (group_id, position);
+
+-- 6. ISBN lookup failure log
+CREATE TABLE IF NOT EXISTS isbn_failures (
+  isbn TEXT PRIMARY KEY,
+  attempts INTEGER DEFAULT 1,
+  last_attempt TIMESTAMPTZ DEFAULT now(),
+  error TEXT,
+  retry_after TIMESTAMPTZ
+);
+
+-- 7. RLS policies
+ALTER TABLE reading_order_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reading_order_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE isbn_failures ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "reading_order_groups_public_read" ON reading_order_groups FOR SELECT USING (true);
+CREATE POLICY "reading_order_groups_auth_write" ON reading_order_groups FOR ALL USING (auth.uid() = created_by);
+CREATE POLICY "reading_order_entries_public_read" ON reading_order_entries FOR SELECT USING (true);
+CREATE POLICY "reading_order_entries_auth_write" ON reading_order_entries FOR ALL USING (
+  EXISTS (SELECT 1 FROM reading_order_groups WHERE id = reading_order_entries.group_id AND created_by = auth.uid())
+);
+CREATE POLICY "isbn_failures_public" ON isbn_failures FOR ALL USING (true);
+  `.trim();
 }
 </script>
 </body>
