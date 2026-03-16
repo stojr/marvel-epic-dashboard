@@ -120,3 +120,98 @@ UPDATE comic_entries
 SET cover_url = 'https://images.penguinrandomhouse.com/cover/' || REPLACE(isbn, '-', '')
 WHERE isbn IS NOT NULL
   AND (cover_url IS NULL OR cover_url = '');
+
+-- ═══════════════════════════════════════════════════════════════
+--  BCE EPIC Database — Schema Migration v3
+--  Series Groups, structured year/issue fields, ISBN cache,
+--  data quality flags, reading order support
+-- ═══════════════════════════════════════════════════════════════
+
+-- ── 1. series_groups reference table ──────────────────────────
+CREATE TABLE IF NOT EXISTS series_groups (
+  id          SERIAL PRIMARY KEY,
+  name        TEXT NOT NULL UNIQUE,
+  publisher   TEXT,
+  character   TEXT,
+  notes       TEXT,
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- ── 2. isbn_cache table ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS isbn_cache (
+  isbn        TEXT PRIMARY KEY,
+  source      TEXT,
+  title       TEXT,
+  subtitle    TEXT,
+  authors     TEXT,
+  page_count  INTEGER,
+  pub_date    TEXT,
+  description TEXT,
+  cover_url   TEXT,
+  fetched_at  TIMESTAMPTZ DEFAULT now(),
+  failed      BOOLEAN DEFAULT false
+);
+
+-- ── 3. data_quality_flags table ──────────────────────────────
+CREATE TABLE IF NOT EXISTS data_quality_flags (
+  id          SERIAL PRIMARY KEY,
+  entry_id    INTEGER REFERENCES comic_entries(id) ON DELETE CASCADE,
+  flag_type   TEXT NOT NULL,
+  detail      TEXT,
+  resolved    BOOLEAN DEFAULT false,
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- ── 4. New columns on comic_entries ──────────────────────────
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS series_group_id  INTEGER REFERENCES series_groups(id);
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS series_group     TEXT;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS year_start       INTEGER;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS year_end         INTEGER;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS sort_order       INTEGER;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS issue_start      INTEGER;
+ALTER TABLE comic_entries ADD COLUMN IF NOT EXISTS issue_end        INTEGER;
+
+-- ── 5. Indexes ───────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_entries_series_group    ON comic_entries(series_group);
+CREATE INDEX IF NOT EXISTS idx_entries_series_group_id ON comic_entries(series_group_id);
+CREATE INDEX IF NOT EXISTS idx_entries_series          ON comic_entries(series);
+CREATE INDEX IF NOT EXISTS idx_entries_year_start      ON comic_entries(year_start);
+CREATE INDEX IF NOT EXISTS idx_entries_year_end        ON comic_entries(year_end);
+CREATE INDEX IF NOT EXISTS idx_entries_date            ON comic_entries(date);
+CREATE INDEX IF NOT EXISTS idx_entries_type            ON comic_entries(type);
+CREATE INDEX IF NOT EXISTS idx_entries_pub             ON comic_entries(pub);
+CREATE INDEX IF NOT EXISTS idx_entries_group_year      ON comic_entries(series_group, year_start, year_end);
+
+-- ── 6. Backfill year_start from years text field ─────────────
+UPDATE comic_entries
+SET year_start = CAST(substring(years FROM '(\d{4})') AS INTEGER)
+WHERE years IS NOT NULL AND year_start IS NULL;
+
+-- Backfill year_end (last 4-digit year in the string)
+UPDATE comic_entries
+SET year_end = sub.last_year
+FROM (
+  SELECT id, CAST((regexp_matches(years, '(\d{4})', 'g'))[1] AS INTEGER) AS last_year
+  FROM comic_entries
+  WHERE years IS NOT NULL AND year_end IS NULL
+) sub
+WHERE comic_entries.id = sub.id;
+
+-- For single-year entries, set year_end = year_start if still null
+UPDATE comic_entries
+SET year_end = year_start
+WHERE year_start IS NOT NULL AND year_end IS NULL;
+
+-- ── 7. Backfill issue_start / issue_end from issues_covered ──
+UPDATE comic_entries
+SET issue_start = CAST(substring(issues_covered FROM '#?(\d+)') AS INTEGER)
+WHERE issues_covered IS NOT NULL AND issue_start IS NULL;
+
+UPDATE comic_entries
+SET issue_end = CAST(substring(issues_covered FROM '#?\d+\s*[-–—]\s*(\d+)') AS INTEGER)
+WHERE issues_covered IS NOT NULL AND issue_end IS NULL;
+
+-- For single-issue entries, set issue_end = issue_start if still null
+UPDATE comic_entries
+SET issue_end = issue_start
+WHERE issue_start IS NOT NULL AND issue_end IS NULL;

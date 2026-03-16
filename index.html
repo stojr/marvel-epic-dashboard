@@ -722,6 +722,7 @@ footer a{color:var(--gold);text-decoration:none}
   <div class="db-status-bar">
     <div class="db-dot loading" id="dbDot"></div>
     <span class="db-status-text" id="dbStatusText">Connecting to Supabase…</span>
+    <span id="dqBadge" style="display:none;margin-left:8px;background:var(--orange);color:#000;font-family:var(--cf);font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" onclick="showDataQualityPanel()" title="Data quality issues">0</span>
     <span style="margin-left:auto;font-family:var(--cf);font-size:11px;color:var(--dimtext)" id="dbLastSync"></span>
   </div>
 </div>
@@ -760,9 +761,12 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="fg"><div class="flabel">Reprints</div>
       <select id="fRep" onchange="applyFilters()">
         <option value="">All</option>
-        <option value="No">Unique Only</option>
+        <option value="No" selected>Unique Only</option>
         <option value="Yes">Reprints Only</option>
       </select></div>
+    <div class="fg"><div class="flabel">Series Group</div>
+      <select id="fSeriesGroup" onchange="applyFilters()"><option value="">All Groups</option></select></div>
+    <datalist id="seriesGroupList"></datalist>
     <div class="fg" id="fUserDataWrap"><div class="flabel" id="profileFilterLabel">Profile Filter</div>
       <div class="owner-filters">
         <span class="own-filter-pill stojr" id="pfWishlist" onclick="toggleUserFilter('wishlist')" title="Show wishlisted">★ Wishlist</span>
@@ -916,7 +920,11 @@ footer a{color:var(--gold);text-decoration:none}
       </div>
       <div class="modal-field full">
         <label class="modal-label">Series Title *</label>
-        <input class="modal-input" id="mSeries" type="text" placeholder="e.g. Amazing Spider-Man" onblur="onModalDcFinestCheck()">
+        <input class="modal-input" id="mSeries" type="text" placeholder="e.g. Amazing Spider-Man" onblur="onModalDcFinestCheck();onSeriesBlurSuggestGroup()">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Series Group</label>
+        <input class="modal-input" id="mSeriesGroup" type="text" list="seriesGroupList" placeholder="e.g. Spider-Man">
       </div>
       <div class="modal-field">
         <label class="modal-label">Volume #</label>
@@ -968,6 +976,10 @@ footer a{color:var(--gold);text-decoration:none}
           <option value="sourced">Sourced (Community)</option>
           <option value="estimated">Estimated</option>
         </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Reading Order #</label>
+        <input class="modal-input" id="mSortOrder" type="number" min="1" placeholder="Manual sort within group">
       </div>
       <div class="modal-field">
         <label class="modal-label">Series # (Optional)</label>
@@ -1059,6 +1071,7 @@ footer a{color:var(--gold);text-decoration:none}
           <th class="bec-pub"     data-sort="pub"     onclick="sortBulkBy('pub')">Publisher<span class="be-sort-arrow" id="bsa-pub"></span><input class="be-col-filter" data-col-filter="pub"     placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-type"    data-sort="type"    onclick="sortBulkBy('type')">Type<span class="be-sort-arrow" id="bsa-type"></span><input class="be-col-filter" data-col-filter="type"    placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-series"  data-sort="series"  onclick="sortBulkBy('series')">Series *<span class="be-sort-arrow" id="bsa-series"></span><input class="be-col-filter" data-col-filter="series"  placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-series"  data-sort="series_group" onclick="sortBulkBy('series_group')">Group<span class="be-sort-arrow" id="bsa-series_group"></span><input class="be-col-filter" data-col-filter="series_group" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-vol"     data-sort="vol"     onclick="sortBulkBy('vol')">Vol<span class="be-sort-arrow" id="bsa-vol"></span></th>
           <th class="bec-sub"     data-sort="subtitle" onclick="sortBulkBy('subtitle')">Subtitle<span class="be-sort-arrow" id="bsa-subtitle"></span><input class="be-col-filter" data-col-filter="subtitle" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-years"   data-sort="years"   onclick="sortBulkBy('years')">Years<span class="be-sort-arrow" id="bsa-years"></span></th>
@@ -1091,10 +1104,13 @@ footer a{color:var(--gold);text-decoration:none}
 <div class="rv-overlay" id="rvOverlay">
   <div class="rv-hdr">
     <div class="rv-title">📚 Run View</div>
-    <div class="rv-select-wrap">
-      <select id="rvSeriesSelect" onchange="rvSelectSeries(this.value)">
-        <option value="">— Select a series —</option>
-      </select>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="rv-mode-btn" id="rvGroupToggle" onclick="rvToggleGroupMode()" title="Toggle between Series and Series Group" style="font-size:11px;padding:4px 10px">By: Series</button>
+      <div class="rv-select-wrap">
+        <select id="rvSeriesSelect" onchange="rvSelectSeries(this.value)">
+          <option value="">— Select a series —</option>
+        </select>
+      </div>
     </div>
     <div class="rv-type-pills" id="rvTypePills">
       <span class="rv-pill epic on" data-type="Epic" onclick="rvTogglePill(this)">Classic Epic</span>
@@ -1102,6 +1118,7 @@ footer a{color:var(--gold);text-decoration:none}
       <span class="rv-pill omni on" data-type="Omnibus" onclick="rvTogglePill(this)">Omnibus</span>
       <span class="rv-pill dc on" data-type="DC Finest" onclick="rvTogglePill(this)">DC Finest</span>
     </div>
+    <span class="rv-pill" id="rvReprintToggle" style="cursor:pointer;font-size:11px" onclick="rvToggleReprints(this)">Hide Reprints</span>
     <button class="rv-mode-btn" id="rvMultiBtn" onclick="rvToggleMultiMode()">⊞ Multi-Series</button>
     <div class="rv-hdr-spacer"></div>
     <button class="rbtn" onclick="rvClose()">✕ Close</button>
@@ -1181,6 +1198,9 @@ async function sbUpsert(table, body, onConflict) {
 // ── State ──────────────────────────────────────
 let ALL_DATA = [];
 let USER_DATA = {};
+let SERIES_GROUPS = [];       // series_groups reference table
+let ISBN_CACHE = {};          // isbn → cached lookup result
+let DATA_QUALITY_FLAGS = [];  // data quality issues
 let activeProfile = 'stojr';
 let activePub = 'all';
 // Default sort: series name + vol/year — so Aliens Vol.1,2,3 group together, Batman titles group together
@@ -1197,24 +1217,156 @@ let pendingDeleteId = null;
 let modalCoverDataUrl = null; // base64 data URL for uploaded file covers
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
+// ── Series Group helpers ──────────────────────────
+function getEffectiveGroup(d) { return d.series_group || d.series; }
+
+function suggestSeriesGroup(seriesName) {
+  if (!seriesName) return null;
+  const patterns = [
+    /^(?:Amazing|Spectacular|Sensational|Superior|Friendly Neighborhood|Web of|Untold Tales of)\s+(.+)$/i,
+    /^(?:Uncanny|Astonishing|All-New|Extraordinary|Giant-Size|New)\s+(.+)$/i,
+    /^(.+?)\s+(?:Vol\.\s*\d+|Annual|Special|Giant-Size)$/i,
+  ];
+  for (const regex of patterns) {
+    const m = seriesName.match(regex);
+    if (m) {
+      const candidate = m[1].trim();
+      const existing = SERIES_GROUPS.find(g => g.name.toLowerCase() === candidate.toLowerCase());
+      if (existing) return existing.name;
+    }
+  }
+  for (const g of SERIES_GROUPS) {
+    if (seriesName.toLowerCase().includes(g.name.toLowerCase()) && g.name.length > 3) return g.name;
+  }
+  return null;
+}
+
+// ── Structured year/issue parsing helpers ─────────
+function parseYearStart(yearsStr) {
+  if (!yearsStr) return null;
+  const m = yearsStr.match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+function parseYearEnd(yearsStr) {
+  if (!yearsStr) return null;
+  const all = yearsStr.match(/\d{4}/g);
+  return all ? parseInt(all[all.length - 1]) : null;
+}
+function parseIssueStart(issStr) {
+  if (!issStr) return null;
+  const m = issStr.match(/#?(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+function parseIssueEnd(issStr) {
+  if (!issStr) return null;
+  const m = issStr.match(/#?\d+\s*[-\u2013\u2014]\s*(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+
+// ── Data quality checks ───────────────────────────
+function runDataQualityChecks() {
+  const flags = [];
+  // 1. Duplicate ISBNs
+  const isbnMap = {};
+  ALL_DATA.forEach(d => {
+    if (!d.isbn) return;
+    const clean = d.isbn.replace(/-/g, '');
+    if (isbnMap[clean]) {
+      flags.push({ entry_id: d.id, flag_type: 'duplicate_isbn',
+        detail: `ISBN ${d.isbn} also on "${isbnMap[clean].series} Vol ${isbnMap[clean].vol||'?'}" (id ${isbnMap[clean].id})` });
+    } else { isbnMap[clean] = d; }
+  });
+  // 2. Missing years covered
+  ALL_DATA.forEach(d => {
+    if (!d.years && !d.year_start) {
+      flags.push({ entry_id: d.id, flag_type: 'missing_years',
+        detail: `"${d.series} Vol ${d.vol||'?'}" has no years covered` });
+    }
+  });
+  // 3. Inconsistent series names (Levenshtein distance <= 2)
+  const seriesNames = [...new Set(ALL_DATA.map(d => d.series).filter(Boolean))];
+  for (let i = 0; i < seriesNames.length; i++) {
+    for (let j = i + 1; j < seriesNames.length; j++) {
+      const a = seriesNames[i].toLowerCase(), b = seriesNames[j].toLowerCase();
+      if (a !== b && a.length > 4 && Math.abs(a.length - b.length) <= 2) {
+        let dist = 0;
+        const maxLen = Math.max(a.length, b.length);
+        for (let k = 0; k < maxLen; k++) { if (a[k] !== b[k]) dist++; }
+        if (dist <= 2) {
+          flags.push({ entry_id: null, flag_type: 'inconsistent_series',
+            detail: `Similar: "${seriesNames[i]}" vs "${seriesNames[j]}"` });
+        }
+      }
+    }
+  }
+  // 4. Duplicate title+type+vol (non-reprint)
+  const titleVolMap = {};
+  ALL_DATA.forEach(d => {
+    if (d.vol == null) return;
+    const key = `${d.series}|${d.type}|${d.vol}`;
+    if (titleVolMap[key] && d.reprint !== 'Yes' && titleVolMap[key].reprint !== 'Yes') {
+      flags.push({ entry_id: d.id, flag_type: 'duplicate_title',
+        detail: `"${d.series} ${d.type} Vol ${d.vol}" appears twice (ids ${titleVolMap[key].id}, ${d.id})` });
+    } else if (!titleVolMap[key]) { titleVolMap[key] = d; }
+  });
+  // 5. Year range sanity
+  ALL_DATA.forEach(d => {
+    const ys = d.year_start || parseYearStart(d.years);
+    const ye = d.year_end || parseYearEnd(d.years);
+    if (ys && ye && ys > ye) {
+      flags.push({ entry_id: d.id, flag_type: 'invalid_year_range',
+        detail: `"${d.series} Vol ${d.vol||'?'}" start ${ys} > end ${ye}` });
+    }
+  });
+  DATA_QUALITY_FLAGS = flags;
+  updateQualityBadge();
+  return flags;
+}
+
+function updateQualityBadge() {
+  const badge = document.getElementById('dqBadge');
+  if (!badge) return;
+  const count = DATA_QUALITY_FLAGS.length;
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'inline-flex' : 'none';
+  badge.title = `${count} data quality issue${count !== 1 ? 's' : ''}`;
+}
+
 // ── Load all data ────────────────────────────────
 async function loadData() {
   setDbStatus('loading', 'Loading entries…');
   document.getElementById('loadingMsg').textContent = 'Loading comic entries…';
   try {
-    // Load comic entries — we apply our own default sort in JS, so just fetch all
-    const entries = await sbSelect('comic_entries', '?limit=2000');
+    // Load all data in parallel
+    const [entries, ud, groups, cache] = await Promise.all([
+      sbSelect('comic_entries', '?limit=5000'),
+      sbSelect('user_data', '?limit=10000'),
+      sbSelect('series_groups', '?order=name').catch(() => []),
+      sbSelect('isbn_cache', '?limit=10000').catch(() => []),
+    ]);
     ALL_DATA = entries || [];
-
-    document.getElementById('loadingMsg').textContent = 'Loading user data…';
-    const ud = await sbSelect('user_data', '?limit=5000');
     USER_DATA = {};
     (ud || []).forEach(row => { USER_DATA[row.entry_id] = row; });
+    SERIES_GROUPS = groups || [];
+    ISBN_CACHE = {};
+    (cache || []).forEach(row => { ISBN_CACHE[row.isbn] = row; });
+
+    // Ensure structured year/issue fields are populated client-side
+    ALL_DATA.forEach(d => {
+      if (d.year_start == null && d.years) d.year_start = parseYearStart(d.years);
+      if (d.year_end == null && d.years) d.year_end = parseYearEnd(d.years);
+      if (d.year_end == null && d.year_start != null) d.year_end = d.year_start;
+      if (d.issue_start == null && d.issues_covered) d.issue_start = parseIssueStart(d.issues_covered);
+      if (d.issue_end == null && d.issues_covered) d.issue_end = parseIssueEnd(d.issues_covered);
+      if (d.issue_end == null && d.issue_start != null) d.issue_end = d.issue_start;
+    });
 
     setDbStatus('connected', `Connected · ${ALL_DATA.length} entries · Last sync ${new Date().toLocaleTimeString()}`);
     document.getElementById('dbLastSync').textContent = `${ALL_DATA.length} entries`;
     populateYearFilter();
+    populateSeriesGroupFilter();
     applyFilters();
+    runDataQualityChecks();
     hideLoading();
   } catch(e) {
     console.error('Load error:', e);
@@ -1222,6 +1374,19 @@ async function loadData() {
     document.getElementById('loadingMsg').textContent = 'Database connection failed. Check console for details.';
     setTimeout(hideLoading, 3000);
   }
+}
+
+function populateSeriesGroupFilter() {
+  const sel = document.getElementById('fSeriesGroup');
+  if (!sel) return;
+  const groups = new Set();
+  ALL_DATA.forEach(d => { const g = getEffectiveGroup(d); if (g) groups.add(g); });
+  const sorted = [...groups].sort((a, b) => a.localeCompare(b));
+  sel.innerHTML = '<option value="">All Groups</option>' +
+    sorted.map(g => `<option value="${g}">${g}</option>`).join('');
+  // Also populate datalist for modal/bulk edit autocomplete
+  const dl = document.getElementById('seriesGroupList');
+  if (dl) dl.innerHTML = sorted.map(g => `<option value="${g}">`).join('');
 }
 
 function setDbStatus(state, text) {
@@ -1444,7 +1609,8 @@ function applyFilters() {
   const type   = document.getElementById('fType').value;
   const lic    = document.getElementById('fLic').value;
   const rep    = document.getElementById('fRep').value;
-  const isFiltered = search || year || type || lic || rep || activePub !== 'all'
+  const sgroup = document.getElementById('fSeriesGroup') ? document.getElementById('fSeriesGroup').value : '';
+  const isFiltered = search || year || type || lic || rep || sgroup || activePub !== 'all'
     || ownerFilters.stojr || ownerFilters.nick || ownerFilters.both
     || userDataFilters.wishlist || userDataFilters.read;
 
@@ -1456,8 +1622,9 @@ function applyFilters() {
     if (type && d.type !== type) return false;
     if (lic  && d.licensed !== lic) return false;
     if (rep  && d.reprint  !== rep) return false;
+    if (sgroup && getEffectiveGroup(d) !== sgroup) return false;
     if (search) {
-      const hay = `${d.series||''} ${d.subtitle||''} ${d.years||''}`.toLowerCase();
+      const hay = `${d.series||''} ${d.subtitle||''} ${d.years||''} ${d.series_group||''}`.toLowerCase();
       if (!hay.includes(search)) return false;
     }
     if (ownerFilters.stojr && !isOwned(d.id,'stojr')) return false;
@@ -1777,6 +1944,7 @@ function toggleExpand(id, cols) {
             ${d.subtitle?`<div class="expand-field ef-wide"><span class="expand-label">Subtitle</span><span class="expand-value">${escHtml(d.subtitle)}</span></div>`:''}
             <div class="expand-field"><span class="expand-label">Release Date</span><span class="expand-value">${d.date||'–'}</span></div>
             ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
+            ${d.series_group?`<div class="expand-field"><span class="expand-label">Series Group</span><span class="expand-value" style="color:var(--gold)">${escHtml(d.series_group)}</span></div>`:''}
             <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
           </div>
           <div class="expand-meta-row">
@@ -1793,6 +1961,7 @@ function toggleExpand(id, cols) {
             <div class="expand-field ef-full"><span class="expand-label">Store Link</span>${prhHtml}</div>
           </div>
           ${d.description?`<div class="expand-meta-row"><div class="expand-field ef-full"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.5">${escHtml(d.description)}</span></div></div>`:''}
+          ${buildSameEraSection(d)}
         </div>
       </div>
       <div class="expand-field expand-notes-area">
@@ -1807,6 +1976,55 @@ function toggleExpand(id, cols) {
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Around the Same Time — discovery section in expand detail ──
+function buildSameEraSection(d) {
+  const ys = d.year_start || parseYearStart(d.years);
+  const ye = d.year_end || parseYearEnd(d.years) || ys;
+  if (!ys) return '';
+  const WINDOW = 3;
+  const nearby = ALL_DATA.filter(other =>
+    other.id !== d.id &&
+    other.reprint !== 'Yes' &&
+    (other.year_start || parseYearStart(other.years)) &&
+    (other.year_start || parseYearStart(other.years)) <= ye + WINDOW &&
+    (other.year_end || parseYearEnd(other.years) || other.year_start || parseYearStart(other.years)) >= ys - WINDOW
+  ).sort((a, b) => (a.year_start || parseYearStart(a.years) || 9999) - (b.year_start || parseYearStart(b.years) || 9999));
+  if (!nearby.length) return '';
+  const shown = nearby.slice(0, 12);
+  return `<div class="expand-meta-row" style="margin-top:8px">
+    <div class="expand-field ef-full">
+      <span class="expand-label">Around the Same Time (${ys}–${ye} ±${WINDOW} years) — ${nearby.length} book${nearby.length>1?'s':''}</span>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding:8px 0;flex-wrap:nowrap">
+        ${shown.map(b => {
+          const coverSrc = (USER_DATA[b.id] && USER_DATA[b.id].cover_url) || b.cover_url || '';
+          const bYears = b.years || '';
+          return `<div style="flex-shrink:0;width:100px;cursor:pointer;text-align:center" onclick="scrollToEntry(${b.id})" title="${escHtml(b.series)} Vol ${b.vol||'?'} (${bYears})">
+            <div style="width:70px;height:105px;margin:0 auto;border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center">
+              ${coverSrc ? `<img src="${escHtml(coverSrc)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentNode.innerHTML='<span style=font-size:10px;color:var(--dimtext)>No cover</span>'">` : '<span style="font-size:10px;color:var(--dimtext)">No cover</span>'}
+            </div>
+            <div style="font-family:var(--cf);font-size:10px;color:var(--text);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(b.series)}</div>
+            <div style="font-family:var(--cf);font-size:9px;color:var(--dimtext)">${bYears}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function scrollToEntry(id) {
+  // Close any expand detail, search for the entry, highlight it
+  const existing = document.querySelector('tr.expand-detail');
+  if (existing) existing.remove();
+  const row = document.querySelector(`tr[data-id="${id}"]`);
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.style.transition = 'background .15s';
+    row.style.background = 'rgba(255,210,52,.2)';
+    setTimeout(() => { row.style.background = ''; }, 2000);
+    row.click(); // open expand detail
+  }
 }
 
 function openImgLightbox(imgEl) {
@@ -2071,51 +2289,186 @@ async function fetchIsbnFields(isbn) {
   // Only attempt if at least some key fields are blank
   const hasData = document.getElementById('mSeries').value.trim()
     && document.getElementById('mPages').value.trim();
-  if (hasData) return; // already filled, don't overwrite
+  if (hasData) return;
+
+  // Use cached pipeline
+  const result = await lookupIsbn(isbn);
+  if (result.failed || !result.data) return;
+  const info = result.data;
+
+  const setIfBlank = (id, val) => {
+    if (!val) return;
+    const el = document.getElementById(id);
+    if (el && !el.value.trim()) el.value = val;
+  };
+
+  setIfBlank('mSeries', info.title);
+  setIfBlank('mSubtitle', info.subtitle);
+  if (info.authors) setIfBlank('mWriters', info.authors);
+  if (info.page_count) setIfBlank('mPages', info.page_count);
+  if (info.pub_date) setIfBlank('mDate', info.pub_date.slice(0,10));
+  setIfBlank('mDescription', info.description);
+
+  // Cover fallback from lookup source
+  if (info.cover_url) {
+    const coverField = document.getElementById('mCoverUrl');
+    if (!_pendingCoverValue || _pendingCoverValue.includes('penguinrandomhouse.com/cover/')) {
+      const img = new Image();
+      img.onload = () => {};
+      img.onerror = () => {
+        coverField.value = info.cover_url;
+        _pendingCoverValue = info.cover_url;
+        updateModalCoverPreview(info.cover_url);
+      };
+      img.src = _pendingCoverValue || '';
+    }
+  }
+
+  const src = result.cached ? 'cache' : (info._source || 'ISBN');
+  showToast(`✓ Fields populated (${src})`);
+}
+
+// ── Unified ISBN lookup pipeline with caching ─────
+async function lookupIsbn(isbn) {
+  const clean = isbn.replace(/-/g, '');
+
+  // 1. Check local memory cache
+  if (ISBN_CACHE[clean]) {
+    if (ISBN_CACHE[clean].failed) return { cached: true, failed: true };
+    return { cached: true, data: ISBN_CACHE[clean] };
+  }
+
+  // 2. Check DB cache
+  try {
+    const cached = await sbSelect('isbn_cache', `?isbn=eq.${clean}&limit=1`);
+    if (cached?.length) {
+      ISBN_CACHE[clean] = cached[0];
+      if (cached[0].failed) return { cached: true, failed: true };
+      return { cached: true, data: cached[0] };
+    }
+  } catch(e) {}
+
+  // 3. Google Books API
+  const gb = await _tryGoogleBooks(clean);
+  if (gb) { gb._source = 'Google Books'; await _cacheIsbnResult(clean, 'google_books', gb); return { data: gb }; }
+
+  // 4. Open Library (enhanced — all fields)
+  const ol = await _tryOpenLibrary(clean);
+  if (ol) { ol._source = 'OpenLibrary'; await _cacheIsbnResult(clean, 'open_library', ol); return { data: ol }; }
+
+  // 5. PRH via CORS proxy
+  const prh = await _tryPrh(clean);
+  if (prh) { prh._source = 'PRH'; await _cacheIsbnResult(clean, 'prh', prh); return { data: prh }; }
+
+  // 6. All failed
+  await _cacheIsbnFailure(clean);
+  return { failed: true };
+}
+
+async function _tryGoogleBooks(isbn) {
   try {
     const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-    if (!r.ok) return;
+    if (!r.ok) return null;
     const data = await r.json();
     const info = data?.items?.[0]?.volumeInfo;
-    if (!info) return;
-
-    const setIfBlank = (id, val) => {
-      if (!val) return;
-      const el = document.getElementById(id);
-      if (el && !el.value.trim()) el.value = val;
+    if (!info) return null;
+    return {
+      title: info.title || null,
+      subtitle: info.subtitle || null,
+      authors: info.authors?.join(', ') || null,
+      page_count: info.pageCount || null,
+      pub_date: info.publishedDate || null,
+      description: info.description || null,
+      cover_url: info.imageLinks?.thumbnail?.replace('http:','https:') || null
     };
+  } catch(e) { return null; }
+}
 
-    setIfBlank('mSeries', info.title);
-    setIfBlank('mSubtitle', info.subtitle);
-    if (info.authors?.length) setIfBlank('mWriters', info.authors.join(', '));
-    if (info.pageCount) setIfBlank('mPages', info.pageCount);
-    if (info.publishedDate) setIfBlank('mDate', info.publishedDate.slice(0,10));
-    setIfBlank('mDescription', info.description);
-
-    // Cover from Google Books if not already set via PRH
-    const gbCover = info.imageLinks?.thumbnail?.replace('http:','https:');
-    if (gbCover) {
-      const coverField = document.getElementById('mCoverUrl');
-      // Only use Google Books cover if no PRH cover is loaded
-      if (!_pendingCoverValue || _pendingCoverValue.includes('penguinrandomhouse.com/cover/')) {
-        // Prefer PRH cover; only fall back to Google Books if PRH URL fails
-        // We'll keep PRH as primary, GB as fallback shown in preview on error
-        const img = new Image();
-        img.onload = () => {}; // PRH worked, keep it
-        img.onerror = () => {
-          if (!document.getElementById('mCoverUrl').value.includes('googleapis') &&
-              !document.getElementById('mCoverUrl').value.includes('books.google')) {
-            coverField.value = gbCover;
-            _pendingCoverValue = gbCover;
-            updateModalCoverPreview(gbCover);
-          }
+async function _tryOpenLibrary(isbn) {
+  try {
+    // Endpoint 1: books API
+    const r1 = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
+    if (r1.ok) {
+      const data = await r1.json();
+      const book = data[`ISBN:${isbn}`];
+      if (book?.details) {
+        return {
+          title: book.details.title || null,
+          subtitle: book.details.subtitle || null,
+          authors: book.details.authors?.map(a => a.name).join(', ') || null,
+          page_count: book.details.number_of_pages || null,
+          pub_date: book.details.publish_date || null,
+          description: (typeof book.details.description === 'string' ? book.details.description : book.details.description?.value) || null,
+          cover_url: book.details.covers?.[0] ? `https://covers.openlibrary.org/b/id/${book.details.covers[0]}-L.jpg` : null
         };
-        img.src = _pendingCoverValue || '';
       }
     }
-
-    showToast('✓ Fields populated from ISBN');
+    // Endpoint 2: search API
+    const r2 = await fetch(`https://openlibrary.org/search.json?isbn=${isbn}&limit=1`);
+    if (r2.ok) {
+      const data = await r2.json();
+      const doc = data.docs?.[0];
+      if (doc) {
+        return {
+          title: doc.title || null,
+          subtitle: doc.subtitle || null,
+          authors: doc.author_name?.join(', ') || null,
+          page_count: doc.number_of_pages_median || null,
+          pub_date: doc.first_publish_year?.toString() || null,
+          description: null,
+          cover_url: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null
+        };
+      }
+    }
   } catch(e) {}
+  return null;
+}
+
+async function _tryPrh(isbn) {
+  try {
+    const prhUrl = `https://prhcomics.com/book/?isbn=${isbn}`;
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(prhUrl)}`);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const html = data.contents || '';
+    const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
+             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
+    const titleM = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i);
+    if (m && m[1].trim()) {
+      return {
+        title: titleM ? titleM[1].replace(/&amp;/g,'&') : null,
+        subtitle: null,
+        authors: null,
+        page_count: null,
+        pub_date: null,
+        description: m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"'),
+        cover_url: null
+      };
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function _cacheIsbnResult(isbn, source, data) {
+  const row = {
+    isbn, source,
+    title: data.title || null,
+    subtitle: data.subtitle || null,
+    authors: data.authors || null,
+    page_count: data.page_count || null,
+    pub_date: data.pub_date || null,
+    description: data.description || null,
+    cover_url: data.cover_url || null,
+    failed: false
+  };
+  ISBN_CACHE[isbn] = row;
+  try { await sbUpsert('isbn_cache', [row], 'isbn'); } catch(e) { console.warn('ISBN cache write failed:', e); }
+}
+
+async function _cacheIsbnFailure(isbn) {
+  const row = { isbn, failed: true };
+  ISBN_CACHE[isbn] = row;
+  try { await sbUpsert('isbn_cache', [row], 'isbn'); } catch(e) {}
 }
 
 // ── Description auto-fetch ──────────────────────
@@ -2123,53 +2476,16 @@ async function fetchDescription() {
   const isbn = document.getElementById('mIsbn').value.trim().replace(/-/g,'');
   const desc = document.getElementById('mDescription');
   if (!isbn) { showToast('Enter an ISBN first', true); return; }
-  // Skip if description already filled (manual edit)
   showToast('Fetching description…');
 
-  // Primary: Google Books API — reliable JSON, no CORS proxy needed
-  try {
-    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-    if (r.ok) {
-      const data = await r.json();
-      const info = data?.items?.[0]?.volumeInfo;
-      if (info?.description) {
-        desc.value = info.description;
-        showToast('✓ Description fetched (Google Books)');
-        return;
-      }
-    }
-  } catch(e) {}
-
-  // Fallback 1: PRH Comics page via CORS proxy
-  try {
-    const prhUrl = `https://prhcomics.com/book/?isbn=${isbn}`;
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(prhUrl)}`);
-    if (r.ok) {
-      const data = await r.json();
-      const html = data.contents || '';
-      // Parse og:description meta tag (handles both attribute orderings)
-      const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
-               || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
-      if (m && m[1].trim()) {
-        desc.value = m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
-        showToast('✓ Description fetched (PRH)');
-        return;
-      }
-    }
-  } catch(e) {}
-
-  // Fallback 2: OpenLibrary
-  try {
-    const r = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
-    if (r.ok) {
-      const data = await r.json();
-      const book = data[`ISBN:${isbn}`];
-      const d = book?.details?.description?.value || book?.details?.description;
-      if (d) { desc.value = typeof d === 'string' ? d : JSON.stringify(d); showToast('✓ Description fetched (OpenLibrary)'); return; }
-    }
-  } catch(e) {}
-
-  showToast('No description found — enter manually', true);
+  const result = await lookupIsbn(isbn);
+  if (result.data?.description) {
+    desc.value = result.data.description;
+    const src = result.cached ? 'cache' : (result.data._source || 'ISBN lookup');
+    showToast(`✓ Description fetched (${src})`);
+  } else {
+    showToast('No description found — enter manually', true);
+  }
 }
 
 // ── Add/Edit Modal ─────────────────────────────
@@ -2182,6 +2498,7 @@ function openAddModal() {
   document.getElementById('mPub').value = 'Marvel';
   document.getElementById('mType').value = 'Epic';
   document.getElementById('mSeries').value = '';
+  document.getElementById('mSeriesGroup').value = '';
   document.getElementById('mVol').value = '';
   document.getElementById('mDate').value = '';
   document.getElementById('mSubtitle').value = '';
@@ -2190,6 +2507,7 @@ function openAddModal() {
   document.getElementById('mLicensed').value = 'No';
   document.getElementById('mReprint').value = 'No';
   document.getElementById('mConf').value = 'sourced';
+  document.getElementById('mSortOrder').value = '';
   document.getElementById('mNum').value = '';
   document.getElementById('mPrhLink').value = '';
   document.getElementById('mIsbn').value = '';
@@ -2215,6 +2533,7 @@ function openEditModal(id) {
   document.getElementById('mPub').value = d.pub || 'Marvel';
   document.getElementById('mType').value = d.type || 'Epic';
   document.getElementById('mSeries').value = d.series || '';
+  document.getElementById('mSeriesGroup').value = d.series_group || '';
   document.getElementById('mVol').value = d.vol != null ? d.vol : '';
   document.getElementById('mDate').value = d.date || '';
   document.getElementById('mSubtitle').value = d.subtitle || '';
@@ -2223,6 +2542,7 @@ function openEditModal(id) {
   document.getElementById('mLicensed').value = d.licensed || 'No';
   document.getElementById('mReprint').value = d.reprint || 'No';
   document.getElementById('mConf').value = d.conf || 'sourced';
+  document.getElementById('mSortOrder').value = d.sort_order != null ? d.sort_order : '';
   document.getElementById('mNum').value = d.num != null ? d.num : '';
   document.getElementById('mPrhLink').value = d.prh_link || '';
   document.getElementById('mIsbn').value = d.isbn || '';
@@ -2262,29 +2582,52 @@ async function saveEntry() {
   const isbnCoverUrl = cleanIsbn ? `https://images.penguinrandomhouse.com/cover/${cleanIsbn}` : null;
   const finalCover = _pendingCoverValue || coverUrlField || isbnCoverUrl || null;
 
+  const yearsVal = document.getElementById('mYears').value.trim() || null;
+  const issuesCoveredVal = document.getElementById('mIssuesCovered').value.trim() || null;
+  const seriesGroupVal = document.getElementById('mSeriesGroup').value.trim() || null;
+  const sortOrderVal = document.getElementById('mSortOrder').value ? parseInt(document.getElementById('mSortOrder').value) : null;
+
   const body = {
     pub:         document.getElementById('mPub').value,
     type:        document.getElementById('mType').value,
     series:      series,
+    series_group: seriesGroupVal,
     vol:         document.getElementById('mVol').value ? parseInt(document.getElementById('mVol').value) : null,
     date:        document.getElementById('mDate').value.trim() || null,
     subtitle:    document.getElementById('mSubtitle').value.trim() || null,
-    years:       document.getElementById('mYears').value.trim() || null,
+    years:       yearsVal,
+    year_start:  parseYearStart(yearsVal),
+    year_end:    parseYearEnd(yearsVal) || parseYearStart(yearsVal),
     pages:       document.getElementById('mPages').value ? parseInt(document.getElementById('mPages').value) : null,
     licensed:    document.getElementById('mLicensed').value,
     reprint:     document.getElementById('mReprint').value,
     conf:        document.getElementById('mConf').value,
     num:         document.getElementById('mNum').value ? parseInt(document.getElementById('mNum').value) : null,
+    sort_order:  sortOrderVal,
     prh_link:    document.getElementById('mPrhLink').value.trim() || null,
     isbn:                       rawIsbn || null,
     writers:                    document.getElementById('mWriters').value.trim() || null,
     artists:                    document.getElementById('mArtists').value.trim() || null,
     description:                document.getElementById('mDescription').value.trim() || null,
-    issues_covered:             document.getElementById('mIssuesCovered').value.trim() || null,
+    issues_covered:             issuesCoveredVal,
+    issue_start:                parseIssueStart(issuesCoveredVal),
+    issue_end:                  parseIssueEnd(issuesCoveredVal) || parseIssueStart(issuesCoveredVal),
     secondary_issues_covered:   document.getElementById('mSecondaryIssuesCovered').value.trim() || null,
     // cover_url stored on the entry itself (URL-based) or in user_data (base64 uploads)
     cover_url:   (finalCover && !finalCover.startsWith('data:')) ? finalCover : null,
   };
+
+  // Ensure series_group gets created in reference table if new
+  if (seriesGroupVal && !SERIES_GROUPS.find(g => g.name === seriesGroupVal)) {
+    try {
+      const result = await sbInsert('series_groups', { name: seriesGroupVal, publisher: body.pub });
+      const newGroup = Array.isArray(result) ? result[0] : result;
+      if (newGroup) { SERIES_GROUPS.push(newGroup); body.series_group_id = newGroup.id; }
+    } catch(e) { console.warn('Series group insert failed (may already exist):', e); }
+  } else if (seriesGroupVal) {
+    const existing = SERIES_GROUPS.find(g => g.name === seriesGroupVal);
+    if (existing) body.series_group_id = existing.id;
+  }
 
   const modal = document.querySelector('.modal');
   modal.classList.add('modal-saving');
@@ -2320,7 +2663,9 @@ async function saveEntry() {
 
     closeModal();
     populateYearFilter();
+    populateSeriesGroupFilter();
     applyFilters();
+    runDataQualityChecks();
     document.getElementById('hTotalMarvl').textContent = ALL_DATA.filter(d=>d.pub==='Marvel').length;
     document.getElementById('hTotalDC').textContent    = ALL_DATA.filter(d=>d.pub==='DC').length;
   } catch(e) {
@@ -2359,6 +2704,8 @@ async function doDelete() {
     delete USER_DATA[id];
     showToast('✓ Entry deleted');
     populateYearFilter();
+    populateSeriesGroupFilter();
+    runDataQualityChecks();
     const _savedPage = page;
     applyFilters(); // resets page to 1 internally
     page = Math.min(_savedPage, Math.ceil(currentFiltered.length / pageSize) || 1);
@@ -2373,13 +2720,13 @@ async function doDelete() {
 // ── Export CSV ────────────────────────────────
 function exportCSV(all) {
   const rows = all ? ALL_DATA : currentFiltered;
-  const headers = ['id','pub','date','series','vol','subtitle','years','type','licensed','reprint','pages','conf','isbn','writers','artists','prh_link','stojr_owned','nick_owned','stojr_wishlist','nick_wishlist','stojr_read','nick_read'];
+  const headers = ['id','pub','date','series','series_group','vol','subtitle','years','type','licensed','reprint','pages','conf','isbn','writers','artists','prh_link','stojr_owned','nick_owned','stojr_wishlist','nick_wishlist','stojr_read','nick_read'];
   const escape = v => { if(v===null||v===undefined)return''; const s=String(v); return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s; };
   const csvRows=[headers.join(',')];
   rows.forEach(d=>{
     const ud=getUD(d.id);
     csvRows.push([
-      escape(d.id),escape(d.pub),escape(d.date),escape(d.series),escape(d.vol),
+      escape(d.id),escape(d.pub),escape(d.date),escape(d.series),escape(d.series_group),escape(d.vol),
       escape(d.subtitle),escape(d.years),escape(d.type),escape(d.licensed),escape(d.reprint),
       escape(d.pages),escape(d.conf),escape(d.isbn),escape(d.writers),escape(d.artists),escape(d.prh_link),
       escape(ud.stojr_owned?'Yes':'No'),escape(ud.nick_owned?'Yes':'No'),
@@ -2456,6 +2803,7 @@ function makeBulkRow(d, isNew) {
     <td class="bec-pub">${selHtml('pub',[['Marvel','Marvel'],['DC','DC']],d.pub||'Marvel')}</td>
     <td class="bec-type">${selHtml('type',[['Epic','Classic Epic'],['Modern','Modern Era'],['Ultimate','Ultimate'],['DC Finest','DC Finest'],['Omnibus','Omnibus']],d.type||'Epic')}</td>
     <td class="bec-series">${inpHtml('series','text',d.series||'','placeholder="Series title *"')}</td>
+    <td class="bec-series"><input class="be-input" data-field="series_group" data-row="${rowId}" type="text" list="seriesGroupList" value="${escHtml(d.series_group||'')}" placeholder="Group" oninput="markBulkDirty('${rowId}')"></td>
     <td class="bec-vol">${inpHtml('vol','number',d.vol??'','min="1" placeholder="—"')}</td>
     <td class="bec-sub">${inpHtml('subtitle','text',d.subtitle||'','placeholder="—"')}</td>
     <td class="bec-years">${inpHtml('years','text',d.years||'','placeholder="e.g. 1966-1971"')}</td>
@@ -2629,34 +2977,38 @@ async function autofillBulkIsbn(input, rowId) {
   const hasData = getEl('series')?.value.trim() && getEl('pages')?.value.trim();
   if (hasData) return;
 
-  try {
-    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-    if (!r.ok) return;
-    const data = await r.json();
-    const info = data?.items?.[0]?.volumeInfo;
-    if (!info) return;
+  const result = await lookupIsbn(isbn);
+  if (result.failed || !result.data) return;
+  const info = result.data;
 
-    setIfBlank('series',   info.title);
-    setIfBlank('subtitle', info.subtitle);
-    setIfBlank('pages',    info.pageCount);
-    if (info.publishedDate) setIfBlank('date', info.publishedDate.slice(0,10));
-    if (info.authors?.length) setIfBlank('writers', info.authors.join(', '));
+  setIfBlank('series',   info.title);
+  setIfBlank('subtitle', info.subtitle);
+  if (info.page_count) setIfBlank('pages', info.page_count);
+  if (info.pub_date) setIfBlank('date', info.pub_date.slice(0,10));
+  if (info.authors) setIfBlank('writers', info.authors);
 
-    markBulkDirty(rowId);
-    showToast('✓ ISBN fields populated');
-  } catch(e) {}
+  markBulkDirty(rowId);
+  const src = result.cached ? 'cache' : (info._source || 'ISBN');
+  showToast(`✓ Fields populated (${src})`);
 }
 
 function readBulkRowData(tr) {
   const get = f => { const el = tr.querySelector(`[data-field="${f}"]`); return el ? el.value.trim() : ''; };
+  const yearsVal = get('years') || null;
+  const issuesVal = get('issues_covered') || null;
   return {
     pub:                       get('pub'),
     type:                      get('type'),
     series:                    get('series'),
+    series_group:              get('series_group') || null,
     vol:                       get('vol')   ? parseInt(get('vol'))   : null,
     subtitle:                  get('subtitle') || null,
-    years:                     get('years')    || null,
-    issues_covered:            get('issues_covered') || null,
+    years:                     yearsVal,
+    year_start:                parseYearStart(yearsVal),
+    year_end:                  parseYearEnd(yearsVal) || parseYearStart(yearsVal),
+    issues_covered:            issuesVal,
+    issue_start:               parseIssueStart(issuesVal),
+    issue_end:                 parseIssueEnd(issuesVal) || parseIssueStart(issuesVal),
     date:                      get('date')     || null,
     pages:                     get('pages') ? parseInt(get('pages')) : null,
     licensed:                  get('licensed'),
@@ -2741,7 +3093,7 @@ async function saveBulkEdits() {
     showToast(`${saved} saved · ${errors} failed`, true);
   } else {
     showToast(`✓ ${saved} change(s) saved`);
-    populateYearFilter(); applyFilters();
+    populateYearFilter(); populateSeriesGroupFilter(); applyFilters(); runDataQualityChecks();
   }
   updateBulkStatus();
 }
@@ -2752,6 +3104,8 @@ const RV = {
   typeFilters: { 'Epic': true, 'Modern': true, 'Omnibus': true, 'DC Finest': true },
   multiMode: false,
   multiSelected: new Set(),
+  groupMode: false,    // true = group by Series Group instead of Series
+  hideReprints: false, // true = exclude reprints from run views
   // Map: entryId -> timeline segment element (for hover cross-link)
   segMap: {},
   cardMap: {}
@@ -2797,25 +3151,57 @@ function rvClose() {
 // Populate dropdown from live data
 function rvPopulateSelect() {
   const sel = document.getElementById('rvSeriesSelect');
-  // Show ALL series; the series with issues_covered data get a ✓ marker
-  const hasCoverage = new Set(
-    ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series)
-  );
-  const allSeries = new Set(ALL_DATA.map(d => d.series));
-  const sorted = [...allSeries].sort((a,b) => a.localeCompare(b));
-  // Preserve selection if possible
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">— Select a series —</option>' +
-    sorted.map(s => {
-      const marker = hasCoverage.has(s) ? ' ✓' : '';
-      return `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}${marker}</option>`;
-    }).join('');
-  // Multi-series chips: only show series that have coverage data (useful for timeline)
-  const covSorted = [...hasCoverage].sort((a,b) => a.localeCompare(b));
+  if (RV.groupMode) {
+    // Group mode: list unique Series Groups
+    const groups = new Set();
+    ALL_DATA.forEach(d => groups.add(getEffectiveGroup(d)));
+    const sorted = [...groups].sort((a,b) => a.localeCompare(b));
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Select a Series Group —</option>' +
+      sorted.map(g => `<option value="${rvEsc(g)}"${g===prev?' selected':''}>${rvEsc(g)}</option>`).join('');
+  } else {
+    // Series mode: show ALL series; the series with issues_covered data get a ✓ marker
+    const hasCoverage = new Set(
+      ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series)
+    );
+    const allSeries = new Set(ALL_DATA.map(d => d.series));
+    const sorted = [...allSeries].sort((a,b) => a.localeCompare(b));
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Select a series —</option>' +
+      sorted.map(s => {
+        const marker = hasCoverage.has(s) ? ' ✓' : '';
+        return `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}${marker}</option>`;
+      }).join('');
+  }
+  // Multi-series chips: use group or series based on mode
+  const chipItems = RV.groupMode
+    ? [...new Set(ALL_DATA.map(d => getEffectiveGroup(d)))].sort()
+    : [...new Set(ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series))].sort();
   const list = document.getElementById('rvMultiList');
-  list.innerHTML = covSorted.map(s =>
+  list.innerHTML = chipItems.map(s =>
     `<span class="rv-ms-chip${RV.multiSelected.has(s)?' on':''}" onclick="rvToggleMultiSeries('${rvEsc(s)}')">${rvEsc(s)}</span>`
   ).join('');
+}
+
+function rvToggleGroupMode() {
+  RV.groupMode = !RV.groupMode;
+  const btn = document.getElementById('rvGroupToggle');
+  btn.textContent = RV.groupMode ? 'By: Group' : 'By: Series';
+  btn.classList.toggle('on', RV.groupMode);
+  RV.series = null;
+  RV.multiSelected.clear();
+  rvPopulateSelect();
+  document.getElementById('rvBody').innerHTML = '<div class="rv-empty">Select a ' + (RV.groupMode ? 'group' : 'series') + ' above</div>';
+  document.getElementById('rvTimelineWrap').style.display = 'none';
+  if (RV.multiMode) rvRenderMulti();
+}
+
+function rvToggleReprints(el) {
+  RV.hideReprints = !RV.hideReprints;
+  el.classList.toggle('on', RV.hideReprints);
+  el.textContent = RV.hideReprints ? 'Reprints Hidden' : 'Hide Reprints';
+  if (RV.multiMode) rvRenderMulti();
+  else if (RV.series) rvRender();
 }
 
 function rvSelectSeries(series) {
@@ -2881,13 +3267,42 @@ function rvRender() {
     tlWrap.style.display = 'none';
     return;
   }
-  const vols = ALL_DATA.filter(d =>
-    d.series === RV.series && d.issues_covered && d.issues_covered.trim()
-  );
+  let vols;
+  if (RV.groupMode) {
+    // Group mode: pull all books from all series in this group
+    vols = ALL_DATA.filter(d =>
+      getEffectiveGroup(d) === RV.series && d.issues_covered && d.issues_covered.trim()
+    );
+  } else {
+    vols = ALL_DATA.filter(d =>
+      d.series === RV.series && d.issues_covered && d.issues_covered.trim()
+    );
+  }
+  // Apply reprint filter
+  if (RV.hideReprints) vols = vols.filter(d => d.reprint !== 'Yes');
   if (!vols.length) {
+    const label = RV.groupMode ? 'group' : 'series';
     body.innerHTML = `<div class="rv-empty">No <em>issues_covered</em> data for "${rvEsc(RV.series)}" yet — use Bulk Edit to populate it.</div>`;
     tlWrap.style.display = 'none';
     return;
+  }
+  // In group mode, sort chronologically across all series in the group
+  if (RV.groupMode) {
+    vols.sort((a, b) => {
+      // Manual sort_order first if set
+      if (a.sort_order != null && b.sort_order != null) return a.sort_order - b.sort_order;
+      if (a.sort_order != null) return -1;
+      if (b.sort_order != null) return 1;
+      // Then by year_start
+      const ya = a.year_start || rvYearStart(a.years);
+      const yb = b.year_start || rvYearStart(b.years);
+      if (ya !== yb) return ya - yb;
+      // Then by issue_start
+      const ia = a.issue_start || 0, ib = b.issue_start || 0;
+      if (ia !== ib) return ia - ib;
+      // Then by date
+      return (a.date || '').localeCompare(b.date || '');
+    });
   }
 
   // Group by type
@@ -3183,34 +3598,50 @@ function rvRenderMulti() {
   const wrap = document.getElementById('rvMultiTimeline');
   const axis = document.getElementById('rvMtAxis');
   if (!RV.multiSelected.size) {
-    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">Select series above to compare</div>';
+    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">Select ' + (RV.groupMode ? 'groups' : 'series') + ' above to compare</div>';
     axis.innerHTML = '';
     return;
   }
 
-  // Gather all items across selected series
+  // Gather all items across selected series/groups
   let globalMinYear = 9999, globalMaxYear = 0;
   const seriesData = [];
-  for (const series of RV.multiSelected) {
-    const vols = ALL_DATA.filter(d =>
-      d.series === series && d.issues_covered && d.issues_covered.trim()
-    );
-    const items = vols.map(v => {
+  for (const selected of RV.multiSelected) {
+    let vols;
+    if (RV.groupMode) {
+      // In group mode, selected is a group name — gather all series in that group
+      vols = ALL_DATA.filter(d => getEffectiveGroup(d) === selected);
+    } else {
+      vols = ALL_DATA.filter(d => d.series === selected);
+    }
+    if (RV.hideReprints) vols = vols.filter(d => d.reprint !== 'Yes');
+    const items = vols.filter(d => d.issues_covered && d.issues_covered.trim()).map(v => {
       const iss = rvParseIssues(v.issues_covered);
-      const yStart = rvYearStart(v.years);
-      const yEnd   = rvYearEnd(v.years) || yStart;
-      return { id: v.id, cls: RV_TYPE_CLASS[v.type||'Epic'], iss, vol: v.vol, yStart, yEnd };
-    }).filter(d => d.iss && d.yStart < 9999);
-    if (!items.length) continue;
-    items.forEach(d => {
+      const yStart = v.year_start || rvYearStart(v.years);
+      const yEnd   = v.year_end || rvYearEnd(v.years) || yStart;
+      return { id: v.id, cls: RV_TYPE_CLASS[v.type||'Epic'], iss, vol: v.vol, yStart, yEnd, series: v.series };
+    }).filter(d => d.yStart && d.yStart < 9999);
+    // Also include items without issues_covered but with year data (for year-based timeline)
+    const yearOnlyItems = vols.filter(d => (!d.issues_covered || !d.issues_covered.trim()) && (d.year_start || d.years)).map(v => {
+      const yStart = v.year_start || rvYearStart(v.years);
+      const yEnd   = v.year_end || rvYearEnd(v.years) || yStart;
+      return { id: v.id, cls: RV_TYPE_CLASS[v.type||'Epic'], iss: null, vol: v.vol, yStart, yEnd, series: v.series };
+    }).filter(d => d.yStart && d.yStart < 9999);
+    const allItems = [...items, ...yearOnlyItems];
+    if (!allItems.length) continue;
+    allItems.forEach(d => {
       if (d.yStart < globalMinYear) globalMinYear = d.yStart;
       if (d.yEnd   > globalMaxYear) globalMaxYear = d.yEnd;
     });
-    seriesData.push({ series, items });
+    // Completeness: count total volumes vs owned
+    const totalVols = vols.length;
+    const ownedVols = vols.filter(d => isOwned(d.id, activeProfile)).length;
+    const completePct = totalVols > 0 ? Math.round(ownedVols / totalVols * 100) : 0;
+    seriesData.push({ series: selected, items: allItems, totalVols, ownedVols, completePct });
   }
 
   if (!seriesData.length || globalMinYear > globalMaxYear) {
-    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">No year data available for selected series</div>';
+    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">No year data available</div>';
     axis.innerHTML = ''; return;
   }
 
@@ -3223,23 +3654,19 @@ function rvRenderMulti() {
   axisTicks += `<span>${globalMaxYear}</span>`;
   axis.innerHTML = axisTicks;
 
-  // Rows per series — with totals
-  wrap.innerHTML = seriesData.map(({ series, items }) => {
+  // Rows per series/group — with completeness
+  wrap.innerHTML = seriesData.map(({ series, items, totalVols, ownedVols, completePct }) => {
     const segs = items.map(d => {
       const left  = ((d.yStart - globalMinYear) / yearSpan * 100).toFixed(2);
       const width = Math.max(((d.yEnd - d.yStart + 1) / yearSpan * 100), 1.5).toFixed(2);
       return `<div class="rv-mt-seg ${d.cls}" style="left:${left}%;width:${width}%"
-        title="Vol ${d.vol} · ${d.yStart}–${d.yEnd}" onclick="rvJumpTo(${d.id})"></div>`;
+        title="${d.series ? rvEsc(d.series)+' ' : ''}Vol ${d.vol||'?'} · ${d.yStart}–${d.yEnd}" onclick="rvJumpTo(${d.id})"></div>`;
     }).join('');
-    // Count totals for this series: all volumes (including ones without issues_covered), released (with coverage), owned
-    const allSeriesVols = ALL_DATA.filter(d => d.series === series);
-    const totalVols = allSeriesVols.length;
-    const releasedVols = items.length;
-    const ownedVols = allSeriesVols.filter(d => isOwned(d.id, activeProfile)).length;
-    // Year range for the series
     const sMinY = Math.min(...items.map(d => d.yStart));
     const sMaxY = Math.max(...items.map(d => d.yEnd));
     const seriesYears = sMinY === sMaxY ? `${sMinY}` : `${sMinY}–${sMaxY}`;
+    // Completeness bar
+    const compColor = completePct >= 80 ? 'var(--green)' : completePct >= 50 ? 'var(--gold)' : 'var(--orange)';
     return `<div class="rv-mt-row">
       <div style="flex-shrink:0;width:170px;text-align:right">
         <div class="rv-mt-label" style="width:auto" title="${rvEsc(series)}">${rvEsc(series)}</div>
@@ -3248,8 +3675,11 @@ function rvRenderMulti() {
       <div class="rv-mt-bar-wrap">${segs}</div>
       <div class="rv-mt-totals">
         <span class="rv-mt-stat total" title="Total volumes">${totalVols} Total</span>
-        <span class="rv-mt-stat released" title="Released with issue data">${releasedVols} Released</span>
         <span class="rv-mt-stat owned" title="Owned by ${activeProfile}">${ownedVols} Owned</span>
+        <span class="rv-mt-stat" title="Collection completeness" style="display:flex;align-items:center;gap:4px">
+          <span style="width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;display:inline-block"><span style="display:block;height:100%;width:${completePct}%;background:${compColor};border-radius:2px"></span></span>
+          <span style="color:${compColor}">${completePct}%</span>
+        </span>
       </div>
     </div>`;
   }).join('');
@@ -3279,7 +3709,8 @@ function resetAll() {
   document.getElementById('fYear').value='';
   document.getElementById('fType').value='';
   document.getElementById('fLic').value='';
-  document.getElementById('fRep').value='';
+  document.getElementById('fRep').value='No'; // Default: exclude reprints
+  if (document.getElementById('fSeriesGroup')) document.getElementById('fSeriesGroup').value='';
   ownerFilters={stojr:false,nick:false,both:false};
   userDataFilters={wishlist:false,read:false};
   ['pfStojr','pfNick','pfBoth','pfWishlist','pfRead'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
@@ -3292,6 +3723,63 @@ function resetAll() {
   document.querySelectorAll('thead th .sort-arrow').forEach(a=>a.textContent='');
   const thSeries=document.getElementById('th-series');if(thSeries){const a=thSeries.querySelector('.sort-arrow');if(a)a.textContent=' ▼';}
   applyFilters();
+}
+
+// ── Series Group auto-suggest on series name blur ─────
+function onSeriesBlurSuggestGroup() {
+  const seriesEl = document.getElementById('mSeries');
+  const groupEl = document.getElementById('mSeriesGroup');
+  if (!seriesEl || !groupEl) return;
+  if (groupEl.value.trim()) return; // already set, don't overwrite
+  const suggestion = suggestSeriesGroup(seriesEl.value.trim());
+  if (suggestion) {
+    groupEl.value = suggestion;
+    groupEl.style.borderColor = 'var(--green)';
+    setTimeout(() => { groupEl.style.borderColor = ''; }, 2000);
+  }
+}
+
+// ── Data Quality Panel ─────────────────────────────
+function showDataQualityPanel() {
+  const flags = DATA_QUALITY_FLAGS;
+  if (!flags.length) { showToast('No data quality issues found'); return; }
+  const grouped = {};
+  flags.forEach(f => {
+    if (!grouped[f.flag_type]) grouped[f.flag_type] = [];
+    grouped[f.flag_type].push(f);
+  });
+  const typeLabels = {
+    duplicate_isbn: 'Duplicate ISBNs',
+    missing_years: 'Missing Years Covered',
+    inconsistent_series: 'Similar Series Names',
+    duplicate_title: 'Duplicate Title/Vol',
+    invalid_year_range: 'Invalid Year Range'
+  };
+  let html = '<div style="max-width:600px;max-height:70vh;overflow-y:auto;padding:20px">';
+  html += '<div style="font-family:var(--hf);font-size:28px;color:var(--orange);margin-bottom:12px">Data Quality Issues</div>';
+  for (const [type, items] of Object.entries(grouped)) {
+    html += `<div style="margin-bottom:14px"><div style="font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${typeLabels[type]||type} (${items.length})</div>`;
+    items.forEach(f => {
+      html += `<div style="font-size:13px;color:var(--text);padding:4px 0;border-bottom:1px solid var(--border)">${f.detail}${f.entry_id ? ` <span style="color:var(--dimtext);cursor:pointer" onclick="closeDataQualityPanel();openEditModal(${f.entry_id})">Edit &rarr;</span>` : ''}</div>`;
+    });
+    html += '</div>';
+  }
+  html += '<div style="text-align:right;margin-top:12px"><button class="modal-btn cancel" onclick="closeDataQualityPanel()">Close</button></div></div>';
+  // Show in a simple overlay
+  let overlay = document.getElementById('dqOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'dqOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:250;display:flex;align-items:center;justify-content:center';
+    overlay.onclick = e => { if (e.target === overlay) closeDataQualityPanel(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:8px">${html}</div>`;
+  overlay.style.display = 'flex';
+}
+function closeDataQualityPanel() {
+  const overlay = document.getElementById('dqOverlay');
+  if (overlay) overlay.style.display = 'none';
 }
 </script>
 </body>
