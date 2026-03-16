@@ -20,7 +20,7 @@
   --bf:'Barlow',sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--text);font-family:var(--bf);font-size:15px;line-height:1.5;min-height:100vh}
 body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#ffffff05 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
 
@@ -466,8 +466,10 @@ footer a{color:var(--gold);text-decoration:none}
 .ro-item:first-child{border-radius:var(--r) var(--r) 0 0}
 .ro-item:last-child{border-bottom:1px solid var(--border);border-radius:0 0 var(--r) var(--r)}
 .ro-item:hover{background:var(--surface2)}
-.ro-item.dragging{opacity:.5;background:var(--surface3)}
-.ro-drag{cursor:grab;color:var(--dimtext);font-size:14px;flex-shrink:0;width:20px;text-align:center}
+.ro-item.dragging{opacity:.35;background:var(--surface3)}
+.ro-item.ro-drop-above{box-shadow:0 -2px 0 0 var(--gold)}
+.ro-item.ro-drop-below{box-shadow:0 2px 0 0 var(--gold)}
+.ro-drag{cursor:grab;color:var(--dimtext);font-size:18px;flex-shrink:0;width:44px;min-height:44px;text-align:center;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none}
 .ro-drag:active{cursor:grabbing}
 .ro-pos{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
 .ro-cover{width:32px;height:48px;border-radius:3px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
@@ -573,6 +575,27 @@ footer a{color:var(--gold);text-decoration:none}
   .fab{display:none !important}
   .rbtn.add-desktop{display:inline-flex}
 }
+
+/* ─── TOUCH & TABLET COMPATIBILITY ─── */
+/* Ensure minimum tap target sizes (44x44px per Apple HIG) */
+@media(pointer:coarse){
+  .rbtn,.pgbtn,.ptab,.ctbtn{min-height:44px;min-width:44px}
+  .own-filter-pill,.host-chip{min-height:44px}
+  .ob{min-width:36px;min-height:36px}
+  .udb{min-width:36px;min-height:36px}
+  .edit-btn{min-width:36px;min-height:36px}
+  .ro-remove{min-width:44px;min-height:44px}
+  /* Run View cards: tap to flip instead of hover-only */
+  .rv-card-holo{opacity:.3;animation-play-state:running}
+  .rv-card-scene:hover .rv-card-border{animation:none}
+  /* Improve scrolling on touch */
+  .tscroll,.rv-body,.ro-body{-webkit-overflow-scrolling:touch}
+  /* Prevent accidental text selection on interactive elements */
+  .rv-card-scene,.browse-card,.ro-item,.rv-ms-tag{-webkit-user-select:none;user-select:none}
+}
+/* Touch-action for interactive elements */
+button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chip{touch-action:manipulation}
+.rv-card-scene{touch-action:manipulation}
 
 /* ─── RUN VIEW ─── */
 .rv-overlay{position:fixed;inset:0;background:var(--bg);z-index:160;display:none;flex-direction:column;overflow:hidden}
@@ -738,9 +761,22 @@ footer a{color:var(--gold);text-decoration:none}
 .rv-multi-wrap{padding:20px 24px}
 .rv-multi-select-wrap{margin-bottom:18px}
 .rv-multi-select-wrap label{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px}
-.rv-multi-series-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-.rv-ms-chip{padding:5px 14px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
-.rv-ms-chip.on{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.1)}
+/* Multi-series searchable dropdown */
+.rv-ms-selected-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;min-height:0}
+.rv-ms-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:16px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;background:rgba(255,210,52,.12);border:1.5px solid var(--gold);color:var(--gold);cursor:default;user-select:none}
+.rv-ms-tag-x{cursor:pointer;font-size:14px;line-height:1;opacity:.7;margin-left:2px}
+.rv-ms-tag-x:hover{opacity:1}
+.rv-ms-dropdown-wrap{position:relative}
+.rv-ms-search{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--bf);font-size:14px;padding:7px 10px;transition:border-color .15s}
+.rv-ms-search:focus{outline:none;border-color:var(--gold)}
+.rv-ms-dropdown{position:absolute;top:100%;left:0;right:0;max-height:240px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border2);border-top:none;border-radius:0 0 var(--r) var(--r);z-index:20;display:none}
+.rv-ms-dropdown.open{display:block}
+.rv-ms-opt{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;font-family:var(--cf);font-size:13px;color:var(--muted);transition:background .1s}
+.rv-ms-opt:hover{background:var(--surface3);color:var(--text)}
+.rv-ms-opt.selected{color:var(--gold)}
+.rv-ms-opt-check{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;transition:all .12s}
+.rv-ms-opt.selected .rv-ms-opt-check{border-color:var(--gold);background:var(--gold);color:#000}
+.rv-ms-opt-count{margin-left:auto;font-size:11px;color:var(--dimtext)}
 .rv-multi-timeline{display:flex;flex-direction:column;gap:14px}
 .rv-mt-row{display:flex;align-items:center;gap:12px}
 .rv-mt-label{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--muted);width:170px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
@@ -1345,7 +1381,15 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="rv-multi-wrap">
       <div class="rv-multi-select-wrap">
         <label>Select series to compare</label>
-        <div class="rv-multi-series-list" id="rvMultiList"></div>
+        <div class="rv-ms-selected-tags" id="rvMultiTags"></div>
+        <div class="rv-ms-dropdown-wrap" id="rvMultiDropdownWrap">
+          <input type="text" class="rv-ms-search" id="rvMultiSearch" placeholder="Search series/groups..." oninput="rvFilterMultiList()" onfocus="rvShowMultiDropdown(true)" autocomplete="off">
+          <div class="rv-ms-dropdown" id="rvMultiDropdown"></div>
+        </div>
+        <div class="rv-ms-actions" style="display:flex;gap:8px;margin-top:6px">
+          <button class="rbtn" onclick="rvSelectAllMulti()" style="font-size:11px;padding:3px 10px">Select All</button>
+          <button class="rbtn" onclick="rvClearAllMulti()" style="font-size:11px;padding:3px 10px">Clear All</button>
+        </div>
       </div>
       <div id="rvMultiTimelineWrap">
         <div class="rv-mt-axis" id="rvMtAxis"></div>
@@ -1688,34 +1732,132 @@ function toggleTheme() {
 }
 
 // ── Auth functions ────────────────────────────
+// Map of common OAuth error codes to user-friendly messages with admin guidance
+const AUTH_ERROR_MAP = {
+  'not enabled': {
+    title: 'Google Provider Not Enabled',
+    message: 'The Google OAuth provider needs to be enabled in your Supabase project.',
+    fix: 'Go to Supabase Dashboard → Auth → Providers → Google and toggle it ON.'
+  },
+  'redirect_uri_mismatch': {
+    title: 'OAuth Redirect URL Mismatch',
+    message: 'The redirect URL configured in Google Cloud Console does not match your Supabase callback URL.',
+    fix: 'Add this redirect URI to Google Cloud Console → Credentials → Your OAuth Client:<br><code style="background:var(--surface3);padding:2px 6px;border-radius:3px;font-size:12px">https://quxuidnmewcmovjbnfgy.supabase.co/auth/v1/callback</code>'
+  },
+  'access_denied': {
+    title: 'Access Denied',
+    message: 'Google denied the sign-in request. This usually means the OAuth consent screen is not configured or the user cancelled.',
+    fix: 'Check that the OAuth consent screen is configured in Google Cloud Console → APIs & Services → OAuth consent screen.'
+  },
+  'invalid_client': {
+    title: 'Invalid OAuth Client',
+    message: 'The Google OAuth Client ID or Client Secret is incorrect.',
+    fix: 'Verify the Client ID and Secret in Supabase Dashboard → Auth → Providers → Google match your Google Cloud Console credentials.'
+  },
+  'server_error': {
+    title: 'Server Error',
+    message: 'The authentication server encountered an error.',
+    fix: 'This is usually temporary. Try again in a few minutes. If it persists, check the Supabase Dashboard status.'
+  }
+};
+
+// Check URL for OAuth callback errors on page load
+function checkOAuthCallbackErrors() {
+  const params = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+  const error = params.get('error') || hashParams.get('error');
+  const errorDesc = params.get('error_description') || hashParams.get('error_description') || '';
+  if (error) {
+    // Clean URL without reload
+    const cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, '', cleanUrl);
+    showAuthError(error, errorDesc);
+  }
+}
+
+function showAuthError(errorCode, errorDescription) {
+  // Find matching error info
+  let errorInfo = null;
+  for (const [key, info] of Object.entries(AUTH_ERROR_MAP)) {
+    if (errorCode.includes(key) || errorDescription.toLowerCase().includes(key)) {
+      errorInfo = info; break;
+    }
+  }
+  if (!errorInfo) {
+    errorInfo = {
+      title: 'Sign-In Failed',
+      message: errorDescription || `Authentication error: ${errorCode}`,
+      fix: 'Check your Google OAuth configuration. Ensure redirect URLs match your application domain.'
+    };
+  }
+  showAuthErrorDialog(errorInfo.title, errorInfo.message, errorInfo.fix);
+}
+
+function showAuthErrorDialog(title, message, fix) {
+  const existing = document.getElementById('authErrorDialog');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'authErrorDialog';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--red);border-radius:10px;padding:28px 32px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto">
+    <h3 style="font-family:var(--hf);font-size:26px;color:var(--red);margin-bottom:8px">${title}</h3>
+    <p style="color:var(--text);font-size:14px;margin-bottom:16px;line-height:1.6">${message}</p>
+    <div style="background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:14px;margin-bottom:16px">
+      <div style="font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px">How to fix</div>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6">${fix}</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="showGoogleSetupGuide()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--blue);font-family:var(--cf);font-size:13px;font-weight:700;cursor:pointer">View Full Setup Guide</button>
+      <button onclick="document.getElementById('authErrorDialog').remove()" style="flex:1;padding:10px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--cf);font-size:13px;font-weight:700;cursor:pointer">Dismiss</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
 async function signInWithGoogle() {
   const { error } = await sbClient.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin + window.location.pathname }
   });
   if (error) {
-    if (error.message && error.message.includes('not enabled')) {
-      showGoogleSetupGuide();
-    } else {
-      showToast('Sign-in failed: ' + error.message, true);
+    const msg = error.message || '';
+    // Find the best matching error
+    let matched = false;
+    for (const [key, info] of Object.entries(AUTH_ERROR_MAP)) {
+      if (msg.toLowerCase().includes(key)) {
+        showAuthErrorDialog(info.title, info.message, info.fix);
+        matched = true; break;
+      }
+    }
+    if (!matched) {
+      showAuthErrorDialog(
+        'Sign-In Failed',
+        msg || 'An unknown error occurred during Google sign-in.',
+        'Check your Google OAuth configuration. Ensure the Google provider is enabled in Supabase and redirect URLs are correctly configured.'
+      );
     }
   }
 }
 
 function showGoogleSetupGuide() {
+  const existing = document.getElementById('authErrorDialog');
+  if (existing) existing.remove();
+  const prev = document.getElementById('googleSetupGuide');
+  if (prev) prev.remove();
   const overlay = document.createElement('div');
   overlay.id = 'googleSetupGuide';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  overlay.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:28px 32px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto">
-    <h3 style="font-family:var(--hf);font-size:26px;color:var(--gold);margin-bottom:4px">Google Sign-In Setup Required</h3>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">The Google OAuth provider needs to be enabled in your Supabase project. Follow these steps:</p>
+  overlay.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:28px 32px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto">
+    <h3 style="font-family:var(--hf);font-size:26px;color:var(--gold);margin-bottom:4px">Google Sign-In Setup Guide</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">Complete these steps to enable Google OAuth for BCE Comics.</p>
     <div style="font-family:var(--cf);font-size:14px;color:var(--text);line-height:1.8">
       <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 1:</strong> Go to
         <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener"
           style="color:var(--blue);text-decoration:underline">Google Cloud Console → Credentials</a></p>
       <ul style="margin:0 0 12px 18px;color:var(--muted)">
         <li>Create an OAuth 2.0 Client ID (Web application)</li>
-        <li>Add <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">https://quxuidnmewcmovjbnfgy.supabase.co/auth/v1/callback</code> as an Authorized Redirect URI</li>
+        <li>Add <strong>Authorized JavaScript Origin</strong>: <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">${window.location.origin}</code></li>
+        <li>Add <strong>Authorized Redirect URI</strong>: <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">https://quxuidnmewcmovjbnfgy.supabase.co/auth/v1/callback</code></li>
         <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
       </ul>
       <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 2:</strong> Go to
@@ -1726,16 +1868,30 @@ function showGoogleSetupGuide() {
         <li>Paste your Google Client ID and Client Secret</li>
         <li>Save</li>
       </ul>
-      <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 3:</strong> Also add your site URL to
+      <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 3:</strong> Go to
         <a href="https://supabase.com/dashboard/project/quxuidnmewcmovjbnfgy/auth/url-configuration" target="_blank" rel="noopener"
-          style="color:var(--blue);text-decoration:underline">Auth → URL Configuration → Redirect URLs</a></p>
-      <p style="margin-bottom:0"><strong style="color:var(--gold)">Step 4:</strong> Run the v4 schema migration in the
+          style="color:var(--blue);text-decoration:underline">Auth → URL Configuration</a></p>
+      <ul style="margin:0 0 12px 18px;color:var(--muted)">
+        <li>Set <strong>Site URL</strong> to: <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">${window.location.origin}</code></li>
+        <li>Add to <strong>Redirect URLs</strong>: <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">${window.location.origin + window.location.pathname}</code></li>
+      </ul>
+      <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 4:</strong> Run the v4 schema migration in the
         <a href="https://supabase.com/dashboard/project/quxuidnmewcmovjbnfgy/sql" target="_blank" rel="noopener"
           style="color:var(--blue);text-decoration:underline">SQL Editor</a>
-        (the new <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">users</code> and <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">user_entry_data</code> tables)</p>
+        (the <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">users</code> and <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">user_entry_data</code> tables)</p>
+    </div>
+    <div style="background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:14px;margin-bottom:14px">
+      <div style="font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);margin-bottom:6px">Troubleshooting</div>
+      <ul style="margin:0 0 0 16px;color:var(--muted);font-size:12px;line-height:1.8">
+        <li><strong>redirect_uri_mismatch</strong> — Callback URL not in Google Console Authorized Redirect URIs</li>
+        <li><strong>access_denied</strong> — OAuth consent screen not configured or user cancelled</li>
+        <li><strong>invalid_client</strong> — Client ID/Secret mismatch between Google Console and Supabase</li>
+        <li><strong>Blank page after login</strong> — Your site URL is not in Supabase Redirect URLs</li>
+        <li><strong>Silent failure</strong> — Third-party cookies may be blocked; try allowing cookies for Supabase domain</li>
+      </ul>
     </div>
     <button onclick="document.getElementById('googleSetupGuide').remove()"
-      style="display:block;width:100%;padding:12px;margin-top:20px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--cf);font-size:14px;font-weight:700;cursor:pointer">Got it</button>
+      style="display:block;width:100%;padding:12px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--cf);font-size:14px;font-weight:700;cursor:pointer">Got it</button>
   </div>`;
   document.body.appendChild(overlay);
 }
@@ -1990,6 +2146,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Initialise sort arrow to match default sort (series)
   const thSeries = document.getElementById('th-series');
   if (thSeries) { const a = thSeries.querySelector('.sort-arrow'); if(a) a.textContent = ' ▼'; }
+
+  // Check for OAuth callback errors in URL (e.g. ?error=redirect_uri_mismatch)
+  checkOAuthCallbackErrors();
 
   // Set up auth listener
   sbClient.auth.onAuthStateChange(onAuthStateChange);
@@ -2462,10 +2621,10 @@ function toggleExpand(id, cols) {
   const whoColor=uid ? (ALL_USERS.find(u=>u.id===uid)?.color || 'var(--gold)') : 'var(--dim)';
   const notesVal=uid ? getNotes(id,uid) : '';
 
-  // Cover: prefer uploaded data URL stored in user_data, then cover_url from comic entry
-  const coverUrl = COVER_OVERRIDES[id] || d.cover_url || null;
+  // Cover: unified resolution via getCoverUrl
+  const coverUrl = getCoverUrl(d);
   const coverHtml = coverUrl
-    ? `<img src="${escHtml(coverUrl)}" alt="Cover" onclick="openImgLightbox(this)" onerror="this.parentElement.innerHTML='<div class=cover-placeholder>No Cover</div>'">`
+    ? `<img src="${escHtml(coverUrl)}" alt="Cover" onclick="openImgLightbox(this)" onerror="markCoverFailed(this.src);this.parentElement.innerHTML='<div class=cover-placeholder>No Cover</div>'">`
     : `<div class="cover-placeholder">No Cover</div>`;
 
   // PRH / store link
@@ -2546,11 +2705,11 @@ function buildSameEraSection(d) {
       <span class="expand-label">Around the Same Time (${ys}–${ye} ±${WINDOW} years) — ${nearby.length} book${nearby.length>1?'s':''}</span>
       <div style="display:flex;gap:8px;overflow-x:auto;padding:8px 0;flex-wrap:nowrap">
         ${shown.map(b => {
-          const coverSrc = COVER_OVERRIDES[b.id] || b.cover_url || '';
+          const coverSrc = getCoverUrl(b);
           const bYears = b.years || '';
           return `<div style="flex-shrink:0;width:100px;cursor:pointer;text-align:center" onclick="scrollToEntry(${b.id})" title="${escHtml(b.series)} Vol ${b.vol||'?'} (${bYears})">
             <div style="width:70px;height:105px;margin:0 auto;border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center">
-              ${coverSrc ? `<img src="${escHtml(coverSrc)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentNode.innerHTML='<span style=font-size:10px;color:var(--dimtext)>No cover</span>'">` : '<span style="font-size:10px;color:var(--dimtext)">No cover</span>'}
+              ${coverSrc ? `<img src="${escHtml(coverSrc)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="markCoverFailed(this.src);this.parentNode.innerHTML='<span style=font-size:10px;color:var(--dimtext)>No cover</span>'">` : '<span style="font-size:10px;color:var(--dimtext)">No cover</span>'}
             </div>
             <div style="font-family:var(--cf);font-size:10px;color:var(--text);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(b.series)}</div>
             <div style="font-family:var(--cf);font-size:9px;color:var(--dimtext)">${bYears}</div>
@@ -2839,6 +2998,25 @@ function onModalDcFinestCheck() {
   }
 }
 
+// ── Unified cover URL resolution ────────────────
+// Single source of truth for resolving cover images across all views.
+// Priority: user override → ISBN cache cover → PRH CDN → entry cover_url → empty
+const _failedCoverUrls = new Set();
+function getCoverUrl(entry) {
+  if (COVER_OVERRIDES[entry.id]) return COVER_OVERRIDES[entry.id];
+  const isbn = entry.isbn ? entry.isbn.replace(/-/g, '') : '';
+  if (isbn) {
+    const cached = ISBN_CACHE[entry.isbn] || ISBN_CACHE[isbn];
+    if (cached && cached.cover_url) return cached.cover_url;
+    // PRH CDN fallback for ISBN-bearing entries
+    const prhUrl = `https://images.penguinrandomhouse.com/cover/${isbn}`;
+    if (!_failedCoverUrls.has(prhUrl)) return prhUrl;
+  }
+  if (entry.cover_url) return entry.cover_url;
+  return '';
+}
+function markCoverFailed(url) { if (url) _failedCoverUrls.add(url); }
+
 // ── ISBN helpers ────────────────────────────────
 let _isbnFetchTimer = null;
 function onIsbnInput() {
@@ -2886,6 +3064,8 @@ async function fetchIsbnFields(isbn) {
   if (info.page_count) setIfBlank('mPages', info.page_count);
   if (info.pub_date) setIfBlank('mDate', info.pub_date.slice(0,10));
   setIfBlank('mDescription', info.description);
+  // Wikipedia enrichment: populate issues_covered if available
+  if (info.issues_covered) setIfBlank('mIssuesCovered', info.issues_covered);
 
   // Cover fallback from lookup source
   if (info.cover_url) {
@@ -2934,11 +3114,15 @@ async function lookupIsbn(isbn) {
   const ol = await _tryOpenLibrary(clean);
   if (ol) { ol._source = 'OpenLibrary'; await _cacheIsbnResult(clean, 'open_library', ol); return { data: ol }; }
 
-  // 5. PRH via CORS proxy
+  // 5. Curated Wikipedia sources (comic-specific metadata)
+  const wiki = await _tryWikipediaCollectedEditions(clean);
+  if (wiki) { wiki._source = 'Wikipedia'; await _cacheIsbnResult(clean, 'wikipedia', wiki); return { data: wiki }; }
+
+  // 6. PRH via CORS proxy
   const prh = await _tryPrh(clean);
   if (prh) { prh._source = 'PRH'; await _cacheIsbnResult(clean, 'prh', prh); return { data: prh }; }
 
-  // 6. All failed
+  // 7. All failed
   await _cacheIsbnFailure(clean);
   return { failed: true };
 }
@@ -3027,6 +3211,116 @@ async function _tryPrh(isbn) {
   return null;
 }
 
+// ── Wikipedia collected editions lookup ──────────
+// Searches curated Wikipedia pages for comic collected editions metadata.
+// Pages: Marvel Omnibus, Epic Collection (Marvel Comics), DC Finest
+const WIKI_COLLECTED_PAGES = [
+  'Epic_Collection_(Marvel_Comics)',
+  'Marvel_Omnibus',
+  'DC_Finest'
+];
+
+async function _tryWikipediaCollectedEditions(isbn) {
+  try {
+    for (const page of WIKI_COLLECTED_PAGES) {
+      const result = await _searchWikiPage(page, isbn);
+      if (result) return result;
+    }
+  } catch(e) { console.warn('[Wikipedia] lookup error:', e); }
+  return null;
+}
+
+async function _searchWikiPage(pageName, isbn) {
+  try {
+    // Use MediaWiki API to get page HTML (CORS-friendly)
+    const url = `https://en.wikipedia.org/api/rest_v1/page/html/${encodeURIComponent(pageName)}`;
+    const r = await fetch(url, { headers: { 'Accept': 'text/html' } });
+    if (!r.ok) return null;
+    const html = await r.text();
+
+    // Parse the HTML to find tables containing ISBN data
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const tables = doc.querySelectorAll('table.wikitable');
+
+    for (const table of tables) {
+      const rows = table.querySelectorAll('tr');
+      if (!rows.length) continue;
+
+      // Find column indices from header row
+      const headers = rows[0].querySelectorAll('th');
+      const colMap = {};
+      headers.forEach((th, i) => {
+        const text = th.textContent.trim().toLowerCase();
+        if (text.includes('isbn')) colMap.isbn = i;
+        if (text.includes('title') || text.includes('name')) colMap.title = i;
+        if (text.includes('issue') || text.includes('collect')) colMap.issues = i;
+        if (text.includes('date') || text.includes('release')) colMap.date = i;
+        if (text.includes('page')) colMap.pages = i;
+        if (text.includes('writer') || text.includes('author')) colMap.writers = i;
+        if (text.includes('artist')) colMap.artists = i;
+      });
+
+      if (colMap.isbn === undefined) continue;
+
+      // Search rows for matching ISBN
+      for (let r = 1; r < rows.length; r++) {
+        const cells = rows[r].querySelectorAll('td');
+        if (!cells.length) continue;
+        const isbnCell = cells[colMap.isbn];
+        if (!isbnCell) continue;
+        const cellIsbn = isbnCell.textContent.replace(/[-\s]/g, '').trim();
+        if (!cellIsbn.includes(isbn)) continue;
+
+        // Found a match — extract metadata
+        const getCell = (key) => {
+          if (colMap[key] !== undefined && cells[colMap[key]]) {
+            return cells[colMap[key]].textContent.trim() || null;
+          }
+          return null;
+        };
+
+        // Parse issues covered — look for patterns like "#1-18" or "1–24"
+        let issuesCovered = null;
+        const issuesText = getCell('issues');
+        if (issuesText) {
+          // Extract issue ranges like "#1-18", "1–24", "#442–459"
+          const issueMatch = issuesText.match(/#?(\d+)\s*[-–—]\s*#?(\d+)/);
+          if (issueMatch) {
+            issuesCovered = `#${issueMatch[1]}–${issueMatch[2]}`;
+          }
+          // Check for legacy numbering pattern like "(Legacy #442-459)"
+          const legacyMatch = issuesText.match(/[Ll]egacy\s*#?(\d+)\s*[-–—]\s*#?(\d+)/);
+          if (legacyMatch) {
+            issuesCovered = (issuesCovered ? issuesCovered + ' / ' : '') + `Legacy #${legacyMatch[1]}–${legacyMatch[2]}`;
+          }
+        }
+
+        // Parse page count
+        let pageCount = null;
+        const pagesText = getCell('pages');
+        if (pagesText) {
+          const pm = pagesText.match(/(\d+)/);
+          if (pm) pageCount = parseInt(pm[1]);
+        }
+
+        return {
+          title: getCell('title'),
+          subtitle: null,
+          authors: getCell('writers'),
+          page_count: pageCount,
+          pub_date: getCell('date'),
+          description: issuesText, // Use issues text as description for context
+          cover_url: null,
+          issues_covered: issuesCovered,
+          _wiki_page: pageName
+        };
+      }
+    }
+  } catch(e) { console.warn(`[Wikipedia] Error parsing ${pageName}:`, e); }
+  return null;
+}
+
 async function _cacheIsbnResult(isbn, source, data) {
   const row = {
     isbn, source,
@@ -3037,9 +3331,11 @@ async function _cacheIsbnResult(isbn, source, data) {
     pub_date: data.pub_date || null,
     description: data.description || null,
     cover_url: data.cover_url || null,
+    issues_covered: data.issues_covered || null,
     failed: false
   };
   ISBN_CACHE[isbn] = row;
+  // Note: isbn_cache table may not have issues_covered column yet; upsert ignores unknown cols
   try { await sbUpsert('isbn_cache', [row], 'isbn'); } catch(e) { console.warn('ISBN cache write failed:', e); }
 }
 
@@ -3129,8 +3425,8 @@ function openEditModal(id) {
   document.getElementById('mDescription').value = d.description || '';
   document.getElementById('mIssuesCovered').value = d.issues_covered || '';
   document.getElementById('mSecondaryIssuesCovered').value = d.secondary_issues_covered || '';
-  // Show existing cover (from entry or user_data)
-  const existingCover = COVER_OVERRIDES[id] || d.cover_url || null;
+  // Show existing cover (unified resolution)
+  const existingCover = getCoverUrl(d) || null;
   document.getElementById('mCoverUrl').value = (existingCover && !existingCover.startsWith('data:')) ? existingCover : '';
   updateModalCoverPreview(existingCover);
   if (existingCover) _pendingCoverValue = existingCover; // keep it unless user changes
@@ -3757,14 +4053,17 @@ function rvPopulateSelect() {
         return `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}${marker}</option>`;
       }).join('');
   }
-  // Multi-series chips: use group or series based on mode
-  const chipItems = RV.groupMode
+  // Multi-series searchable dropdown: build items with volume counts
+  RV._multiItems = RV.groupMode
     ? [...new Set(ALL_DATA.map(d => getEffectiveGroup(d)))].sort()
     : [...new Set(ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series))].sort();
-  const list = document.getElementById('rvMultiList');
-  list.innerHTML = chipItems.map(s =>
-    `<span class="rv-ms-chip${RV.multiSelected.has(s)?' on':''}" onclick="rvToggleMultiSeries('${rvEsc(s)}')">${rvEsc(s)}</span>`
-  ).join('');
+  // Compute volume counts per item
+  RV._multiCounts = {};
+  RV._multiItems.forEach(s => {
+    RV._multiCounts[s] = ALL_DATA.filter(d => RV.groupMode ? getEffectiveGroup(d) === s : d.series === s).length;
+  });
+  rvRenderMultiDropdown();
+  rvRenderMultiTags();
 }
 
 function rvToggleGroupMode() {
@@ -3816,11 +4115,56 @@ function rvSetMultiMode(on) {
 function rvToggleMultiSeries(s) {
   if (RV.multiSelected.has(s)) RV.multiSelected.delete(s);
   else RV.multiSelected.add(s);
-  document.getElementById('rvMultiList').querySelectorAll('.rv-ms-chip').forEach(el => {
-    el.classList.toggle('on', RV.multiSelected.has(el.textContent));
-  });
+  rvRenderMultiDropdown();
+  rvRenderMultiTags();
   rvRenderMulti();
 }
+
+// Searchable multi-select dropdown helpers
+function rvRenderMultiDropdown() {
+  const dd = document.getElementById('rvMultiDropdown');
+  if (!dd) return;
+  const search = (document.getElementById('rvMultiSearch')?.value || '').toLowerCase().trim();
+  const items = (RV._multiItems || []).filter(s => !search || s.toLowerCase().includes(search));
+  dd.innerHTML = items.map(s => {
+    const selected = RV.multiSelected.has(s);
+    const count = RV._multiCounts?.[s] || 0;
+    return `<div class="rv-ms-opt${selected?' selected':''}" onclick="rvToggleMultiSeries('${rvEsc(s)}')">
+      <span class="rv-ms-opt-check">${selected ? '✓' : ''}</span>
+      <span>${rvEsc(s)}</span>
+      <span class="rv-ms-opt-count">${count} vol${count !== 1 ? 's' : ''}</span>
+    </div>`;
+  }).join('') || '<div class="rv-ms-opt" style="color:var(--dimtext);cursor:default">No matches</div>';
+}
+
+function rvRenderMultiTags() {
+  const tags = document.getElementById('rvMultiTags');
+  if (!tags) return;
+  tags.innerHTML = [...RV.multiSelected].map(s =>
+    `<span class="rv-ms-tag">${rvEsc(s)}<span class="rv-ms-tag-x" onclick="rvToggleMultiSeries('${rvEsc(s)}')">×</span></span>`
+  ).join('');
+}
+
+function rvFilterMultiList() { rvRenderMultiDropdown(); rvShowMultiDropdown(true); }
+function rvShowMultiDropdown(show) {
+  const dd = document.getElementById('rvMultiDropdown');
+  if (dd) dd.classList.toggle('open', show);
+}
+function rvSelectAllMulti() {
+  (RV._multiItems || []).forEach(s => RV.multiSelected.add(s));
+  rvRenderMultiDropdown(); rvRenderMultiTags(); rvRenderMulti();
+}
+function rvClearAllMulti() {
+  RV.multiSelected.clear();
+  rvRenderMultiDropdown(); rvRenderMultiTags(); rvRenderMulti();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.rv-ms-dropdown-wrap') && !e.target.closest('.rv-ms-tag-x')) {
+    rvShowMultiDropdown(false);
+  }
+});
 
 // ── Missing-volume detection ──
 function rvBuildAllItems(vols, cls) {
@@ -3935,9 +4279,9 @@ function rvRender() {
       } else {
         const issLabel = iss ? `#${iss.start}–${iss.end}` : (v.issues_covered || '?');
         if (iss) allForTimeline.push({ id: v.id, cls, iss, vol: v.vol, years: v.years, series: v.series });
-        const coverSrc = COVER_OVERRIDES[v.id] || v.cover_url || '';
+        const coverSrc = getCoverUrl(v);
         const coverImgHTML = coverSrc
-          ? `<img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rv-card-img-ph><span class=rv-card-img-ph-icon>📚</span><span class=rv-card-img-ph-vol>VOL ${v.vol||'?'}</span></div>'">`
+          ? `<img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="markCoverFailed(this.src);this.parentNode.innerHTML='<div class=rv-card-img-ph><span class=rv-card-img-ph-icon>📚</span><span class=rv-card-img-ph-vol>VOL ${v.vol||'?'}</span></div>'">`
           : `<div class="rv-card-img-ph"><span class="rv-card-img-ph-icon">📚</span><span class="rv-card-img-ph-vol">VOL ${v.vol||'?'}</span></div>`;
         const issLabelEsc = issLabel.replace(/</g,'&lt;');
         // Card number (e.g. "3 of 12")
@@ -4480,9 +4824,7 @@ function renderBrowseGrid() {
   let html = '';
   for (let i = 0; i < limit; i++) {
     const d = browseFiltered[i];
-    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
-    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
-    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+    const coverUrl = getCoverUrl(d);
     const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : 'tb-omnibus';
     const group = getEffectiveGroup(d);
     const ownedDots = ALL_USERS.filter(u => isOwned(d.id, u.id)).map(u =>
@@ -4491,7 +4833,7 @@ function renderBrowseGrid() {
 
     html += `<div class="browse-card" onclick="openEditModal(${d.id})" title="${escHtml(d.series)} Vol ${d.vol||'?'}">`;
     if (coverUrl && !coverUrl.startsWith('data:')) {
-      html += `<img class="bc-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'bc-cover-ph',textContent:'Vol ${d.vol||'?'}'}))">`;
+      html += `<img class="bc-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy" onerror="markCoverFailed(this.src);this.replaceWith(Object.assign(document.createElement('div'),{className:'bc-cover-ph',textContent:'Vol ${d.vol||'?'}'}))">`;
     } else if (coverUrl) {
       html += `<img class="bc-cover" src="${coverUrl}" alt="" loading="lazy">`;
     } else {
@@ -4670,9 +5012,7 @@ function inlineRvSelectSeries(name) {
   let html = '<div class="rv-run" style="padding:10px 0">';
   entries.forEach((d, i) => {
     const typeKey = d.type === 'Epic' ? 'epic' : d.type === 'Modern' ? 'modern' : d.type === 'Omnibus' ? 'omni' : 'dc';
-    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
-    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
-    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+    const coverUrl = getCoverUrl(d);
 
     // Connector between cards
     if (i > 0) {
@@ -4824,14 +5164,12 @@ function renderEraGrid() {
   let html = '';
   for (let i = 0; i < limit; i++) {
     const d = entries[i];
-    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
-    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
-    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+    const coverUrl = getCoverUrl(d);
     const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : 'tb-omnibus';
 
     html += `<div class="browse-card" onclick="openEditModal(${d.id})">`;
     if (coverUrl && !coverUrl.startsWith('data:')) {
-      html += `<img class="bc-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'bc-cover-ph',textContent:'Vol ${d.vol||'?'}'}))">`;
+      html += `<img class="bc-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy" onerror="markCoverFailed(this.src);this.replaceWith(Object.assign(document.createElement('div'),{className:'bc-cover-ph',textContent:'Vol ${d.vol||'?'}'}))">`;
     } else if (coverUrl) {
       html += `<img class="bc-cover" src="${coverUrl}" alt="" loading="lazy">`;
     } else {
@@ -4906,13 +5244,10 @@ function renderReadingOrder() {
   roEntries.forEach((id, i) => {
     const d = ALL_DATA.find(e => e.id === id);
     if (!d) return;
-    const isbn = d.isbn ? d.isbn.replace(/-/g, '') : '';
-    const cached = isbn ? ISBN_CACHE[d.isbn] || ISBN_CACHE[isbn] : null;
-    const coverUrl = COVER_OVERRIDES[d.id] || (cached && cached.cover_url) || '';
+    const coverUrl = getCoverUrl(d);
 
-    html += `<div class="ro-item" draggable="true" data-ro-idx="${i}" data-ro-id="${id}"
-      ondragstart="roDragStart(event)" ondragover="roDragOver(event)" ondrop="roDrop(event)" ondragend="roDragEnd(event)">
-      <span class="ro-drag">⠿</span>
+    html += `<div class="ro-item" data-ro-idx="${i}" data-ro-id="${id}">
+      <span class="ro-drag" data-ro-idx="${i}">⠿</span>
       <span class="ro-pos">${i + 1}</span>
       ${coverUrl ? `<img class="ro-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy">` : `<div class="ro-cover" style="display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--dimtext)">📖</div>`}
       <div class="ro-info">
@@ -4928,26 +5263,95 @@ function renderReadingOrder() {
   html += `<span style="font-family:var(--cf);font-size:12px;color:var(--muted)">${roEntries.length} entries</span>`;
   html += '</div>';
   container.innerHTML = html;
+  // Initialize pointer-based drag and drop after rendering
+  roInitDrag();
 }
 
-// Drag and drop
-let roDragIdx = null;
-function roDragStart(e) {
-  roDragIdx = parseInt(e.currentTarget.dataset.roIdx);
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
+// Pointer events-based drag and drop (works with touch, mouse, and trackpad)
+let roDragState = null; // { idx, el, ghost, startY, lastTargetIdx }
+
+function roInitDrag() {
+  const list = document.querySelector('.ro-list');
+  if (!list) return;
+  // Attach pointer events to drag handles
+  list.querySelectorAll('.ro-drag').forEach(handle => {
+    handle.addEventListener('pointerdown', roPointerDown);
+  });
 }
-function roDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
-function roDrop(e) {
+
+function roPointerDown(e) {
   e.preventDefault();
-  const targetIdx = parseInt(e.currentTarget.dataset.roIdx);
-  if (roDragIdx === null || roDragIdx === targetIdx) return;
-  const item = roEntries.splice(roDragIdx, 1)[0];
-  roEntries.splice(targetIdx, 0, item);
-  roSave(roCurrentGroup, roEntries);
-  renderReadingOrder();
+  const handle = e.currentTarget;
+  const item = handle.closest('.ro-item');
+  if (!item) return;
+  const idx = parseInt(handle.dataset.roIdx);
+  handle.setPointerCapture(e.pointerId);
+
+  // Create floating ghost
+  const rect = item.getBoundingClientRect();
+  const ghost = item.cloneNode(true);
+  ghost.className = 'ro-item ro-ghost';
+  ghost.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;z-index:10000;pointer-events:none;opacity:.85;box-shadow:0 8px 32px rgba(0,0,0,.5);border-color:var(--gold);`;
+  document.body.appendChild(ghost);
+
+  item.classList.add('dragging');
+  roDragState = { idx, el: item, ghost, startY: e.clientY, offsetY: e.clientY - rect.top, lastTargetIdx: idx, pointerId: e.pointerId };
+
+  handle.addEventListener('pointermove', roPointerMove);
+  handle.addEventListener('pointerup', roPointerUp);
+  handle.addEventListener('pointercancel', roPointerUp);
 }
-function roDragEnd(e) { e.currentTarget.classList.remove('dragging'); roDragIdx = null; }
+
+function roPointerMove(e) {
+  if (!roDragState) return;
+  const { ghost, offsetY } = roDragState;
+  ghost.style.top = (e.clientY - offsetY) + 'px';
+
+  // Find drop target by position
+  const items = document.querySelectorAll('.ro-item:not(.ro-ghost)');
+  let targetIdx = roDragState.idx;
+  items.forEach((item, i) => {
+    const rect = item.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY > midY) targetIdx = i;
+  });
+
+  // Show insertion indicator
+  items.forEach((item, i) => {
+    item.classList.remove('ro-drop-above', 'ro-drop-below');
+    if (i === targetIdx && targetIdx !== roDragState.idx) {
+      if (targetIdx > roDragState.idx) item.classList.add('ro-drop-below');
+      else item.classList.add('ro-drop-above');
+    }
+  });
+  roDragState.lastTargetIdx = targetIdx;
+}
+
+function roPointerUp(e) {
+  if (!roDragState) return;
+  const { idx, el, ghost, lastTargetIdx } = roDragState;
+  const handle = e.currentTarget;
+
+  // Cleanup
+  ghost.remove();
+  el.classList.remove('dragging');
+  document.querySelectorAll('.ro-item').forEach(item => {
+    item.classList.remove('ro-drop-above', 'ro-drop-below');
+  });
+
+  handle.removeEventListener('pointermove', roPointerMove);
+  handle.removeEventListener('pointerup', roPointerUp);
+  handle.removeEventListener('pointercancel', roPointerUp);
+
+  // Apply reorder
+  if (idx !== lastTargetIdx) {
+    const item = roEntries.splice(idx, 1)[0];
+    roEntries.splice(lastTargetIdx, 0, item);
+    roSave(roCurrentGroup, roEntries);
+    renderReadingOrder();
+  }
+  roDragState = null;
+}
 
 function roRemove(idx) {
   roEntries.splice(idx, 1);
