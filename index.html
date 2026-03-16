@@ -704,7 +704,7 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="hdr-hosts" id="authSection">
       <div class="hdr-host-label" id="authLabel">Account</div>
       <div class="hdr-host-names" id="authControls">
-        <button class="host-chip" id="btnSignIn" onclick="signInWithGoogle()" style="color:var(--gold);border-color:var(--gold)">Sign in with Google</button>
+        <button class="host-chip" id="btnSignIn" onclick="signInWithGoogle()" style="color:#fff;border-color:var(--gold);background:linear-gradient(135deg,#e8352a,#ff7a3d);font-size:13px;padding:6px 16px;text-shadow:0 1px 2px rgba(0,0,0,.4)">Sign in with Google</button>
       </div>
       <div class="hdr-host-names" id="authUser" style="display:none;align-items:center;gap:8px">
         <img id="authAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--gold)" alt="">
@@ -1487,7 +1487,51 @@ async function signInWithGoogle() {
     provider: 'google',
     options: { redirectTo: window.location.origin + window.location.pathname }
   });
-  if (error) showToast('Sign-in failed: ' + error.message, true);
+  if (error) {
+    if (error.message && error.message.includes('not enabled')) {
+      showGoogleSetupGuide();
+    } else {
+      showToast('Sign-in failed: ' + error.message, true);
+    }
+  }
+}
+
+function showGoogleSetupGuide() {
+  const overlay = document.createElement('div');
+  overlay.id = 'googleSetupGuide';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:28px 32px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto">
+    <h3 style="font-family:var(--hf);font-size:26px;color:var(--gold);margin-bottom:4px">Google Sign-In Setup Required</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:18px">The Google OAuth provider needs to be enabled in your Supabase project. Follow these steps:</p>
+    <div style="font-family:var(--cf);font-size:14px;color:var(--text);line-height:1.8">
+      <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 1:</strong> Go to
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener"
+          style="color:var(--blue);text-decoration:underline">Google Cloud Console → Credentials</a></p>
+      <ul style="margin:0 0 12px 18px;color:var(--muted)">
+        <li>Create an OAuth 2.0 Client ID (Web application)</li>
+        <li>Add <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">https://quxuidnmewcmovjbnfgy.supabase.co/auth/v1/callback</code> as an Authorized Redirect URI</li>
+        <li>Copy the <strong>Client ID</strong> and <strong>Client Secret</strong></li>
+      </ul>
+      <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 2:</strong> Go to
+        <a href="https://supabase.com/dashboard/project/quxuidnmewcmovjbnfgy/auth/providers" target="_blank" rel="noopener"
+          style="color:var(--blue);text-decoration:underline">Supabase Dashboard → Auth → Providers</a></p>
+      <ul style="margin:0 0 12px 18px;color:var(--muted)">
+        <li>Find <strong>Google</strong> and toggle it <strong>ON</strong></li>
+        <li>Paste your Google Client ID and Client Secret</li>
+        <li>Save</li>
+      </ul>
+      <p style="margin-bottom:12px"><strong style="color:var(--gold)">Step 3:</strong> Also add your site URL to
+        <a href="https://supabase.com/dashboard/project/quxuidnmewcmovjbnfgy/auth/url-configuration" target="_blank" rel="noopener"
+          style="color:var(--blue);text-decoration:underline">Auth → URL Configuration → Redirect URLs</a></p>
+      <p style="margin-bottom:0"><strong style="color:var(--gold)">Step 4:</strong> Run the v4 schema migration in the
+        <a href="https://supabase.com/dashboard/project/quxuidnmewcmovjbnfgy/sql" target="_blank" rel="noopener"
+          style="color:var(--blue);text-decoration:underline">SQL Editor</a>
+        (the new <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">users</code> and <code style="background:var(--surface3);padding:2px 6px;border-radius:3px">user_entry_data</code> tables)</p>
+    </div>
+    <button onclick="document.getElementById('googleSetupGuide').remove()"
+      style="display:block;width:100%;padding:12px;margin-top:20px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--cf);font-size:14px;font-weight:700;cursor:pointer">Got it</button>
+  </div>`;
+  document.body.appendChild(overlay);
 }
 
 async function signOut() {
