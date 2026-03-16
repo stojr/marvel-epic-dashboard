@@ -215,3 +215,36 @@ WHERE issues_covered IS NOT NULL AND issue_end IS NULL;
 UPDATE comic_entries
 SET issue_end = issue_start
 WHERE issue_start IS NOT NULL AND issue_end IS NULL;
+
+-- ═══════════════════════════════════════════════════════════════
+--  BCE EPIC Database — Schema Migration v4
+--  Google OAuth user accounts + per-user collection tracking
+--  Replaces hardcoded stojr/nick columns with generic user system
+-- ═══════════════════════════════════════════════════════════════
+
+-- ── 1. users table — maps auth.users to display profiles ────
+CREATE TABLE IF NOT EXISTS users (
+  id            UUID PRIMARY KEY,
+  email         TEXT,
+  display_name  TEXT NOT NULL,
+  color         TEXT DEFAULT '#c97fff',
+  avatar_url    TEXT,
+  created_at    TIMESTAMPTZ DEFAULT now()
+);
+
+-- ── 2. user_entry_data — per-user-per-entry collection data ─
+CREATE TABLE IF NOT EXISTS user_entry_data (
+  user_id   UUID REFERENCES users(id) ON DELETE CASCADE,
+  entry_id  INTEGER REFERENCES comic_entries(id) ON DELETE CASCADE,
+  owned     BOOLEAN DEFAULT false,
+  wishlist  BOOLEAN DEFAULT false,
+  read      BOOLEAN DEFAULT false,
+  notes     TEXT,
+  PRIMARY KEY (user_id, entry_id)
+);
+
+-- ── 3. Indexes ──────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_ued_user     ON user_entry_data(user_id);
+CREATE INDEX IF NOT EXISTS idx_ued_entry    ON user_entry_data(entry_id);
+CREATE INDEX IF NOT EXISTS idx_ued_owned    ON user_entry_data(user_id, owned) WHERE owned = true;
+CREATE INDEX IF NOT EXISTS idx_users_email  ON users(email);
