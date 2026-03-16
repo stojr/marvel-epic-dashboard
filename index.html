@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BCE Comics Pod — EPIC Database</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;1,400&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg:#0d0d10; --surface:#16161e; --surface2:#1e1e2a; --surface3:#252535;
@@ -205,7 +206,7 @@ td{padding:8px 10px;vertical-align:middle;white-space:nowrap}
 .udb:hover{border-color:var(--gold);color:var(--gold)}
 .udb.wish.on{background:#1a1200;border-color:var(--gold);color:var(--gold)}
 .udb.read.on{background:#0a2012;border-color:var(--green);color:var(--green)}
-.note-indicator{width:6px;height:6px;border-radius:50%;background:var(--stojr);opacity:0;margin-left:2px;transition:opacity .15s}
+.note-indicator{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:0;margin-left:2px;transition:opacity .15s}
 .note-indicator.has-note{opacity:1}
 
 /* ─── PAGINATION ─── */
@@ -700,11 +701,15 @@ footer a{color:var(--gold);text-decoration:none}
       <div class="hdr-desc">Marvel Epic Collections · DC Finest · stojr's Shelf<span class="sync-spin" id="syncSpin"></span></div>
     </div>
     <div class="hdr-spacer"></div>
-    <div class="hdr-hosts">
-      <div class="hdr-host-label">Active profile</div>
-      <div class="hdr-host-names">
-        <span class="host-chip stojr active-profile" id="chipStojr" onclick="setProfile('stojr')" title="Switch to stojr profile">stojr</span>
-        <span class="host-chip nick" id="chipNick" onclick="setProfile('nick')" title="Switch to Nick profile">Nick</span>
+    <div class="hdr-hosts" id="authSection">
+      <div class="hdr-host-label" id="authLabel">Account</div>
+      <div class="hdr-host-names" id="authControls">
+        <button class="host-chip" id="btnSignIn" onclick="signInWithGoogle()" style="color:var(--gold);border-color:var(--gold)">Sign in with Google</button>
+      </div>
+      <div class="hdr-host-names" id="authUser" style="display:none;align-items:center;gap:8px">
+        <img id="authAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--gold)" alt="">
+        <span id="authName" style="font-family:var(--cf);font-size:14px;font-weight:700;color:var(--text)"></span>
+        <button class="host-chip" onclick="signOut()" style="color:var(--dim);border-color:var(--dim);font-size:11px;padding:3px 10px">Sign Out</button>
       </div>
     </div>
     <div class="hdr-vbar2"></div>
@@ -722,6 +727,7 @@ footer a{color:var(--gold);text-decoration:none}
   <div class="db-status-bar">
     <div class="db-dot loading" id="dbDot"></div>
     <span class="db-status-text" id="dbStatusText">Connecting to Supabase…</span>
+    <span id="dqBadge" style="display:none;margin-left:8px;background:var(--orange);color:#000;font-family:var(--cf);font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" onclick="showDataQualityPanel()" title="Data quality issues">0</span>
     <span style="margin-left:auto;font-family:var(--cf);font-size:11px;color:var(--dimtext)" id="dbLastSync"></span>
   </div>
 </div>
@@ -760,9 +766,12 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="fg"><div class="flabel">Reprints</div>
       <select id="fRep" onchange="applyFilters()">
         <option value="">All</option>
-        <option value="No">Unique Only</option>
+        <option value="No" selected>Unique Only</option>
         <option value="Yes">Reprints Only</option>
       </select></div>
+    <div class="fg"><div class="flabel">Series Group</div>
+      <select id="fSeriesGroup" onchange="applyFilters()"><option value="">All Groups</option></select></div>
+    <datalist id="seriesGroupList"></datalist>
     <div class="fg" id="fUserDataWrap"><div class="flabel" id="profileFilterLabel">Profile Filter</div>
       <div class="owner-filters">
         <span class="own-filter-pill stojr" id="pfWishlist" onclick="toggleUserFilter('wishlist')" title="Show wishlisted">★ Wishlist</span>
@@ -771,10 +780,8 @@ footer a{color:var(--gold);text-decoration:none}
     </div>
     <div class="fsep"></div>
     <div class="fg"><div class="flabel">Collection Filter</div>
-      <div class="owner-filters">
-        <span class="own-filter-pill stojr" id="pfStojr" onclick="toggleOwnerFilter('stojr')">stojr owns</span>
-        <span class="own-filter-pill nick"  id="pfNick"  onclick="toggleOwnerFilter('nick')">Nick owns</span>
-        <span class="own-filter-pill both"  id="pfBoth"  onclick="toggleOwnerFilter('both')">Both own</span>
+      <div class="owner-filters" id="ownerFilterPills">
+        <!-- Dynamically populated by buildOwnerFilters() -->
       </div>
     </div>
     <div class="fbar-break"></div>
@@ -798,8 +805,7 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="card cd"><div class="card-n" id="cDC">–</div><div class="card-l">DC Finest</div><div class="card-s">filtered</div></div>
     <div class="card cg"><div class="card-n" id="cUniq">–</div><div class="card-l">Unique</div><div class="card-s">no reprints</div></div>
     <div class="card cx"><div class="card-n" id="cTotal">–</div><div class="card-l">Total</div><div class="card-s">shown</div></div>
-    <div class="card cs"><div class="card-n" id="cStojr">–</div><div class="card-l">stojr owns</div><div class="card-prog"><div class="prog-pct" id="stojrPct"></div><div class="prog-bar-track"><div class="prog-bar-fill" id="stojrFill" style="width:0%"></div></div></div></div>
-    <div class="card cn"><div class="card-n" id="cNick">–</div><div class="card-l">Nick owns</div><div class="card-prog"><div class="prog-pct" id="nickPct"></div><div class="prog-bar-track"><div class="prog-bar-fill" id="nickFill" style="width:0%"></div></div></div></div>
+    <div id="ownerStatCards"></div>
   </div>
 
   <!-- Charts -->
@@ -850,10 +856,9 @@ footer a{color:var(--gold);text-decoration:none}
     <div class="tscroll">
       <table>
         <thead>
-          <tr>
-            <th>stojr</th>
-            <th>Nick</th>
-            <th id="th-ud-label">stojr ★/✓</th>
+          <tr id="tableHeaderRow">
+            <th id="th-owners-placeholder" colspan="2">Owners</th>
+            <th id="th-ud-label">★/✓</th>
             <th>Pub</th>
             <th class="col-type" onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
             <th onclick="sortBy('vol')" id="th-vol">Vol <span class="sort-arrow"></span></th>
@@ -916,7 +921,11 @@ footer a{color:var(--gold);text-decoration:none}
       </div>
       <div class="modal-field full">
         <label class="modal-label">Series Title *</label>
-        <input class="modal-input" id="mSeries" type="text" placeholder="e.g. Amazing Spider-Man" onblur="onModalDcFinestCheck()">
+        <input class="modal-input" id="mSeries" type="text" placeholder="e.g. Amazing Spider-Man" onblur="onModalDcFinestCheck();onSeriesBlurSuggestGroup()">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Series Group</label>
+        <input class="modal-input" id="mSeriesGroup" type="text" list="seriesGroupList" placeholder="e.g. Spider-Man">
       </div>
       <div class="modal-field">
         <label class="modal-label">Volume #</label>
@@ -968,6 +977,10 @@ footer a{color:var(--gold);text-decoration:none}
           <option value="sourced">Sourced (Community)</option>
           <option value="estimated">Estimated</option>
         </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Reading Order #</label>
+        <input class="modal-input" id="mSortOrder" type="number" min="1" placeholder="Manual sort within group">
       </div>
       <div class="modal-field">
         <label class="modal-label">Series # (Optional)</label>
@@ -1059,6 +1072,7 @@ footer a{color:var(--gold);text-decoration:none}
           <th class="bec-pub"     data-sort="pub"     onclick="sortBulkBy('pub')">Publisher<span class="be-sort-arrow" id="bsa-pub"></span><input class="be-col-filter" data-col-filter="pub"     placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-type"    data-sort="type"    onclick="sortBulkBy('type')">Type<span class="be-sort-arrow" id="bsa-type"></span><input class="be-col-filter" data-col-filter="type"    placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-series"  data-sort="series"  onclick="sortBulkBy('series')">Series *<span class="be-sort-arrow" id="bsa-series"></span><input class="be-col-filter" data-col-filter="series"  placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
+          <th class="bec-series"  data-sort="series_group" onclick="sortBulkBy('series_group')">Group<span class="be-sort-arrow" id="bsa-series_group"></span><input class="be-col-filter" data-col-filter="series_group" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-vol"     data-sort="vol"     onclick="sortBulkBy('vol')">Vol<span class="be-sort-arrow" id="bsa-vol"></span></th>
           <th class="bec-sub"     data-sort="subtitle" onclick="sortBulkBy('subtitle')">Subtitle<span class="be-sort-arrow" id="bsa-subtitle"></span><input class="be-col-filter" data-col-filter="subtitle" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-years"   data-sort="years"   onclick="sortBulkBy('years')">Years<span class="be-sort-arrow" id="bsa-years"></span></th>
@@ -1091,10 +1105,13 @@ footer a{color:var(--gold);text-decoration:none}
 <div class="rv-overlay" id="rvOverlay">
   <div class="rv-hdr">
     <div class="rv-title">📚 Run View</div>
-    <div class="rv-select-wrap">
-      <select id="rvSeriesSelect" onchange="rvSelectSeries(this.value)">
-        <option value="">— Select a series —</option>
-      </select>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="rv-mode-btn" id="rvGroupToggle" onclick="rvToggleGroupMode()" title="Toggle between Series and Series Group" style="font-size:11px;padding:4px 10px">By: Series</button>
+      <div class="rv-select-wrap">
+        <select id="rvSeriesSelect" onchange="rvSelectSeries(this.value)">
+          <option value="">— Select a series —</option>
+        </select>
+      </div>
     </div>
     <div class="rv-type-pills" id="rvTypePills">
       <span class="rv-pill epic on" data-type="Epic" onclick="rvTogglePill(this)">Classic Epic</span>
@@ -1102,6 +1119,7 @@ footer a{color:var(--gold);text-decoration:none}
       <span class="rv-pill omni on" data-type="Omnibus" onclick="rvTogglePill(this)">Omnibus</span>
       <span class="rv-pill dc on" data-type="DC Finest" onclick="rvTogglePill(this)">DC Finest</span>
     </div>
+    <span class="rv-pill" id="rvReprintToggle" style="cursor:pointer;font-size:11px" onclick="rvToggleReprints(this)">Hide Reprints</span>
     <button class="rv-mode-btn" id="rvMultiBtn" onclick="rvToggleMultiMode()">⊞ Multi-Series</button>
     <div class="rv-hdr-spacer"></div>
     <button class="rbtn" onclick="rvClose()">✕ Close</button>
@@ -1178,17 +1196,26 @@ async function sbUpsert(table, body, onConflict) {
   return sbFetch(table, '', { method:'POST', headers:{...HEADERS,'Prefer':`resolution=merge-duplicates,return=representation`,'on-conflict':onConflict}, body: JSON.stringify(body) });
 }
 
+// ── Supabase Auth Client ──────────────────────
+const sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+let currentUser = null;       // auth.users object when signed in
+let ALL_USERS = [];           // users table rows
+let LEGACY_CLAIMED = {};      // { 'stojr': userId, 'nick': userId }
+
 // ── State ──────────────────────────────────────
 let ALL_DATA = [];
-let USER_DATA = {};
-let activeProfile = 'stojr';
+let USER_DATA = {};           // { entryId: { userId: { owned, wishlist, read, notes } } }
+let COVER_OVERRIDES = {};     // { entryId: base64coverUrl } from legacy user_data
+let SERIES_GROUPS = [];       // series_groups reference table
+let ISBN_CACHE = {};          // isbn → cached lookup result
+let DATA_QUALITY_FLAGS = [];  // data quality issues
 let activePub = 'all';
 // Default sort: series name + vol/year — so Aliens Vol.1,2,3 group together, Batman titles group together
 let sortCol = 'series', sortDir = 1;
 let sortSecondary = 'vol';  // secondary sort key used after series
 let page = 1, pageSize = 100;
 let currentFiltered = [];
-let ownerFilters = { stojr: false, nick: false, both: false };
+let ownerFilters = {}; // { userId: true/false } dynamically built from ALL_USERS
 let userDataFilters = { wishlist: false, read: false };
 let barMode = 'normal';
 let chartMode = 'bar';
@@ -1197,24 +1224,173 @@ let pendingDeleteId = null;
 let modalCoverDataUrl = null; // base64 data URL for uploaded file covers
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
+// ── Series Group helpers ──────────────────────────
+function getEffectiveGroup(d) { return d.series_group || d.series; }
+
+function suggestSeriesGroup(seriesName) {
+  if (!seriesName) return null;
+  const patterns = [
+    /^(?:Amazing|Spectacular|Sensational|Superior|Friendly Neighborhood|Web of|Untold Tales of)\s+(.+)$/i,
+    /^(?:Uncanny|Astonishing|All-New|Extraordinary|Giant-Size|New)\s+(.+)$/i,
+    /^(.+?)\s+(?:Vol\.\s*\d+|Annual|Special|Giant-Size)$/i,
+  ];
+  for (const regex of patterns) {
+    const m = seriesName.match(regex);
+    if (m) {
+      const candidate = m[1].trim();
+      const existing = SERIES_GROUPS.find(g => g.name.toLowerCase() === candidate.toLowerCase());
+      if (existing) return existing.name;
+    }
+  }
+  for (const g of SERIES_GROUPS) {
+    if (seriesName.toLowerCase().includes(g.name.toLowerCase()) && g.name.length > 3) return g.name;
+  }
+  return null;
+}
+
+// ── Structured year/issue parsing helpers ─────────
+function parseYearStart(yearsStr) {
+  if (!yearsStr) return null;
+  const m = yearsStr.match(/(\d{4})/);
+  return m ? parseInt(m[1]) : null;
+}
+function parseYearEnd(yearsStr) {
+  if (!yearsStr) return null;
+  const all = yearsStr.match(/\d{4}/g);
+  return all ? parseInt(all[all.length - 1]) : null;
+}
+function parseIssueStart(issStr) {
+  if (!issStr) return null;
+  const m = issStr.match(/#?(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+function parseIssueEnd(issStr) {
+  if (!issStr) return null;
+  const m = issStr.match(/#?\d+\s*[-\u2013\u2014]\s*(\d+)/);
+  return m ? parseInt(m[1]) : null;
+}
+
+// ── Data quality checks ───────────────────────────
+function runDataQualityChecks() {
+  const flags = [];
+  // 1. Duplicate ISBNs
+  const isbnMap = {};
+  ALL_DATA.forEach(d => {
+    if (!d.isbn) return;
+    const clean = d.isbn.replace(/-/g, '');
+    if (isbnMap[clean]) {
+      flags.push({ entry_id: d.id, flag_type: 'duplicate_isbn',
+        detail: `ISBN ${d.isbn} also on "${isbnMap[clean].series} Vol ${isbnMap[clean].vol||'?'}" (id ${isbnMap[clean].id})` });
+    } else { isbnMap[clean] = d; }
+  });
+  // 2. Missing years covered
+  ALL_DATA.forEach(d => {
+    if (!d.years && !d.year_start) {
+      flags.push({ entry_id: d.id, flag_type: 'missing_years',
+        detail: `"${d.series} Vol ${d.vol||'?'}" has no years covered` });
+    }
+  });
+  // 3. Inconsistent series names (Levenshtein distance <= 2)
+  const seriesNames = [...new Set(ALL_DATA.map(d => d.series).filter(Boolean))];
+  for (let i = 0; i < seriesNames.length; i++) {
+    for (let j = i + 1; j < seriesNames.length; j++) {
+      const a = seriesNames[i].toLowerCase(), b = seriesNames[j].toLowerCase();
+      if (a !== b && a.length > 4 && Math.abs(a.length - b.length) <= 2) {
+        let dist = 0;
+        const maxLen = Math.max(a.length, b.length);
+        for (let k = 0; k < maxLen; k++) { if (a[k] !== b[k]) dist++; }
+        if (dist <= 2) {
+          flags.push({ entry_id: null, flag_type: 'inconsistent_series',
+            detail: `Similar: "${seriesNames[i]}" vs "${seriesNames[j]}"` });
+        }
+      }
+    }
+  }
+  // 4. Duplicate title+type+vol (non-reprint)
+  const titleVolMap = {};
+  ALL_DATA.forEach(d => {
+    if (d.vol == null) return;
+    const key = `${d.series}|${d.type}|${d.vol}`;
+    if (titleVolMap[key] && d.reprint !== 'Yes' && titleVolMap[key].reprint !== 'Yes') {
+      flags.push({ entry_id: d.id, flag_type: 'duplicate_title',
+        detail: `"${d.series} ${d.type} Vol ${d.vol}" appears twice (ids ${titleVolMap[key].id}, ${d.id})` });
+    } else if (!titleVolMap[key]) { titleVolMap[key] = d; }
+  });
+  // 5. Year range sanity
+  ALL_DATA.forEach(d => {
+    const ys = d.year_start || parseYearStart(d.years);
+    const ye = d.year_end || parseYearEnd(d.years);
+    if (ys && ye && ys > ye) {
+      flags.push({ entry_id: d.id, flag_type: 'invalid_year_range',
+        detail: `"${d.series} Vol ${d.vol||'?'}" start ${ys} > end ${ye}` });
+    }
+  });
+  DATA_QUALITY_FLAGS = flags;
+  updateQualityBadge();
+  return flags;
+}
+
+function updateQualityBadge() {
+  const badge = document.getElementById('dqBadge');
+  if (!badge) return;
+  const count = DATA_QUALITY_FLAGS.length;
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'inline-flex' : 'none';
+  badge.title = `${count} data quality issue${count !== 1 ? 's' : ''}`;
+}
+
 // ── Load all data ────────────────────────────────
 async function loadData() {
   setDbStatus('loading', 'Loading entries…');
   document.getElementById('loadingMsg').textContent = 'Loading comic entries…';
   try {
-    // Load comic entries — we apply our own default sort in JS, so just fetch all
-    const entries = await sbSelect('comic_entries', '?limit=2000');
+    // Load all data in parallel — prefer new user_entry_data table, fall back to legacy user_data
+    const [entries, ued, users, groups, cache, legacyUd] = await Promise.all([
+      sbSelect('comic_entries', '?limit=5000'),
+      sbSelect('user_entry_data', '?limit=50000').catch(() => []),
+      sbSelect('users', '?order=display_name').catch(() => []),
+      sbSelect('series_groups', '?order=name').catch(() => []),
+      sbSelect('isbn_cache', '?limit=10000').catch(() => []),
+      sbSelect('user_data', '?limit=10000').catch(() => []),
+    ]);
     ALL_DATA = entries || [];
-
-    document.getElementById('loadingMsg').textContent = 'Loading user data…';
-    const ud = await sbSelect('user_data', '?limit=5000');
+    ALL_USERS = users || [];
     USER_DATA = {};
-    (ud || []).forEach(row => { USER_DATA[row.entry_id] = row; });
+    // Load new-format user_entry_data
+    (ued || []).forEach(row => {
+      if (!USER_DATA[row.entry_id]) USER_DATA[row.entry_id] = {};
+      USER_DATA[row.entry_id][row.user_id] = row;
+    });
+    // Extract cover overrides from legacy user_data (base64 covers stored globally)
+    COVER_OVERRIDES = {};
+    (legacyUd || []).forEach(row => {
+      if (row.cover_url) COVER_OVERRIDES[row.entry_id] = row.cover_url;
+    });
+    // If no new-format data exists, load legacy user_data for read-only display
+    if (!(ued || []).length && (legacyUd || []).length) {
+      loadLegacyUserData(legacyUd);
+    }
+    SERIES_GROUPS = groups || [];
+    ISBN_CACHE = {};
+    (cache || []).forEach(row => { ISBN_CACHE[row.isbn] = row; });
+
+    // Ensure structured year/issue fields are populated client-side
+    ALL_DATA.forEach(d => {
+      if (d.year_start == null && d.years) d.year_start = parseYearStart(d.years);
+      if (d.year_end == null && d.years) d.year_end = parseYearEnd(d.years);
+      if (d.year_end == null && d.year_start != null) d.year_end = d.year_start;
+      if (d.issue_start == null && d.issues_covered) d.issue_start = parseIssueStart(d.issues_covered);
+      if (d.issue_end == null && d.issues_covered) d.issue_end = parseIssueEnd(d.issues_covered);
+      if (d.issue_end == null && d.issue_start != null) d.issue_end = d.issue_start;
+    });
 
     setDbStatus('connected', `Connected · ${ALL_DATA.length} entries · Last sync ${new Date().toLocaleTimeString()}`);
     document.getElementById('dbLastSync').textContent = `${ALL_DATA.length} entries`;
     populateYearFilter();
+    populateSeriesGroupFilter();
+    buildOwnerFilters();
     applyFilters();
+    runDataQualityChecks();
     hideLoading();
   } catch(e) {
     console.error('Load error:', e);
@@ -1222,6 +1398,52 @@ async function loadData() {
     document.getElementById('loadingMsg').textContent = 'Database connection failed. Check console for details.';
     setTimeout(hideLoading, 3000);
   }
+}
+
+// Load legacy user_data (hardcoded stojr/nick columns) into USER_DATA with placeholder UUIDs
+const LEGACY_STOJR_ID = '00000000-0000-0000-0000-000000000001';
+const LEGACY_NICK_ID  = '00000000-0000-0000-0000-000000000002';
+function loadLegacyUserData(legacyRows) {
+  // Ensure legacy "users" appear in ALL_USERS for display
+  if (!ALL_USERS.find(u => u.id === LEGACY_STOJR_ID)) {
+    ALL_USERS.push({ id: LEGACY_STOJR_ID, display_name: 'stojr', color: '#c97fff' });
+  }
+  if (!ALL_USERS.find(u => u.id === LEGACY_NICK_ID)) {
+    ALL_USERS.push({ id: LEGACY_NICK_ID, display_name: 'Nick', color: '#2ee8d4' });
+  }
+  legacyRows.forEach(row => {
+    const eid = row.entry_id;
+    if (!USER_DATA[eid]) USER_DATA[eid] = {};
+    // stojr data
+    if (row.stojr_owned || row.stojr_wishlist || row.stojr_read || row.stojr_notes) {
+      USER_DATA[eid][LEGACY_STOJR_ID] = {
+        user_id: LEGACY_STOJR_ID, entry_id: eid,
+        owned: !!row.stojr_owned, wishlist: !!row.stojr_wishlist,
+        read: !!row.stojr_read, notes: row.stojr_notes || ''
+      };
+    }
+    // nick data
+    if (row.nick_owned || row.nick_wishlist || row.nick_read || row.nick_notes) {
+      USER_DATA[eid][LEGACY_NICK_ID] = {
+        user_id: LEGACY_NICK_ID, entry_id: eid,
+        owned: !!row.nick_owned, wishlist: !!row.nick_wishlist,
+        read: !!row.nick_read, notes: row.nick_notes || ''
+      };
+    }
+  });
+}
+
+function populateSeriesGroupFilter() {
+  const sel = document.getElementById('fSeriesGroup');
+  if (!sel) return;
+  const groups = new Set();
+  ALL_DATA.forEach(d => { const g = getEffectiveGroup(d); if (g) groups.add(g); });
+  const sorted = [...groups].sort((a, b) => a.localeCompare(b));
+  sel.innerHTML = '<option value="">All Groups</option>' +
+    sorted.map(g => `<option value="${g}">${g}</option>`).join('');
+  // Also populate datalist for modal/bulk edit autocomplete
+  const dl = document.getElementById('seriesGroupList');
+  if (dl) dl.innerHTML = sorted.map(g => `<option value="${g}">`).join('');
 }
 
 function setDbStatus(state, text) {
@@ -1259,61 +1481,231 @@ function toggleTheme() {
   buildDonut(currentFiltered);
 }
 
-// ── Profile toggle ────────────────────────────
-function setProfile(who) {
-  activeProfile = who;
-  document.getElementById('chipStojr').classList.toggle('active-profile', who==='stojr');
-  document.getElementById('chipNick').classList.toggle('active-profile', who==='nick');
-  document.getElementById('th-ud-label').textContent = `${who} ★/✓`;
-  document.getElementById('profileFilterLabel').textContent = `${who} Filter`;
-  const wl = document.getElementById('pfWishlist');
-  const rd = document.getElementById('pfRead');
-  if (who === 'stojr') {
-    wl.style.color = 'var(--stojr)'; wl.style.borderColor = 'var(--stojr)';
-    rd.style.color = 'var(--stojr)'; rd.style.borderColor = 'var(--stojr)';
+// ── Auth functions ────────────────────────────
+async function signInWithGoogle() {
+  const { error } = await sbClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) showToast('Sign-in failed: ' + error.message, true);
+}
+
+async function signOut() {
+  await sbClient.auth.signOut();
+  currentUser = null;
+  updateAuthUI();
+  buildTable(currentFiltered);
+  buildCards(currentFiltered);
+}
+
+function updateAuthUI() {
+  const signInBtn = document.getElementById('btnSignIn');
+  const userEl = document.getElementById('authUser');
+  const labelEl = document.getElementById('authLabel');
+  if (currentUser) {
+    const u = ALL_USERS.find(x => x.id === currentUser.id);
+    const name = u ? u.display_name : (currentUser.user_metadata?.full_name || currentUser.email || 'User');
+    const avatar = currentUser.user_metadata?.avatar_url || '';
+    signInBtn.style.display = 'none';
+    userEl.style.display = 'flex';
+    document.getElementById('authName').textContent = name;
+    const avatarEl = document.getElementById('authAvatar');
+    if (avatar) { avatarEl.src = avatar; avatarEl.style.display = ''; }
+    else { avatarEl.style.display = 'none'; }
+    labelEl.textContent = 'Signed in';
+    document.getElementById('th-ud-label').textContent = `${name} ★/✓`;
+    document.getElementById('profileFilterLabel').textContent = `${name} Filter`;
+    const color = u ? u.color : 'var(--gold)';
+    const wl = document.getElementById('pfWishlist');
+    const rd = document.getElementById('pfRead');
+    if (wl) { wl.style.color = color; wl.style.borderColor = color; }
+    if (rd) { rd.style.color = color; rd.style.borderColor = color; }
   } else {
-    wl.style.color = 'var(--nick)'; wl.style.borderColor = 'var(--nick)';
-    rd.style.color = 'var(--nick)'; rd.style.borderColor = 'var(--nick)';
+    signInBtn.style.display = '';
+    userEl.style.display = 'none';
+    labelEl.textContent = 'Account';
+    document.getElementById('th-ud-label').textContent = '★/✓';
+    document.getElementById('profileFilterLabel').textContent = 'Profile Filter';
   }
+}
+
+async function onAuthStateChange(event, session) {
+  if (session?.user) {
+    currentUser = session.user;
+    // Ensure user exists in our users table
+    const existing = ALL_USERS.find(u => u.id === currentUser.id);
+    if (!existing) {
+      const name = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
+      const avatar = currentUser.user_metadata?.avatar_url || '';
+      const colors = ['#c97fff','#2ee8d4','#ff9f2a','#3eff8a','#3aa8ff','#ff4136','#ffd234'];
+      const color = colors[ALL_USERS.length % colors.length];
+      try {
+        await sbUpsert('users', {
+          id: currentUser.id, email: currentUser.email,
+          display_name: name, color: color, avatar_url: avatar
+        }, 'id');
+        ALL_USERS.push({ id: currentUser.id, display_name: name, color, avatar_url: avatar });
+      } catch(e) { console.warn('Could not create user profile:', e); }
+    }
+    updateAuthUI();
+    buildOwnerFilters();
+    // Check for legacy data claim
+    checkLegacyClaim();
+    buildTable(currentFiltered);
+    buildCards(currentFiltered);
+  } else {
+    currentUser = null;
+    updateAuthUI();
+    buildTable(currentFiltered);
+    buildCards(currentFiltered);
+  }
+}
+
+// Legacy profile claim — migrate stojr/nick data to authenticated user
+async function checkLegacyClaim() {
+  if (!currentUser) return;
+  const alreadyClaimed = ALL_USERS.find(u => u.id === currentUser.id);
+  // Check if this user has any data in user_entry_data
+  const hasNewData = Object.values(USER_DATA).some(byUser => byUser[currentUser.id]);
+  if (hasNewData) return; // already has data, no need to claim
+  // Check if legacy data exists
+  const hasLegacy = Object.values(USER_DATA).some(byUser =>
+    byUser[LEGACY_STOJR_ID] || byUser[LEGACY_NICK_ID]
+  );
+  if (!hasLegacy) return;
+  // Check which legacy profiles are unclaimed
+  const stojrClaimed = ALL_USERS.some(u => u.id !== LEGACY_STOJR_ID && u.id !== LEGACY_NICK_ID &&
+    Object.values(USER_DATA).some(byUser => byUser[u.id]));
+  // Show claim dialog
+  showLegacyClaimDialog();
+}
+
+function showLegacyClaimDialog() {
+  const unclaimed = [];
+  // Check if legacy stojr data exists and isn't claimed
+  const hasStojr = Object.values(USER_DATA).some(byUser => byUser[LEGACY_STOJR_ID]);
+  const hasNick = Object.values(USER_DATA).some(byUser => byUser[LEGACY_NICK_ID]);
+  if (hasStojr) unclaimed.push({ id: LEGACY_STOJR_ID, name: 'stojr' });
+  if (hasNick) unclaimed.push({ id: LEGACY_NICK_ID, name: 'Nick' });
+  if (!unclaimed.length) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'legacyClaimOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `<div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:28px;max-width:380px;width:90%">
+    <h3 style="font-family:var(--hf);font-size:24px;margin-bottom:12px;color:var(--gold)">Welcome!</h3>
+    <p style="color:var(--muted);margin-bottom:16px;font-size:14px">Claim your existing collection profile to migrate your data:</p>
+    ${unclaimed.map(p => `<button onclick="claimLegacyProfile('${p.id}','${p.name}')"
+      style="display:block;width:100%;padding:12px;margin-bottom:8px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--cf);font-size:16px;font-weight:700;cursor:pointer;text-align:left">
+      I'm <span style="color:${p.id===LEGACY_STOJR_ID?'var(--stojr)':'var(--nick)'}">${p.name}</span>
+    </button>`).join('')}
+    <button onclick="document.getElementById('legacyClaimOverlay').remove()"
+      style="display:block;width:100%;padding:10px;margin-top:4px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--cf);font-size:13px;cursor:pointer">
+      I'm a new user — skip
+    </button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function claimLegacyProfile(legacyId, legacyName) {
+  if (!currentUser) return;
+  document.getElementById('legacyClaimOverlay')?.remove();
+  setSyncing(true);
+  showToast(`Migrating ${legacyName} data…`);
+
+  // Gather all legacy data for this profile
+  const rows = [];
+  for (const [entryId, byUser] of Object.entries(USER_DATA)) {
+    const legacyData = byUser[legacyId];
+    if (!legacyData) continue;
+    rows.push({
+      user_id: currentUser.id,
+      entry_id: parseInt(entryId),
+      owned: !!legacyData.owned,
+      wishlist: !!legacyData.wishlist,
+      read: !!legacyData.read,
+      notes: legacyData.notes || null
+    });
+  }
+
+  // Batch upsert in chunks of 100
+  for (let i = 0; i < rows.length; i += 100) {
+    const chunk = rows.slice(i, i + 100);
+    try {
+      await sbUpsert('user_entry_data', chunk, 'user_id,entry_id');
+    } catch(e) {
+      console.error('Migration chunk failed:', e);
+      showToast('Migration error — check console', true);
+      setSyncing(false);
+      return;
+    }
+  }
+
+  // Update local state: copy legacy data to current user
+  for (const [entryId, byUser] of Object.entries(USER_DATA)) {
+    if (byUser[legacyId]) {
+      byUser[currentUser.id] = { ...byUser[legacyId], user_id: currentUser.id };
+    }
+  }
+
+  // Update user's display name/color to match legacy profile
+  const color = legacyId === LEGACY_STOJR_ID ? '#c97fff' : '#2ee8d4';
+  try {
+    await sbUpsert('users', {
+      id: currentUser.id, display_name: legacyName, color
+    }, 'id');
+    const u = ALL_USERS.find(x => x.id === currentUser.id);
+    if (u) { u.display_name = legacyName; u.color = color; }
+  } catch(e) { console.warn('Could not update display name:', e); }
+
+  showToast(`✓ ${legacyName} collection claimed! (${rows.length} entries)`);
+  setSyncing(false);
+  updateAuthUI();
+  buildOwnerFilters();
   buildTable(currentFiltered);
   buildCards(currentFiltered);
 }
 
 // ── User data helpers ─────────────────────────
 function getUD(entryId) { return USER_DATA[entryId] || {}; }
-function isOwned(entryId, who) { return !!(getUD(entryId)[`${who}_owned`]); }
-function isWishlist(entryId, who) { return !!(getUD(entryId)[`${who}_wishlist`]); }
-function isRead(entryId, who) { return !!(getUD(entryId)[`${who}_read`]); }
-function getNotes(entryId, who) { return getUD(entryId)[`${who}_notes`] || ''; }
-function hasNotes(entryId, who) { return !!(getUD(entryId)[`${who}_notes`]); }
+function isOwned(entryId, userId) { return !!(USER_DATA[entryId]?.[userId]?.owned); }
+function isWishlist(entryId, userId) { return !!(USER_DATA[entryId]?.[userId]?.wishlist); }
+function isRead(entryId, userId) { return !!(USER_DATA[entryId]?.[userId]?.read); }
+function getNotes(entryId, userId) { return USER_DATA[entryId]?.[userId]?.notes || ''; }
+function hasNotes(entryId, userId) { return !!(USER_DATA[entryId]?.[userId]?.notes); }
+function currentUserId() { return currentUser?.id || null; }
 
-async function toggleUserField(entryId, field) {
-  const ud = getUD(entryId);
-  const current = !!(ud[field]);
-  const newVal = !current;
-  if (!USER_DATA[entryId]) USER_DATA[entryId] = { entry_id: entryId };
-  USER_DATA[entryId][field] = newVal;
+async function toggleUserField(entryId, field, userId) {
+  userId = userId || currentUserId();
+  if (!userId) { showToast('Sign in to track your collection', true); return; }
+  if (!USER_DATA[entryId]) USER_DATA[entryId] = {};
+  if (!USER_DATA[entryId][userId]) USER_DATA[entryId][userId] = { user_id: userId, entry_id: entryId, owned: false, wishlist: false, read: false, notes: '' };
+  const current = !!USER_DATA[entryId][userId][field];
+  USER_DATA[entryId][userId][field] = !current;
   updateRowUDButtons(entryId);
   buildCards(currentFiltered);
   setSyncing(true);
   try {
-    await sbUpsert('user_data', { entry_id: entryId, [field]: newVal }, 'entry_id');
+    await sbUpsert('user_entry_data', { user_id: userId, entry_id: entryId, [field]: !current }, 'user_id,entry_id');
     showToast('✓ Saved');
   } catch(e) {
-    USER_DATA[entryId][field] = current;
+    USER_DATA[entryId][userId][field] = current;
     updateRowUDButtons(entryId);
     showToast('Save failed', true);
   }
   setSyncing(false);
 }
 
-async function saveNotes(entryId, who, value) {
-  if (!USER_DATA[entryId]) USER_DATA[entryId] = { entry_id: entryId };
-  USER_DATA[entryId][`${who}_notes`] = value;
+async function saveNotes(entryId, userId, value) {
+  userId = userId || currentUserId();
+  if (!userId) { showToast('Sign in to save notes', true); return; }
+  if (!USER_DATA[entryId]) USER_DATA[entryId] = {};
+  if (!USER_DATA[entryId][userId]) USER_DATA[entryId][userId] = { user_id: userId, entry_id: entryId, owned: false, wishlist: false, read: false, notes: '' };
+  USER_DATA[entryId][userId].notes = value;
   updateRowUDButtons(entryId);
   setSyncing(true);
   try {
-    await sbUpsert('user_data', { entry_id: entryId, [`${who}_notes`]: value }, 'entry_id');
+    await sbUpsert('user_entry_data', { user_id: userId, entry_id: entryId, notes: value }, 'user_id,entry_id');
     showToast('✓ Notes saved');
   } catch(e) {
     showToast('Save failed', true);
@@ -1322,20 +1714,22 @@ async function saveNotes(entryId, who, value) {
 }
 
 function updateRowUDButtons(entryId) {
+  const uid = currentUserId();
   const wBtn = document.querySelector(`.udb.wish[data-id="${entryId}"]`);
   const rBtn = document.querySelector(`.udb.read[data-id="${entryId}"]`);
   const nInd = document.querySelector(`.note-indicator[data-id="${entryId}"]`);
-  if (wBtn) wBtn.classList.toggle('on', isWishlist(entryId, activeProfile));
-  if (rBtn) rBtn.classList.toggle('on', isRead(entryId, activeProfile));
-  if (nInd) nInd.classList.toggle('has-note', hasNotes(entryId, activeProfile));
-  const sBtn = document.querySelector(`.ob.os[data-id="${entryId}"]`);
-  const nBtn = document.querySelector(`.ob.on2[data-id="${entryId}"]`);
-  if (sBtn) sBtn.classList.toggle('on', isOwned(entryId, 'stojr'));
-  if (nBtn) nBtn.classList.toggle('on', isOwned(entryId, 'nick'));
+  if (wBtn) wBtn.classList.toggle('on', uid ? isWishlist(entryId, uid) : false);
+  if (rBtn) rBtn.classList.toggle('on', uid ? isRead(entryId, uid) : false);
+  if (nInd) nInd.classList.toggle('has-note', uid ? hasNotes(entryId, uid) : false);
+  // Update all ownership buttons
+  ALL_USERS.forEach(u => {
+    const btn = document.querySelector(`.ob[data-uid="${u.id}"][data-id="${entryId}"]`);
+    if (btn) btn.classList.toggle('on', isOwned(entryId, u.id));
+  });
 }
 
 // ── Init ──────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   try {
     if (localStorage.getItem('bce_theme') === 'light') {
       document.body.classList.add('light');
@@ -1346,6 +1740,15 @@ window.addEventListener('DOMContentLoaded', () => {
   // Initialise sort arrow to match default sort (series)
   const thSeries = document.getElementById('th-series');
   if (thSeries) { const a = thSeries.querySelector('.sort-arrow'); if(a) a.textContent = ' ▼'; }
+
+  // Set up auth listener
+  sbClient.auth.onAuthStateChange(onAuthStateChange);
+  // Check existing session
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+  }
+  updateAuthUI();
 
   loadData();
 
@@ -1407,10 +1810,42 @@ function setPub(pub, el) {
 }
 
 // ── Filters ───────────────────────────────────
+function buildOwnerFilters() {
+  const wrap = document.getElementById('ownerFilterPills');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  // Per-user ownership pills
+  ALL_USERS.forEach(u => {
+    ownerFilters[u.id] = ownerFilters[u.id] || false;
+    const pill = document.createElement('span');
+    pill.className = 'own-filter-pill';
+    pill.id = `pfOwner_${u.id}`;
+    pill.style.color = u.color || 'var(--gold)';
+    pill.style.borderColor = u.color || 'var(--gold)';
+    pill.textContent = `${u.display_name} owns`;
+    pill.onclick = () => toggleOwnerFilter(u.id);
+    if (ownerFilters[u.id]) pill.classList.add('on');
+    wrap.appendChild(pill);
+  });
+  // "All own" pill (only if 2+ users)
+  if (ALL_USERS.length >= 2) {
+    ownerFilters._all = ownerFilters._all || false;
+    const pill = document.createElement('span');
+    pill.className = 'own-filter-pill';
+    pill.id = 'pfOwner_all';
+    pill.style.color = 'var(--gold)';
+    pill.style.borderColor = 'var(--gold)';
+    pill.textContent = 'All own';
+    pill.onclick = () => toggleOwnerFilter('_all');
+    if (ownerFilters._all) pill.classList.add('on');
+    wrap.appendChild(pill);
+  }
+}
+
 function toggleOwnerFilter(who) {
   ownerFilters[who] = !ownerFilters[who];
-  const ids = { stojr:'pfStojr', nick:'pfNick', both:'pfBoth' };
-  document.getElementById(ids[who]).classList.toggle('on', ownerFilters[who]);
+  const el = document.getElementById(who === '_all' ? 'pfOwner_all' : `pfOwner_${who}`);
+  if (el) el.classList.toggle('on', ownerFilters[who]);
   applyFilters();
 }
 
@@ -1444,8 +1879,10 @@ function applyFilters() {
   const type   = document.getElementById('fType').value;
   const lic    = document.getElementById('fLic').value;
   const rep    = document.getElementById('fRep').value;
-  const isFiltered = search || year || type || lic || rep || activePub !== 'all'
-    || ownerFilters.stojr || ownerFilters.nick || ownerFilters.both
+  const sgroup = document.getElementById('fSeriesGroup') ? document.getElementById('fSeriesGroup').value : '';
+  const anyOwnerFilter = Object.values(ownerFilters).some(v => v);
+  const isFiltered = search || year || type || lic || rep || sgroup || activePub !== 'all'
+    || anyOwnerFilter
     || userDataFilters.wishlist || userDataFilters.read;
 
   let filtered = ALL_DATA.filter(d => {
@@ -1456,15 +1893,22 @@ function applyFilters() {
     if (type && d.type !== type) return false;
     if (lic  && d.licensed !== lic) return false;
     if (rep  && d.reprint  !== rep) return false;
+    if (sgroup && getEffectiveGroup(d) !== sgroup) return false;
     if (search) {
-      const hay = `${d.series||''} ${d.subtitle||''} ${d.years||''}`.toLowerCase();
+      const hay = `${d.series||''} ${d.subtitle||''} ${d.years||''} ${d.series_group||''}`.toLowerCase();
       if (!hay.includes(search)) return false;
     }
-    if (ownerFilters.stojr && !isOwned(d.id,'stojr')) return false;
-    if (ownerFilters.nick  && !isOwned(d.id,'nick'))  return false;
-    if (ownerFilters.both  && !(isOwned(d.id,'stojr') && isOwned(d.id,'nick'))) return false;
-    if (userDataFilters.wishlist && !isWishlist(d.id, activeProfile)) return false;
-    if (userDataFilters.read     && !isRead(d.id, activeProfile)) return false;
+    // Per-user ownership filters
+    for (const [uid, active] of Object.entries(ownerFilters)) {
+      if (!active) continue;
+      if (uid === '_all') {
+        if (!ALL_USERS.every(u => isOwned(d.id, u.id))) return false;
+      } else {
+        if (!isOwned(d.id, uid)) return false;
+      }
+    }
+    if (userDataFilters.wishlist && currentUserId() && !isWishlist(d.id, currentUserId())) return false;
+    if (userDataFilters.read     && currentUserId() && !isRead(d.id, currentUserId())) return false;
     return true;
   });
 
@@ -1517,20 +1961,28 @@ function buildCards(filtered) {
   const dc    = filtered.filter(d=>d.pub==='DC').length;
   const uniq  = filtered.filter(d=>d.reprint==='No').length;
   const total = filtered.length;
-  const sC    = filtered.filter(d=>isOwned(d.id,'stojr')).length;
-  const nC    = filtered.filter(d=>isOwned(d.id,'nick')).length;
   document.getElementById('cMrv').textContent   = mrv;
   document.getElementById('cDC').textContent    = dc;
   document.getElementById('cUniq').textContent  = uniq;
   document.getElementById('cTotal').textContent = total;
-  document.getElementById('cStojr').textContent = sC;
-  document.getElementById('cNick').textContent  = nC;
-  const sPct = total ? Math.round(sC/total*100) : 0;
-  const nPct = total ? Math.round(nC/total*100) : 0;
-  document.getElementById('stojrPct').textContent = `${sPct}% of shown`;
-  document.getElementById('nickPct').textContent  = `${nPct}% of shown`;
-  document.getElementById('stojrFill').style.width = `${sPct}%`;
-  document.getElementById('nickFill').style.width  = `${nPct}%`;
+  // Dynamic owner stat cards
+  const wrap = document.getElementById('ownerStatCards');
+  if (wrap) {
+    wrap.innerHTML = ALL_USERS.map(u => {
+      const cnt = filtered.filter(d => isOwned(d.id, u.id)).length;
+      const pct = total ? Math.round(cnt / total * 100) : 0;
+      return `<div class="card" style="display:inline-block;min-width:140px;vertical-align:top">
+        <div class="card-n" style="color:${u.color}">${cnt}</div>
+        <div class="card-l">${escHtml(u.display_name)} owns</div>
+        <div class="card-prog">
+          <div class="prog-pct">${pct}% of shown</div>
+          <div class="prog-bar-track"><div class="prog-bar-fill" style="width:${pct}%;background:${u.color}"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+    // Style the container to be inline with other cards
+    wrap.style.display = 'contents';
+  }
 }
 
 // ── Bar Chart ──────────────────────────────────
@@ -1564,16 +2016,22 @@ function buildBarChart(filtered) {
     if (!d.date) return;
     const y = d.date.slice(0,4);
     if (!yearMap[y]) {
-      yearMap[y]={m:0,d:0,stojr:0,nick:0,both:0,none:0};
+      yearMap[y]={m:0,d:0,none:0};
+      ALL_USERS.forEach(u => { yearMap[y]['u_'+u.id] = 0; });
+      yearMap[y]._allOwn = 0;
       TYPES.forEach(t=>{yearMap[y][t+'_o']=0;yearMap[y][t+'_r']=0;});
     }
     yearMap[y].m += d.pub==='Marvel'?1:0;
     yearMap[y].d += d.pub==='DC'?1:0;
-    const s=isOwned(d.id,'stojr'),n=isOwned(d.id,'nick');
-    if(s&&n) yearMap[y].both++;
-    else if(s) yearMap[y].stojr++;
-    else if(n) yearMap[y].nick++;
-    else yearMap[y].none++;
+    // Track ownership per user
+    const owners = ALL_USERS.filter(u => isOwned(d.id, u.id));
+    if (owners.length === ALL_USERS.length && ALL_USERS.length >= 2) {
+      yearMap[y]._allOwn++;
+    } else if (owners.length > 0) {
+      owners.forEach(u => { yearMap[y]['u_'+u.id]++; });
+    } else {
+      yearMap[y].none++;
+    }
     // Track by type × reprint status
     const tk=(d.type||'')+(d.reprint==='Yes'?'_r':'_o');
     if(tk in yearMap[y]) yearMap[y][tk]++;
@@ -1594,10 +2052,9 @@ function buildBarChart(filtered) {
   if (legEl) {
     if (barMode==='owned') {
       legEl.innerHTML =
-        `<div class="bl-item"><div class="bl-dot" style="background:#a8dfff"></div>Both</div>
-         <div class="bl-item"><div class="bl-dot" style="background:var(--stojr)"></div>stojr</div>
-         <div class="bl-item"><div class="bl-dot" style="background:var(--nick)"></div>Nick</div>
-         <div class="bl-item"><div class="bl-dot" style="background:var(--dim)"></div>Neither</div>`;
+        (ALL_USERS.length >= 2 ? `<div class="bl-item"><div class="bl-dot" style="background:#a8dfff"></div>All</div>` : '') +
+        ALL_USERS.map(u => `<div class="bl-item"><div class="bl-dot" style="background:${u.color}"></div>${escHtml(u.display_name)}</div>`).join('') +
+        `<div class="bl-item"><div class="bl-dot" style="background:var(--dim)"></div>Neither</div>`;
     } else {
       // Type legend + reprint hatch swatch
       legEl.innerHTML = TYPES.map(t=>
@@ -1609,13 +2066,16 @@ function buildBarChart(filtered) {
   document.getElementById('barChart').innerHTML = years.map(y => {
     const tot=yearMap[y].m+yearMap[y].d;
     if (barMode==='owned') {
-      const b=yearMap[y].both,s=yearMap[y].stojr,n=yearMap[y].nick,none=yearMap[y].none;
+      const allOwn = yearMap[y]._allOwn, none = yearMap[y].none;
+      const userSegs = ALL_USERS.map(u => {
+        const c = yearMap[y]['u_'+u.id] || 0;
+        return seg(c/maxVal*100, u.color, c, u.display_name, false, '#fff');
+      }).join('');
       return `<div class="brow" onclick="filterByYear('${y}')" style="cursor:pointer">
         <div class="byr">${y}</div>
         <div class="btrack">
-          ${seg(b/maxVal*100,'#a8dfff',b,'Both',false,'#000')}
-          ${seg(s/maxVal*100,'var(--stojr)',s,'stojr',false,'#fff')}
-          ${seg(n/maxVal*100,'var(--nick)',n,'Nick',false,'#000')}
+          ${ALL_USERS.length >= 2 ? seg(allOwn/maxVal*100,'#a8dfff',allOwn,'All',false,'#000') : ''}
+          ${userSegs}
           ${seg(none/maxVal*100,'var(--dim)',none,'Neither',false,'#fff')}
         </div><div class="bcnt"><b>${tot}</b></div></div>`;
     }
@@ -1744,11 +2204,13 @@ function toggleExpand(id, cols) {
   const d=ALL_DATA.find(x=>x.id===id);if(!d)return;
   const row=document.querySelector(`tr[data-row-id="${id}"]`);if(!row)return;
   row.classList.add('expanded');
-  const who=activeProfile;
-  const notesVal=getNotes(id,who);
+  const uid=currentUserId();
+  const who=uid ? (ALL_USERS.find(u=>u.id===uid)?.display_name || 'You') : 'Guest';
+  const whoColor=uid ? (ALL_USERS.find(u=>u.id===uid)?.color || 'var(--gold)') : 'var(--dim)';
+  const notesVal=uid ? getNotes(id,uid) : '';
 
   // Cover: prefer uploaded data URL stored in user_data, then cover_url from comic entry
-  const coverUrl = getUD(id).cover_url || d.cover_url || null;
+  const coverUrl = COVER_OVERRIDES[id] || d.cover_url || null;
   const coverHtml = coverUrl
     ? `<img src="${escHtml(coverUrl)}" alt="Cover" onclick="openImgLightbox(this)" onerror="this.parentElement.innerHTML='<div class=cover-placeholder>No Cover</div>'">`
     : `<div class="cover-placeholder">No Cover</div>`;
@@ -1777,6 +2239,7 @@ function toggleExpand(id, cols) {
             ${d.subtitle?`<div class="expand-field ef-wide"><span class="expand-label">Subtitle</span><span class="expand-value">${escHtml(d.subtitle)}</span></div>`:''}
             <div class="expand-field"><span class="expand-label">Release Date</span><span class="expand-value">${d.date||'–'}</span></div>
             ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
+            ${d.series_group?`<div class="expand-field"><span class="expand-label">Series Group</span><span class="expand-value" style="color:var(--gold)">${escHtml(d.series_group)}</span></div>`:''}
             <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
           </div>
           <div class="expand-meta-row">
@@ -1793,12 +2256,13 @@ function toggleExpand(id, cols) {
             <div class="expand-field ef-full"><span class="expand-label">Store Link</span>${prhHtml}</div>
           </div>
           ${d.description?`<div class="expand-meta-row"><div class="expand-field ef-full"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.5">${escHtml(d.description)}</span></div></div>`:''}
+          ${buildSameEraSection(d)}
         </div>
       </div>
       <div class="expand-field expand-notes-area">
-        <span class="expand-label"><span class="profile-badge ${who}">${who}</span> Notes</span>
-        <textarea class="notes-textarea" id="notesArea_${id}" placeholder="Add personal notes about this book…">${notesVal}</textarea>
-        <button class="notes-save-btn" onclick="saveNotes(${id},'${who}',document.getElementById('notesArea_${id}').value)">Save Notes</button>
+        <span class="expand-label"><span class="profile-badge" style="background:${whoColor}22;color:${whoColor};border:1px solid ${whoColor}44">${who}</span> Notes</span>
+        <textarea class="notes-textarea" id="notesArea_${id}" placeholder="${uid ? 'Add personal notes about this book…' : 'Sign in to add notes'}" ${uid?'':'disabled'}>${notesVal}</textarea>
+        ${uid ? `<button class="notes-save-btn" onclick="saveNotes(${id},null,document.getElementById('notesArea_${id}').value)">Save Notes</button>` : ''}
       </div>
     </div>
   </td>`;
@@ -1807,6 +2271,55 @@ function toggleExpand(id, cols) {
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Around the Same Time — discovery section in expand detail ──
+function buildSameEraSection(d) {
+  const ys = d.year_start || parseYearStart(d.years);
+  const ye = d.year_end || parseYearEnd(d.years) || ys;
+  if (!ys) return '';
+  const WINDOW = 3;
+  const nearby = ALL_DATA.filter(other =>
+    other.id !== d.id &&
+    other.reprint !== 'Yes' &&
+    (other.year_start || parseYearStart(other.years)) &&
+    (other.year_start || parseYearStart(other.years)) <= ye + WINDOW &&
+    (other.year_end || parseYearEnd(other.years) || other.year_start || parseYearStart(other.years)) >= ys - WINDOW
+  ).sort((a, b) => (a.year_start || parseYearStart(a.years) || 9999) - (b.year_start || parseYearStart(b.years) || 9999));
+  if (!nearby.length) return '';
+  const shown = nearby.slice(0, 12);
+  return `<div class="expand-meta-row" style="margin-top:8px">
+    <div class="expand-field ef-full">
+      <span class="expand-label">Around the Same Time (${ys}–${ye} ±${WINDOW} years) — ${nearby.length} book${nearby.length>1?'s':''}</span>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding:8px 0;flex-wrap:nowrap">
+        ${shown.map(b => {
+          const coverSrc = COVER_OVERRIDES[b.id] || b.cover_url || '';
+          const bYears = b.years || '';
+          return `<div style="flex-shrink:0;width:100px;cursor:pointer;text-align:center" onclick="scrollToEntry(${b.id})" title="${escHtml(b.series)} Vol ${b.vol||'?'} (${bYears})">
+            <div style="width:70px;height:105px;margin:0 auto;border:1px solid var(--border2);border-radius:4px;overflow:hidden;background:var(--surface3);display:flex;align-items:center;justify-content:center">
+              ${coverSrc ? `<img src="${escHtml(coverSrc)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.parentNode.innerHTML='<span style=font-size:10px;color:var(--dimtext)>No cover</span>'">` : '<span style="font-size:10px;color:var(--dimtext)">No cover</span>'}
+            </div>
+            <div style="font-family:var(--cf);font-size:10px;color:var(--text);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(b.series)}</div>
+            <div style="font-family:var(--cf);font-size:9px;color:var(--dimtext)">${bYears}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function scrollToEntry(id) {
+  // Close any expand detail, search for the entry, highlight it
+  const existing = document.querySelector('tr.expand-detail');
+  if (existing) existing.remove();
+  const row = document.querySelector(`tr[data-id="${id}"]`);
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.style.transition = 'background .15s';
+    row.style.background = 'rgba(255,210,52,.2)';
+    setTimeout(() => { row.style.background = ''; }, 2000);
+    row.click(); // open expand detail
+  }
 }
 
 function openImgLightbox(imgEl) {
@@ -1825,10 +2338,11 @@ const VIRT_ROW_H=37;
 let _virtScroll=null;
 
 function buildTable(filtered) {
+  updateTableHeaders();
   const start=(page-1)*pageSize,end=Math.min(start+pageSize,filtered.length);
   const rows=filtered.slice(start,end);
   const maxPage=Math.ceil(filtered.length/pageSize)||1;
-  const COLS=14;
+  const COLS=ALL_USERS.length + 12;
   document.getElementById('tableCount').textContent=`${filtered.length} entries`;
   document.getElementById('pgInfo').textContent=`Page ${page} of ${maxPage} · ${start+1}–${end} of ${filtered.length}`;
   document.getElementById('pgPrev').disabled=page<=1;
@@ -1869,30 +2383,59 @@ function setupVirtScroll(rows,container,cols){
   _virtScroll=render;container.addEventListener('scroll',render);render();
 }
 
+// Build dynamic table header owner columns
+function updateTableHeaders() {
+  const headerRow = document.getElementById('tableHeaderRow');
+  if (!headerRow) return;
+  // Remove old owner placeholder and re-insert dynamic columns
+  const ph = document.getElementById('th-owners-placeholder');
+  if (ph) ph.remove();
+  // Remove any existing dynamic owner th's
+  headerRow.querySelectorAll('.th-owner-dynamic').forEach(el => el.remove());
+  // Insert owner columns at start of header row
+  const firstTh = headerRow.firstElementChild;
+  ALL_USERS.forEach(u => {
+    const th = document.createElement('th');
+    th.className = 'th-owner-dynamic';
+    th.textContent = u.display_name;
+    th.style.color = u.color || 'var(--text)';
+    headerRow.insertBefore(th, firstTh);
+  });
+}
+
 function buildRowEl(d, cols) {
   const confClass=d.conf==='stojr verified'?'conf-stojr-verified':d.conf==='verified'?'conf-verified':d.conf==='sourced'?'conf-sourced':'conf-est';
   const licClass=d.licensed==='Yes'?'licensed-row':'';
   const tr=document.createElement('tr');
   tr.className=['data-row',confClass,licClass].filter(Boolean).join(' ');
   tr.dataset.rowId=d.id;
-  tr.onclick=()=>toggleExpand(d.id,cols);
+  const actualCols = ALL_USERS.length + 12; // owner cols + ud + pub + type + vol + series + sub + years + date + lic + rep + conf + edit
+  tr.onclick=()=>toggleExpand(d.id,actualCols);
   const isNew=d.date&&d.date.startsWith(CURRENT_YEAR);
   const dateHtml=d.date?`${d.date}${isNew?' <span class="date-new">NEW</span>':''}`:`<span class="date-tbd">TBD</span>`;
   const pubBadge=d.pub==='Marvel'?`<span class="pub-badge m">Marvel</span>`:`<span class="pub-badge d">DC</span>`;
   const confDot=d.conf==='stojr verified'?`<div class="ck-dot sv" style="display:inline-block"></div>`:d.conf==='verified'?`<div class="ck-dot v" style="display:inline-block"></div>`:d.conf==='sourced'?`<div class="ck-dot s" style="display:inline-block"></div>`:`<div class="ck-dot e" style="display:inline-block"></div>`;
-  // DC Finest uses "Years Covered" in the Vol column; all other types use Vol number
   const volTxt=d.type==='DC Finest'?(d.years||'–'):(d.vol!=null?`Vol. ${d.vol}`:'–');
   const subTxt=d.subtitle||'–';
   const licIcon=d.licensed==='Yes'?' <span class="lic-icon" title="Licensed IP">™</span>':'';
-  const sOwn=isOwned(d.id,'stojr'),nOwn=isOwned(d.id,'nick');
-  const wl=isWishlist(d.id,activeProfile),rd=isRead(d.id,activeProfile),hn=hasNotes(d.id,activeProfile);
+  const uid = currentUserId();
+  const wl = uid ? isWishlist(d.id, uid) : false;
+  const rd = uid ? isRead(d.id, uid) : false;
+  const hn = uid ? hasNotes(d.id, uid) : false;
+  // Dynamic ownership buttons per user
+  const ownerBtns = ALL_USERS.map((u, i) => {
+    const own = isOwned(d.id, u.id);
+    const initial = u.display_name.charAt(0).toUpperCase();
+    return `<td><button class="ob${own?' on':''}" data-id="${d.id}" data-uid="${u.id}"
+      style="border-color:${u.color};color:${own?'#fff':u.color};background:${own?u.color:'transparent'}"
+      onclick="event.stopPropagation();toggleUserField(${d.id},'owned','${u.id}')" title="${u.display_name} owns">${initial}</button></td>`;
+  }).join('');
   tr.innerHTML=`
-    <td><button class="ob os${sOwn?' on':''}" data-id="${d.id}" data-who="stojr" onclick="event.stopPropagation();toggleUserField(${d.id},'stojr_owned')" title="stojr owns">S</button></td>
-    <td><button class="ob on2${nOwn?' on':''}" data-id="${d.id}" data-who="nick"  onclick="event.stopPropagation();toggleUserField(${d.id},'nick_owned')"  title="Nick owns">N</button></td>
+    ${ownerBtns}
     <td><div class="ud-cell">
-      <button class="udb wish${wl?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'${activeProfile}_wishlist')" title="${activeProfile} wishlist">★</button>
-      <button class="udb read${rd?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'${activeProfile}_read')" title="${activeProfile} read it">✓</button>
-      <div class="note-indicator${hn?' has-note':''}" data-id="${d.id}" title="${activeProfile} has notes"></div>
+      <button class="udb wish${wl?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'wishlist')" title="Wishlist">★</button>
+      <button class="udb read${rd?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'read')" title="Read">✓</button>
+      <div class="note-indicator${hn?' has-note':''}" data-id="${d.id}" title="Has notes"></div>
     </div></td>
     <td>${pubBadge}</td>
     <td class="col-type">${typeBadge(d)}</td>
@@ -2071,51 +2614,186 @@ async function fetchIsbnFields(isbn) {
   // Only attempt if at least some key fields are blank
   const hasData = document.getElementById('mSeries').value.trim()
     && document.getElementById('mPages').value.trim();
-  if (hasData) return; // already filled, don't overwrite
+  if (hasData) return;
+
+  // Use cached pipeline
+  const result = await lookupIsbn(isbn);
+  if (result.failed || !result.data) return;
+  const info = result.data;
+
+  const setIfBlank = (id, val) => {
+    if (!val) return;
+    const el = document.getElementById(id);
+    if (el && !el.value.trim()) el.value = val;
+  };
+
+  setIfBlank('mSeries', info.title);
+  setIfBlank('mSubtitle', info.subtitle);
+  if (info.authors) setIfBlank('mWriters', info.authors);
+  if (info.page_count) setIfBlank('mPages', info.page_count);
+  if (info.pub_date) setIfBlank('mDate', info.pub_date.slice(0,10));
+  setIfBlank('mDescription', info.description);
+
+  // Cover fallback from lookup source
+  if (info.cover_url) {
+    const coverField = document.getElementById('mCoverUrl');
+    if (!_pendingCoverValue || _pendingCoverValue.includes('penguinrandomhouse.com/cover/')) {
+      const img = new Image();
+      img.onload = () => {};
+      img.onerror = () => {
+        coverField.value = info.cover_url;
+        _pendingCoverValue = info.cover_url;
+        updateModalCoverPreview(info.cover_url);
+      };
+      img.src = _pendingCoverValue || '';
+    }
+  }
+
+  const src = result.cached ? 'cache' : (info._source || 'ISBN');
+  showToast(`✓ Fields populated (${src})`);
+}
+
+// ── Unified ISBN lookup pipeline with caching ─────
+async function lookupIsbn(isbn) {
+  const clean = isbn.replace(/-/g, '');
+
+  // 1. Check local memory cache
+  if (ISBN_CACHE[clean]) {
+    if (ISBN_CACHE[clean].failed) return { cached: true, failed: true };
+    return { cached: true, data: ISBN_CACHE[clean] };
+  }
+
+  // 2. Check DB cache
+  try {
+    const cached = await sbSelect('isbn_cache', `?isbn=eq.${clean}&limit=1`);
+    if (cached?.length) {
+      ISBN_CACHE[clean] = cached[0];
+      if (cached[0].failed) return { cached: true, failed: true };
+      return { cached: true, data: cached[0] };
+    }
+  } catch(e) {}
+
+  // 3. Google Books API
+  const gb = await _tryGoogleBooks(clean);
+  if (gb) { gb._source = 'Google Books'; await _cacheIsbnResult(clean, 'google_books', gb); return { data: gb }; }
+
+  // 4. Open Library (enhanced — all fields)
+  const ol = await _tryOpenLibrary(clean);
+  if (ol) { ol._source = 'OpenLibrary'; await _cacheIsbnResult(clean, 'open_library', ol); return { data: ol }; }
+
+  // 5. PRH via CORS proxy
+  const prh = await _tryPrh(clean);
+  if (prh) { prh._source = 'PRH'; await _cacheIsbnResult(clean, 'prh', prh); return { data: prh }; }
+
+  // 6. All failed
+  await _cacheIsbnFailure(clean);
+  return { failed: true };
+}
+
+async function _tryGoogleBooks(isbn) {
   try {
     const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-    if (!r.ok) return;
+    if (!r.ok) return null;
     const data = await r.json();
     const info = data?.items?.[0]?.volumeInfo;
-    if (!info) return;
-
-    const setIfBlank = (id, val) => {
-      if (!val) return;
-      const el = document.getElementById(id);
-      if (el && !el.value.trim()) el.value = val;
+    if (!info) return null;
+    return {
+      title: info.title || null,
+      subtitle: info.subtitle || null,
+      authors: info.authors?.join(', ') || null,
+      page_count: info.pageCount || null,
+      pub_date: info.publishedDate || null,
+      description: info.description || null,
+      cover_url: info.imageLinks?.thumbnail?.replace('http:','https:') || null
     };
+  } catch(e) { return null; }
+}
 
-    setIfBlank('mSeries', info.title);
-    setIfBlank('mSubtitle', info.subtitle);
-    if (info.authors?.length) setIfBlank('mWriters', info.authors.join(', '));
-    if (info.pageCount) setIfBlank('mPages', info.pageCount);
-    if (info.publishedDate) setIfBlank('mDate', info.publishedDate.slice(0,10));
-    setIfBlank('mDescription', info.description);
-
-    // Cover from Google Books if not already set via PRH
-    const gbCover = info.imageLinks?.thumbnail?.replace('http:','https:');
-    if (gbCover) {
-      const coverField = document.getElementById('mCoverUrl');
-      // Only use Google Books cover if no PRH cover is loaded
-      if (!_pendingCoverValue || _pendingCoverValue.includes('penguinrandomhouse.com/cover/')) {
-        // Prefer PRH cover; only fall back to Google Books if PRH URL fails
-        // We'll keep PRH as primary, GB as fallback shown in preview on error
-        const img = new Image();
-        img.onload = () => {}; // PRH worked, keep it
-        img.onerror = () => {
-          if (!document.getElementById('mCoverUrl').value.includes('googleapis') &&
-              !document.getElementById('mCoverUrl').value.includes('books.google')) {
-            coverField.value = gbCover;
-            _pendingCoverValue = gbCover;
-            updateModalCoverPreview(gbCover);
-          }
+async function _tryOpenLibrary(isbn) {
+  try {
+    // Endpoint 1: books API
+    const r1 = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
+    if (r1.ok) {
+      const data = await r1.json();
+      const book = data[`ISBN:${isbn}`];
+      if (book?.details) {
+        return {
+          title: book.details.title || null,
+          subtitle: book.details.subtitle || null,
+          authors: book.details.authors?.map(a => a.name).join(', ') || null,
+          page_count: book.details.number_of_pages || null,
+          pub_date: book.details.publish_date || null,
+          description: (typeof book.details.description === 'string' ? book.details.description : book.details.description?.value) || null,
+          cover_url: book.details.covers?.[0] ? `https://covers.openlibrary.org/b/id/${book.details.covers[0]}-L.jpg` : null
         };
-        img.src = _pendingCoverValue || '';
       }
     }
-
-    showToast('✓ Fields populated from ISBN');
+    // Endpoint 2: search API
+    const r2 = await fetch(`https://openlibrary.org/search.json?isbn=${isbn}&limit=1`);
+    if (r2.ok) {
+      const data = await r2.json();
+      const doc = data.docs?.[0];
+      if (doc) {
+        return {
+          title: doc.title || null,
+          subtitle: doc.subtitle || null,
+          authors: doc.author_name?.join(', ') || null,
+          page_count: doc.number_of_pages_median || null,
+          pub_date: doc.first_publish_year?.toString() || null,
+          description: null,
+          cover_url: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : null
+        };
+      }
+    }
   } catch(e) {}
+  return null;
+}
+
+async function _tryPrh(isbn) {
+  try {
+    const prhUrl = `https://prhcomics.com/book/?isbn=${isbn}`;
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(prhUrl)}`);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const html = data.contents || '';
+    const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
+             || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
+    const titleM = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i);
+    if (m && m[1].trim()) {
+      return {
+        title: titleM ? titleM[1].replace(/&amp;/g,'&') : null,
+        subtitle: null,
+        authors: null,
+        page_count: null,
+        pub_date: null,
+        description: m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"'),
+        cover_url: null
+      };
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function _cacheIsbnResult(isbn, source, data) {
+  const row = {
+    isbn, source,
+    title: data.title || null,
+    subtitle: data.subtitle || null,
+    authors: data.authors || null,
+    page_count: data.page_count || null,
+    pub_date: data.pub_date || null,
+    description: data.description || null,
+    cover_url: data.cover_url || null,
+    failed: false
+  };
+  ISBN_CACHE[isbn] = row;
+  try { await sbUpsert('isbn_cache', [row], 'isbn'); } catch(e) { console.warn('ISBN cache write failed:', e); }
+}
+
+async function _cacheIsbnFailure(isbn) {
+  const row = { isbn, failed: true };
+  ISBN_CACHE[isbn] = row;
+  try { await sbUpsert('isbn_cache', [row], 'isbn'); } catch(e) {}
 }
 
 // ── Description auto-fetch ──────────────────────
@@ -2123,53 +2801,16 @@ async function fetchDescription() {
   const isbn = document.getElementById('mIsbn').value.trim().replace(/-/g,'');
   const desc = document.getElementById('mDescription');
   if (!isbn) { showToast('Enter an ISBN first', true); return; }
-  // Skip if description already filled (manual edit)
   showToast('Fetching description…');
 
-  // Primary: Google Books API — reliable JSON, no CORS proxy needed
-  try {
-    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-    if (r.ok) {
-      const data = await r.json();
-      const info = data?.items?.[0]?.volumeInfo;
-      if (info?.description) {
-        desc.value = info.description;
-        showToast('✓ Description fetched (Google Books)');
-        return;
-      }
-    }
-  } catch(e) {}
-
-  // Fallback 1: PRH Comics page via CORS proxy
-  try {
-    const prhUrl = `https://prhcomics.com/book/?isbn=${isbn}`;
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(prhUrl)}`);
-    if (r.ok) {
-      const data = await r.json();
-      const html = data.contents || '';
-      // Parse og:description meta tag (handles both attribute orderings)
-      const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)
-               || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
-      if (m && m[1].trim()) {
-        desc.value = m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
-        showToast('✓ Description fetched (PRH)');
-        return;
-      }
-    }
-  } catch(e) {}
-
-  // Fallback 2: OpenLibrary
-  try {
-    const r = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
-    if (r.ok) {
-      const data = await r.json();
-      const book = data[`ISBN:${isbn}`];
-      const d = book?.details?.description?.value || book?.details?.description;
-      if (d) { desc.value = typeof d === 'string' ? d : JSON.stringify(d); showToast('✓ Description fetched (OpenLibrary)'); return; }
-    }
-  } catch(e) {}
-
-  showToast('No description found — enter manually', true);
+  const result = await lookupIsbn(isbn);
+  if (result.data?.description) {
+    desc.value = result.data.description;
+    const src = result.cached ? 'cache' : (result.data._source || 'ISBN lookup');
+    showToast(`✓ Description fetched (${src})`);
+  } else {
+    showToast('No description found — enter manually', true);
+  }
 }
 
 // ── Add/Edit Modal ─────────────────────────────
@@ -2182,6 +2823,7 @@ function openAddModal() {
   document.getElementById('mPub').value = 'Marvel';
   document.getElementById('mType').value = 'Epic';
   document.getElementById('mSeries').value = '';
+  document.getElementById('mSeriesGroup').value = '';
   document.getElementById('mVol').value = '';
   document.getElementById('mDate').value = '';
   document.getElementById('mSubtitle').value = '';
@@ -2190,6 +2832,7 @@ function openAddModal() {
   document.getElementById('mLicensed').value = 'No';
   document.getElementById('mReprint').value = 'No';
   document.getElementById('mConf').value = 'sourced';
+  document.getElementById('mSortOrder').value = '';
   document.getElementById('mNum').value = '';
   document.getElementById('mPrhLink').value = '';
   document.getElementById('mIsbn').value = '';
@@ -2215,6 +2858,7 @@ function openEditModal(id) {
   document.getElementById('mPub').value = d.pub || 'Marvel';
   document.getElementById('mType').value = d.type || 'Epic';
   document.getElementById('mSeries').value = d.series || '';
+  document.getElementById('mSeriesGroup').value = d.series_group || '';
   document.getElementById('mVol').value = d.vol != null ? d.vol : '';
   document.getElementById('mDate').value = d.date || '';
   document.getElementById('mSubtitle').value = d.subtitle || '';
@@ -2223,6 +2867,7 @@ function openEditModal(id) {
   document.getElementById('mLicensed').value = d.licensed || 'No';
   document.getElementById('mReprint').value = d.reprint || 'No';
   document.getElementById('mConf').value = d.conf || 'sourced';
+  document.getElementById('mSortOrder').value = d.sort_order != null ? d.sort_order : '';
   document.getElementById('mNum').value = d.num != null ? d.num : '';
   document.getElementById('mPrhLink').value = d.prh_link || '';
   document.getElementById('mIsbn').value = d.isbn || '';
@@ -2232,7 +2877,7 @@ function openEditModal(id) {
   document.getElementById('mIssuesCovered').value = d.issues_covered || '';
   document.getElementById('mSecondaryIssuesCovered').value = d.secondary_issues_covered || '';
   // Show existing cover (from entry or user_data)
-  const existingCover = getUD(id).cover_url || d.cover_url || null;
+  const existingCover = COVER_OVERRIDES[id] || d.cover_url || null;
   document.getElementById('mCoverUrl').value = (existingCover && !existingCover.startsWith('data:')) ? existingCover : '';
   updateModalCoverPreview(existingCover);
   if (existingCover) _pendingCoverValue = existingCover; // keep it unless user changes
@@ -2262,29 +2907,52 @@ async function saveEntry() {
   const isbnCoverUrl = cleanIsbn ? `https://images.penguinrandomhouse.com/cover/${cleanIsbn}` : null;
   const finalCover = _pendingCoverValue || coverUrlField || isbnCoverUrl || null;
 
+  const yearsVal = document.getElementById('mYears').value.trim() || null;
+  const issuesCoveredVal = document.getElementById('mIssuesCovered').value.trim() || null;
+  const seriesGroupVal = document.getElementById('mSeriesGroup').value.trim() || null;
+  const sortOrderVal = document.getElementById('mSortOrder').value ? parseInt(document.getElementById('mSortOrder').value) : null;
+
   const body = {
     pub:         document.getElementById('mPub').value,
     type:        document.getElementById('mType').value,
     series:      series,
+    series_group: seriesGroupVal,
     vol:         document.getElementById('mVol').value ? parseInt(document.getElementById('mVol').value) : null,
     date:        document.getElementById('mDate').value.trim() || null,
     subtitle:    document.getElementById('mSubtitle').value.trim() || null,
-    years:       document.getElementById('mYears').value.trim() || null,
+    years:       yearsVal,
+    year_start:  parseYearStart(yearsVal),
+    year_end:    parseYearEnd(yearsVal) || parseYearStart(yearsVal),
     pages:       document.getElementById('mPages').value ? parseInt(document.getElementById('mPages').value) : null,
     licensed:    document.getElementById('mLicensed').value,
     reprint:     document.getElementById('mReprint').value,
     conf:        document.getElementById('mConf').value,
     num:         document.getElementById('mNum').value ? parseInt(document.getElementById('mNum').value) : null,
+    sort_order:  sortOrderVal,
     prh_link:    document.getElementById('mPrhLink').value.trim() || null,
     isbn:                       rawIsbn || null,
     writers:                    document.getElementById('mWriters').value.trim() || null,
     artists:                    document.getElementById('mArtists').value.trim() || null,
     description:                document.getElementById('mDescription').value.trim() || null,
-    issues_covered:             document.getElementById('mIssuesCovered').value.trim() || null,
+    issues_covered:             issuesCoveredVal,
+    issue_start:                parseIssueStart(issuesCoveredVal),
+    issue_end:                  parseIssueEnd(issuesCoveredVal) || parseIssueStart(issuesCoveredVal),
     secondary_issues_covered:   document.getElementById('mSecondaryIssuesCovered').value.trim() || null,
     // cover_url stored on the entry itself (URL-based) or in user_data (base64 uploads)
     cover_url:   (finalCover && !finalCover.startsWith('data:')) ? finalCover : null,
   };
+
+  // Ensure series_group gets created in reference table if new
+  if (seriesGroupVal && !SERIES_GROUPS.find(g => g.name === seriesGroupVal)) {
+    try {
+      const result = await sbInsert('series_groups', { name: seriesGroupVal, publisher: body.pub });
+      const newGroup = Array.isArray(result) ? result[0] : result;
+      if (newGroup) { SERIES_GROUPS.push(newGroup); body.series_group_id = newGroup.id; }
+    } catch(e) { console.warn('Series group insert failed (may already exist):', e); }
+  } else if (seriesGroupVal) {
+    const existing = SERIES_GROUPS.find(g => g.name === seriesGroupVal);
+    if (existing) body.series_group_id = existing.id;
+  }
 
   const modal = document.querySelector('.modal');
   modal.classList.add('modal-saving');
@@ -2311,8 +2979,7 @@ async function saveEntry() {
 
     // If a base64 cover was uploaded, save it to user_data (avoids bloating comic_entries)
     if (finalCover && finalCover.startsWith('data:') && entryId) {
-      if (!USER_DATA[entryId]) USER_DATA[entryId] = { entry_id: entryId };
-      USER_DATA[entryId].cover_url = finalCover;
+      COVER_OVERRIDES[entryId] = finalCover;
       try {
         await sbUpsert('user_data', { entry_id: entryId, cover_url: finalCover }, 'entry_id');
       } catch(e) { console.warn('Cover save to user_data failed:', e); }
@@ -2320,7 +2987,9 @@ async function saveEntry() {
 
     closeModal();
     populateYearFilter();
+    populateSeriesGroupFilter();
     applyFilters();
+    runDataQualityChecks();
     document.getElementById('hTotalMarvl').textContent = ALL_DATA.filter(d=>d.pub==='Marvel').length;
     document.getElementById('hTotalDC').textContent    = ALL_DATA.filter(d=>d.pub==='DC').length;
   } catch(e) {
@@ -2353,12 +3022,15 @@ async function doDelete() {
   setSyncing(true);
   try {
     await sbDelete('comic_entries', `id=eq.${id}`);
+    try { await sbDelete('user_entry_data', `entry_id=eq.${id}`); } catch(e){}
     try { await sbDelete('user_data', `entry_id=eq.${id}`); } catch(e){}
     const idx = ALL_DATA.findIndex(x=>x.id===id);
     if (idx !== -1) ALL_DATA.splice(idx, 1);
     delete USER_DATA[id];
     showToast('✓ Entry deleted');
     populateYearFilter();
+    populateSeriesGroupFilter();
+    runDataQualityChecks();
     const _savedPage = page;
     applyFilters(); // resets page to 1 internally
     page = Math.min(_savedPage, Math.ceil(currentFiltered.length / pageSize) || 1);
@@ -2373,19 +3045,23 @@ async function doDelete() {
 // ── Export CSV ────────────────────────────────
 function exportCSV(all) {
   const rows = all ? ALL_DATA : currentFiltered;
-  const headers = ['id','pub','date','series','vol','subtitle','years','type','licensed','reprint','pages','conf','isbn','writers','artists','prh_link','stojr_owned','nick_owned','stojr_wishlist','nick_wishlist','stojr_read','nick_read'];
+  const baseHeaders = ['id','pub','date','series','series_group','vol','subtitle','years','type','licensed','reprint','pages','conf','isbn','writers','artists','prh_link'];
+  const userHeaders = ALL_USERS.flatMap(u => [`${u.display_name}_owned`,`${u.display_name}_wishlist`,`${u.display_name}_read`]);
+  const headers = [...baseHeaders, ...userHeaders];
   const escape = v => { if(v===null||v===undefined)return''; const s=String(v); return(s.includes(',')||s.includes('"')||s.includes('\n'))?'"'+s.replace(/"/g,'""')+'"':s; };
   const csvRows=[headers.join(',')];
   rows.forEach(d=>{
-    const ud=getUD(d.id);
-    csvRows.push([
-      escape(d.id),escape(d.pub),escape(d.date),escape(d.series),escape(d.vol),
+    const baseVals = [
+      escape(d.id),escape(d.pub),escape(d.date),escape(d.series),escape(d.series_group),escape(d.vol),
       escape(d.subtitle),escape(d.years),escape(d.type),escape(d.licensed),escape(d.reprint),
-      escape(d.pages),escape(d.conf),escape(d.isbn),escape(d.writers),escape(d.artists),escape(d.prh_link),
-      escape(ud.stojr_owned?'Yes':'No'),escape(ud.nick_owned?'Yes':'No'),
-      escape(ud.stojr_wishlist?'Yes':'No'),escape(ud.nick_wishlist?'Yes':'No'),
-      escape(ud.stojr_read?'Yes':'No'),escape(ud.nick_read?'Yes':'No'),
-    ].join(','));
+      escape(d.pages),escape(d.conf),escape(d.isbn),escape(d.writers),escape(d.artists),escape(d.prh_link)
+    ];
+    const userVals = ALL_USERS.flatMap(u => [
+      escape(isOwned(d.id,u.id)?'Yes':'No'),
+      escape(isWishlist(d.id,u.id)?'Yes':'No'),
+      escape(isRead(d.id,u.id)?'Yes':'No')
+    ]);
+    csvRows.push([...baseVals, ...userVals].join(','));
   });
   const blob=new Blob([csvRows.join('\n')],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
@@ -2456,6 +3132,7 @@ function makeBulkRow(d, isNew) {
     <td class="bec-pub">${selHtml('pub',[['Marvel','Marvel'],['DC','DC']],d.pub||'Marvel')}</td>
     <td class="bec-type">${selHtml('type',[['Epic','Classic Epic'],['Modern','Modern Era'],['Ultimate','Ultimate'],['DC Finest','DC Finest'],['Omnibus','Omnibus']],d.type||'Epic')}</td>
     <td class="bec-series">${inpHtml('series','text',d.series||'','placeholder="Series title *"')}</td>
+    <td class="bec-series"><input class="be-input" data-field="series_group" data-row="${rowId}" type="text" list="seriesGroupList" value="${escHtml(d.series_group||'')}" placeholder="Group" oninput="markBulkDirty('${rowId}')"></td>
     <td class="bec-vol">${inpHtml('vol','number',d.vol??'','min="1" placeholder="—"')}</td>
     <td class="bec-sub">${inpHtml('subtitle','text',d.subtitle||'','placeholder="—"')}</td>
     <td class="bec-years">${inpHtml('years','text',d.years||'','placeholder="e.g. 1966-1971"')}</td>
@@ -2629,34 +3306,38 @@ async function autofillBulkIsbn(input, rowId) {
   const hasData = getEl('series')?.value.trim() && getEl('pages')?.value.trim();
   if (hasData) return;
 
-  try {
-    const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`);
-    if (!r.ok) return;
-    const data = await r.json();
-    const info = data?.items?.[0]?.volumeInfo;
-    if (!info) return;
+  const result = await lookupIsbn(isbn);
+  if (result.failed || !result.data) return;
+  const info = result.data;
 
-    setIfBlank('series',   info.title);
-    setIfBlank('subtitle', info.subtitle);
-    setIfBlank('pages',    info.pageCount);
-    if (info.publishedDate) setIfBlank('date', info.publishedDate.slice(0,10));
-    if (info.authors?.length) setIfBlank('writers', info.authors.join(', '));
+  setIfBlank('series',   info.title);
+  setIfBlank('subtitle', info.subtitle);
+  if (info.page_count) setIfBlank('pages', info.page_count);
+  if (info.pub_date) setIfBlank('date', info.pub_date.slice(0,10));
+  if (info.authors) setIfBlank('writers', info.authors);
 
-    markBulkDirty(rowId);
-    showToast('✓ ISBN fields populated');
-  } catch(e) {}
+  markBulkDirty(rowId);
+  const src = result.cached ? 'cache' : (info._source || 'ISBN');
+  showToast(`✓ Fields populated (${src})`);
 }
 
 function readBulkRowData(tr) {
   const get = f => { const el = tr.querySelector(`[data-field="${f}"]`); return el ? el.value.trim() : ''; };
+  const yearsVal = get('years') || null;
+  const issuesVal = get('issues_covered') || null;
   return {
     pub:                       get('pub'),
     type:                      get('type'),
     series:                    get('series'),
+    series_group:              get('series_group') || null,
     vol:                       get('vol')   ? parseInt(get('vol'))   : null,
     subtitle:                  get('subtitle') || null,
-    years:                     get('years')    || null,
-    issues_covered:            get('issues_covered') || null,
+    years:                     yearsVal,
+    year_start:                parseYearStart(yearsVal),
+    year_end:                  parseYearEnd(yearsVal) || parseYearStart(yearsVal),
+    issues_covered:            issuesVal,
+    issue_start:               parseIssueStart(issuesVal),
+    issue_end:                 parseIssueEnd(issuesVal) || parseIssueStart(issuesVal),
     date:                      get('date')     || null,
     pages:                     get('pages') ? parseInt(get('pages')) : null,
     licensed:                  get('licensed'),
@@ -2699,10 +3380,12 @@ async function saveBulkEdits() {
     const id = parseInt(tr.dataset.rowId);
     try {
       await sbDelete('comic_entries', `id=eq.${id}`);
+      try { await sbDelete('user_entry_data', `entry_id=eq.${id}`); } catch(e){}
       try { await sbDelete('user_data', `entry_id=eq.${id}`); } catch(e){}
       const idx = ALL_DATA.findIndex(x=>x.id===id);
       if (idx !== -1) ALL_DATA.splice(idx, 1);
       delete USER_DATA[id];
+      delete COVER_OVERRIDES[id];
       tr.remove(); saved++;
     } catch(e) { console.error('Bulk delete failed:', e); errors++; }
   }
@@ -2741,7 +3424,7 @@ async function saveBulkEdits() {
     showToast(`${saved} saved · ${errors} failed`, true);
   } else {
     showToast(`✓ ${saved} change(s) saved`);
-    populateYearFilter(); applyFilters();
+    populateYearFilter(); populateSeriesGroupFilter(); applyFilters(); runDataQualityChecks();
   }
   updateBulkStatus();
 }
@@ -2752,6 +3435,8 @@ const RV = {
   typeFilters: { 'Epic': true, 'Modern': true, 'Omnibus': true, 'DC Finest': true },
   multiMode: false,
   multiSelected: new Set(),
+  groupMode: false,    // true = group by Series Group instead of Series
+  hideReprints: false, // true = exclude reprints from run views
   // Map: entryId -> timeline segment element (for hover cross-link)
   segMap: {},
   cardMap: {}
@@ -2797,25 +3482,57 @@ function rvClose() {
 // Populate dropdown from live data
 function rvPopulateSelect() {
   const sel = document.getElementById('rvSeriesSelect');
-  // Show ALL series; the series with issues_covered data get a ✓ marker
-  const hasCoverage = new Set(
-    ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series)
-  );
-  const allSeries = new Set(ALL_DATA.map(d => d.series));
-  const sorted = [...allSeries].sort((a,b) => a.localeCompare(b));
-  // Preserve selection if possible
-  const prev = sel.value;
-  sel.innerHTML = '<option value="">— Select a series —</option>' +
-    sorted.map(s => {
-      const marker = hasCoverage.has(s) ? ' ✓' : '';
-      return `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}${marker}</option>`;
-    }).join('');
-  // Multi-series chips: only show series that have coverage data (useful for timeline)
-  const covSorted = [...hasCoverage].sort((a,b) => a.localeCompare(b));
+  if (RV.groupMode) {
+    // Group mode: list unique Series Groups
+    const groups = new Set();
+    ALL_DATA.forEach(d => groups.add(getEffectiveGroup(d)));
+    const sorted = [...groups].sort((a,b) => a.localeCompare(b));
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Select a Series Group —</option>' +
+      sorted.map(g => `<option value="${rvEsc(g)}"${g===prev?' selected':''}>${rvEsc(g)}</option>`).join('');
+  } else {
+    // Series mode: show ALL series; the series with issues_covered data get a ✓ marker
+    const hasCoverage = new Set(
+      ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series)
+    );
+    const allSeries = new Set(ALL_DATA.map(d => d.series));
+    const sorted = [...allSeries].sort((a,b) => a.localeCompare(b));
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Select a series —</option>' +
+      sorted.map(s => {
+        const marker = hasCoverage.has(s) ? ' ✓' : '';
+        return `<option value="${rvEsc(s)}"${s===prev?' selected':''}>${rvEsc(s)}${marker}</option>`;
+      }).join('');
+  }
+  // Multi-series chips: use group or series based on mode
+  const chipItems = RV.groupMode
+    ? [...new Set(ALL_DATA.map(d => getEffectiveGroup(d)))].sort()
+    : [...new Set(ALL_DATA.filter(d => d.issues_covered && d.issues_covered.trim()).map(d => d.series))].sort();
   const list = document.getElementById('rvMultiList');
-  list.innerHTML = covSorted.map(s =>
+  list.innerHTML = chipItems.map(s =>
     `<span class="rv-ms-chip${RV.multiSelected.has(s)?' on':''}" onclick="rvToggleMultiSeries('${rvEsc(s)}')">${rvEsc(s)}</span>`
   ).join('');
+}
+
+function rvToggleGroupMode() {
+  RV.groupMode = !RV.groupMode;
+  const btn = document.getElementById('rvGroupToggle');
+  btn.textContent = RV.groupMode ? 'By: Group' : 'By: Series';
+  btn.classList.toggle('on', RV.groupMode);
+  RV.series = null;
+  RV.multiSelected.clear();
+  rvPopulateSelect();
+  document.getElementById('rvBody').innerHTML = '<div class="rv-empty">Select a ' + (RV.groupMode ? 'group' : 'series') + ' above</div>';
+  document.getElementById('rvTimelineWrap').style.display = 'none';
+  if (RV.multiMode) rvRenderMulti();
+}
+
+function rvToggleReprints(el) {
+  RV.hideReprints = !RV.hideReprints;
+  el.classList.toggle('on', RV.hideReprints);
+  el.textContent = RV.hideReprints ? 'Reprints Hidden' : 'Hide Reprints';
+  if (RV.multiMode) rvRenderMulti();
+  else if (RV.series) rvRender();
 }
 
 function rvSelectSeries(series) {
@@ -2881,13 +3598,42 @@ function rvRender() {
     tlWrap.style.display = 'none';
     return;
   }
-  const vols = ALL_DATA.filter(d =>
-    d.series === RV.series && d.issues_covered && d.issues_covered.trim()
-  );
+  let vols;
+  if (RV.groupMode) {
+    // Group mode: pull all books from all series in this group
+    vols = ALL_DATA.filter(d =>
+      getEffectiveGroup(d) === RV.series && d.issues_covered && d.issues_covered.trim()
+    );
+  } else {
+    vols = ALL_DATA.filter(d =>
+      d.series === RV.series && d.issues_covered && d.issues_covered.trim()
+    );
+  }
+  // Apply reprint filter
+  if (RV.hideReprints) vols = vols.filter(d => d.reprint !== 'Yes');
   if (!vols.length) {
+    const label = RV.groupMode ? 'group' : 'series';
     body.innerHTML = `<div class="rv-empty">No <em>issues_covered</em> data for "${rvEsc(RV.series)}" yet — use Bulk Edit to populate it.</div>`;
     tlWrap.style.display = 'none';
     return;
+  }
+  // In group mode, sort chronologically across all series in the group
+  if (RV.groupMode) {
+    vols.sort((a, b) => {
+      // Manual sort_order first if set
+      if (a.sort_order != null && b.sort_order != null) return a.sort_order - b.sort_order;
+      if (a.sort_order != null) return -1;
+      if (b.sort_order != null) return 1;
+      // Then by year_start
+      const ya = a.year_start || rvYearStart(a.years);
+      const yb = b.year_start || rvYearStart(b.years);
+      if (ya !== yb) return ya - yb;
+      // Then by issue_start
+      const ia = a.issue_start || 0, ib = b.issue_start || 0;
+      if (ia !== ib) return ia - ib;
+      // Then by date
+      return (a.date || '').localeCompare(b.date || '');
+    });
   }
 
   // Group by type
@@ -2936,7 +3682,7 @@ function rvRender() {
       } else {
         const issLabel = iss ? `#${iss.start}–${iss.end}` : (v.issues_covered || '?');
         if (iss) allForTimeline.push({ id: v.id, cls, iss, vol: v.vol, years: v.years, series: v.series });
-        const coverSrc = (USER_DATA[v.id] && USER_DATA[v.id].cover_url) || v.cover_url || '';
+        const coverSrc = COVER_OVERRIDES[v.id] || v.cover_url || '';
         const coverImgHTML = coverSrc
           ? `<img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="this.parentNode.innerHTML='<div class=rv-card-img-ph><span class=rv-card-img-ph-icon>📚</span><span class=rv-card-img-ph-vol>VOL ${v.vol||'?'}</span></div>'">`
           : `<div class="rv-card-img-ph"><span class="rv-card-img-ph-icon">📚</span><span class="rv-card-img-ph-vol">VOL ${v.vol||'?'}</span></div>`;
@@ -2946,7 +3692,7 @@ function rvRender() {
         // Description for back
         const descText = v.description ? rvEsc(v.description) : '';
         // Ownership badge
-        const owned = isOwned(v.id, activeProfile);
+        const owned = currentUserId() ? isOwned(v.id, currentUserId()) : false;
         const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
         html += `<div class="rv-card-scene" id="rvCard_${v.id}"
             onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false);rvResetTilt(this)" onmousemove="rvTiltCard(event)">
@@ -3183,34 +3929,50 @@ function rvRenderMulti() {
   const wrap = document.getElementById('rvMultiTimeline');
   const axis = document.getElementById('rvMtAxis');
   if (!RV.multiSelected.size) {
-    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">Select series above to compare</div>';
+    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">Select ' + (RV.groupMode ? 'groups' : 'series') + ' above to compare</div>';
     axis.innerHTML = '';
     return;
   }
 
-  // Gather all items across selected series
+  // Gather all items across selected series/groups
   let globalMinYear = 9999, globalMaxYear = 0;
   const seriesData = [];
-  for (const series of RV.multiSelected) {
-    const vols = ALL_DATA.filter(d =>
-      d.series === series && d.issues_covered && d.issues_covered.trim()
-    );
-    const items = vols.map(v => {
+  for (const selected of RV.multiSelected) {
+    let vols;
+    if (RV.groupMode) {
+      // In group mode, selected is a group name — gather all series in that group
+      vols = ALL_DATA.filter(d => getEffectiveGroup(d) === selected);
+    } else {
+      vols = ALL_DATA.filter(d => d.series === selected);
+    }
+    if (RV.hideReprints) vols = vols.filter(d => d.reprint !== 'Yes');
+    const items = vols.filter(d => d.issues_covered && d.issues_covered.trim()).map(v => {
       const iss = rvParseIssues(v.issues_covered);
-      const yStart = rvYearStart(v.years);
-      const yEnd   = rvYearEnd(v.years) || yStart;
-      return { id: v.id, cls: RV_TYPE_CLASS[v.type||'Epic'], iss, vol: v.vol, yStart, yEnd };
-    }).filter(d => d.iss && d.yStart < 9999);
-    if (!items.length) continue;
-    items.forEach(d => {
+      const yStart = v.year_start || rvYearStart(v.years);
+      const yEnd   = v.year_end || rvYearEnd(v.years) || yStart;
+      return { id: v.id, cls: RV_TYPE_CLASS[v.type||'Epic'], iss, vol: v.vol, yStart, yEnd, series: v.series };
+    }).filter(d => d.yStart && d.yStart < 9999);
+    // Also include items without issues_covered but with year data (for year-based timeline)
+    const yearOnlyItems = vols.filter(d => (!d.issues_covered || !d.issues_covered.trim()) && (d.year_start || d.years)).map(v => {
+      const yStart = v.year_start || rvYearStart(v.years);
+      const yEnd   = v.year_end || rvYearEnd(v.years) || yStart;
+      return { id: v.id, cls: RV_TYPE_CLASS[v.type||'Epic'], iss: null, vol: v.vol, yStart, yEnd, series: v.series };
+    }).filter(d => d.yStart && d.yStart < 9999);
+    const allItems = [...items, ...yearOnlyItems];
+    if (!allItems.length) continue;
+    allItems.forEach(d => {
       if (d.yStart < globalMinYear) globalMinYear = d.yStart;
       if (d.yEnd   > globalMaxYear) globalMaxYear = d.yEnd;
     });
-    seriesData.push({ series, items });
+    // Completeness: count total volumes vs owned
+    const totalVols = vols.length;
+    const ownedVols = currentUserId() ? vols.filter(d => isOwned(d.id, currentUserId())).length : 0;
+    const completePct = totalVols > 0 ? Math.round(ownedVols / totalVols * 100) : 0;
+    seriesData.push({ series: selected, items: allItems, totalVols, ownedVols, completePct });
   }
 
   if (!seriesData.length || globalMinYear > globalMaxYear) {
-    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">No year data available for selected series</div>';
+    wrap.innerHTML = '<div class="rv-empty" style="padding:30px 0">No year data available</div>';
     axis.innerHTML = ''; return;
   }
 
@@ -3223,23 +3985,19 @@ function rvRenderMulti() {
   axisTicks += `<span>${globalMaxYear}</span>`;
   axis.innerHTML = axisTicks;
 
-  // Rows per series — with totals
-  wrap.innerHTML = seriesData.map(({ series, items }) => {
+  // Rows per series/group — with completeness
+  wrap.innerHTML = seriesData.map(({ series, items, totalVols, ownedVols, completePct }) => {
     const segs = items.map(d => {
       const left  = ((d.yStart - globalMinYear) / yearSpan * 100).toFixed(2);
       const width = Math.max(((d.yEnd - d.yStart + 1) / yearSpan * 100), 1.5).toFixed(2);
       return `<div class="rv-mt-seg ${d.cls}" style="left:${left}%;width:${width}%"
-        title="Vol ${d.vol} · ${d.yStart}–${d.yEnd}" onclick="rvJumpTo(${d.id})"></div>`;
+        title="${d.series ? rvEsc(d.series)+' ' : ''}Vol ${d.vol||'?'} · ${d.yStart}–${d.yEnd}" onclick="rvJumpTo(${d.id})"></div>`;
     }).join('');
-    // Count totals for this series: all volumes (including ones without issues_covered), released (with coverage), owned
-    const allSeriesVols = ALL_DATA.filter(d => d.series === series);
-    const totalVols = allSeriesVols.length;
-    const releasedVols = items.length;
-    const ownedVols = allSeriesVols.filter(d => isOwned(d.id, activeProfile)).length;
-    // Year range for the series
     const sMinY = Math.min(...items.map(d => d.yStart));
     const sMaxY = Math.max(...items.map(d => d.yEnd));
     const seriesYears = sMinY === sMaxY ? `${sMinY}` : `${sMinY}–${sMaxY}`;
+    // Completeness bar
+    const compColor = completePct >= 80 ? 'var(--green)' : completePct >= 50 ? 'var(--gold)' : 'var(--orange)';
     return `<div class="rv-mt-row">
       <div style="flex-shrink:0;width:170px;text-align:right">
         <div class="rv-mt-label" style="width:auto" title="${rvEsc(series)}">${rvEsc(series)}</div>
@@ -3248,8 +4006,11 @@ function rvRenderMulti() {
       <div class="rv-mt-bar-wrap">${segs}</div>
       <div class="rv-mt-totals">
         <span class="rv-mt-stat total" title="Total volumes">${totalVols} Total</span>
-        <span class="rv-mt-stat released" title="Released with issue data">${releasedVols} Released</span>
-        <span class="rv-mt-stat owned" title="Owned by ${activeProfile}">${ownedVols} Owned</span>
+        <span class="rv-mt-stat owned" title="Owned">${ownedVols} Owned</span>
+        <span class="rv-mt-stat" title="Collection completeness" style="display:flex;align-items:center;gap:4px">
+          <span style="width:40px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;display:inline-block"><span style="display:block;height:100%;width:${completePct}%;background:${compColor};border-radius:2px"></span></span>
+          <span style="color:${compColor}">${completePct}%</span>
+        </span>
       </div>
     </div>`;
   }).join('');
@@ -3279,10 +4040,13 @@ function resetAll() {
   document.getElementById('fYear').value='';
   document.getElementById('fType').value='';
   document.getElementById('fLic').value='';
-  document.getElementById('fRep').value='';
-  ownerFilters={stojr:false,nick:false,both:false};
+  document.getElementById('fRep').value='No'; // Default: exclude reprints
+  if (document.getElementById('fSeriesGroup')) document.getElementById('fSeriesGroup').value='';
+  ownerFilters={};
+  ALL_USERS.forEach(u => { ownerFilters[u.id] = false; });
+  ownerFilters._all = false;
   userDataFilters={wishlist:false,read:false};
-  ['pfStojr','pfNick','pfBoth','pfWishlist','pfRead'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('on');});
+  document.querySelectorAll('.own-filter-pill').forEach(el => el.classList.remove('on'));
   document.querySelectorAll('.ptab').forEach(t=>{t.className='ptab '+t.classList[1];});
   document.querySelector('.ptab.all').classList.add('on');
   activePub='all';
@@ -3292,6 +4056,63 @@ function resetAll() {
   document.querySelectorAll('thead th .sort-arrow').forEach(a=>a.textContent='');
   const thSeries=document.getElementById('th-series');if(thSeries){const a=thSeries.querySelector('.sort-arrow');if(a)a.textContent=' ▼';}
   applyFilters();
+}
+
+// ── Series Group auto-suggest on series name blur ─────
+function onSeriesBlurSuggestGroup() {
+  const seriesEl = document.getElementById('mSeries');
+  const groupEl = document.getElementById('mSeriesGroup');
+  if (!seriesEl || !groupEl) return;
+  if (groupEl.value.trim()) return; // already set, don't overwrite
+  const suggestion = suggestSeriesGroup(seriesEl.value.trim());
+  if (suggestion) {
+    groupEl.value = suggestion;
+    groupEl.style.borderColor = 'var(--green)';
+    setTimeout(() => { groupEl.style.borderColor = ''; }, 2000);
+  }
+}
+
+// ── Data Quality Panel ─────────────────────────────
+function showDataQualityPanel() {
+  const flags = DATA_QUALITY_FLAGS;
+  if (!flags.length) { showToast('No data quality issues found'); return; }
+  const grouped = {};
+  flags.forEach(f => {
+    if (!grouped[f.flag_type]) grouped[f.flag_type] = [];
+    grouped[f.flag_type].push(f);
+  });
+  const typeLabels = {
+    duplicate_isbn: 'Duplicate ISBNs',
+    missing_years: 'Missing Years Covered',
+    inconsistent_series: 'Similar Series Names',
+    duplicate_title: 'Duplicate Title/Vol',
+    invalid_year_range: 'Invalid Year Range'
+  };
+  let html = '<div style="max-width:600px;max-height:70vh;overflow-y:auto;padding:20px">';
+  html += '<div style="font-family:var(--hf);font-size:28px;color:var(--orange);margin-bottom:12px">Data Quality Issues</div>';
+  for (const [type, items] of Object.entries(grouped)) {
+    html += `<div style="margin-bottom:14px"><div style="font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${typeLabels[type]||type} (${items.length})</div>`;
+    items.forEach(f => {
+      html += `<div style="font-size:13px;color:var(--text);padding:4px 0;border-bottom:1px solid var(--border)">${f.detail}${f.entry_id ? ` <span style="color:var(--dimtext);cursor:pointer" onclick="closeDataQualityPanel();openEditModal(${f.entry_id})">Edit &rarr;</span>` : ''}</div>`;
+    });
+    html += '</div>';
+  }
+  html += '<div style="text-align:right;margin-top:12px"><button class="modal-btn cancel" onclick="closeDataQualityPanel()">Close</button></div></div>';
+  // Show in a simple overlay
+  let overlay = document.getElementById('dqOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'dqOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:250;display:flex;align-items:center;justify-content:center';
+    overlay.onclick = e => { if (e.target === overlay) closeDataQualityPanel(); };
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:8px">${html}</div>`;
+  overlay.style.display = 'flex';
+}
+function closeDataQualityPanel() {
+  const overlay = document.getElementById('dqOverlay');
+  if (overlay) overlay.style.display = 'none';
 }
 </script>
 </body>
