@@ -395,6 +395,90 @@ footer a{color:var(--gold);text-decoration:none}
 .be-col-filter{display:block;margin-top:4px;width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--bf);font-size:11px;padding:2px 4px;height:20px;box-sizing:border-box;font-weight:400;letter-spacing:0;text-transform:none}
 .be-col-filter:focus{outline:none;border-color:var(--gold)}
 
+/* ─── MAIN NAV BAR ─── */
+.main-nav{max-width:1600px;margin:0 auto;padding:0 28px;display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface)}
+.main-nav-btn{padding:10px 20px;font-family:var(--cf);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:all .2s;position:relative;top:1px;white-space:nowrap}
+.main-nav-btn:hover{color:var(--text)}
+.main-nav-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+@media(max-width:700px){.main-nav{padding:0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}.main-nav-btn{padding:8px 14px;font-size:11px;letter-spacing:1px}}
+
+/* ─── VIEW SECTIONS ─── */
+.view-section{display:none}
+.view-section.active{display:block}
+
+/* ─── GRID/CARD BROWSE VIEW ─── */
+.grid-toggle{display:flex;gap:0;margin-left:auto}
+.grid-toggle-btn{padding:5px 10px;background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.grid-toggle-btn:first-child{border-radius:var(--r) 0 0 var(--r)}
+.grid-toggle-btn:last-child{border-radius:0 var(--r) var(--r) 0;border-left:0}
+.grid-toggle-btn.active{background:var(--surface3);border-color:var(--gold);color:var(--gold)}
+.browse-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:16px 0}
+@media(max-width:700px){.browse-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}}
+.browse-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;cursor:pointer;transition:all .2s;position:relative}
+.browse-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.browse-card.owned-card{border-color:rgba(62,255,138,.25)}
+.browse-card .bc-cover{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:var(--surface2)}
+.browse-card .bc-cover-ph{width:100%;aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;background:var(--surface2);font-family:var(--cf);font-size:10px;color:var(--dimtext);letter-spacing:1px}
+.browse-card .bc-info{padding:8px 10px}
+.browse-card .bc-series{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.browse-card .bc-sub{font-family:var(--cf);font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.browse-card .bc-meta{display:flex;align-items:center;gap:4px;margin-top:4px}
+.browse-card .bc-type-badge{font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:.5px;padding:2px 5px;border-radius:2px;text-transform:uppercase}
+.browse-card .bc-owned-dot{width:8px;height:8px;border-radius:50%;margin-left:auto;flex-shrink:0}
+.browse-card .bc-group-badge{font-family:var(--cf);font-size:8px;font-weight:600;color:var(--dimtext);padding:1px 5px;border-radius:2px;background:var(--surface2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:2px}
+
+/* ─── RUN COMPLETENESS (Dashboard) ─── */
+.run-completeness{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.rc-title{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.rc-row{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border)}
+.rc-row:hover{border-color:var(--gold);cursor:pointer}
+.rc-name{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-bar{width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;flex-shrink:0}
+.rc-bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.rc-pct{font-family:var(--cf);font-size:11px;font-weight:700;width:36px;text-align:right;flex-shrink:0}
+.rc-count{font-family:var(--cf);font-size:10px;color:var(--dimtext);width:40px;text-align:right;flex-shrink:0}
+
+/* ─── ERA EXPLORER ─── */
+.era-explorer{padding:0}
+.era-decades{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.era-decade-btn{padding:10px 18px;font-family:var(--cf);font-size:14px;font-weight:700;letter-spacing:1px;color:var(--muted);cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:all .2s}
+.era-decade-btn:hover{color:var(--text)}
+.era-decade-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.era-slider-wrap{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:0 4px}
+.era-slider-label{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--text);min-width:80px}
+.era-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;background:var(--surface3);border-radius:3px;outline:none}
+.era-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+.era-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--bg)}
+.era-count{font-family:var(--cf);font-size:12px;color:var(--muted)}
+.era-groups{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.era-group-pill{padding:4px 12px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
+.era-group-pill.active{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.1)}
+
+/* ─── READING ORDER ─── */
+.ro-overlay{position:fixed;inset:0;background:var(--bg);z-index:155;display:none;flex-direction:column;overflow:hidden}
+.ro-overlay.open{display:flex}
+.ro-hdr{background:var(--surface);border-bottom:2px solid var(--border2);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
+.ro-title{font-family:var(--hf);font-size:26px;letter-spacing:1px;color:var(--gold);white-space:nowrap}
+.ro-body{flex:1;overflow-y:auto;padding:20px 24px}
+.ro-list{display:flex;flex-direction:column;gap:0}
+.ro-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-bottom:none;transition:all .15s}
+.ro-item:first-child{border-radius:var(--r) var(--r) 0 0}
+.ro-item:last-child{border-bottom:1px solid var(--border);border-radius:0 0 var(--r) var(--r)}
+.ro-item:hover{background:var(--surface2)}
+.ro-item.dragging{opacity:.5;background:var(--surface3)}
+.ro-drag{cursor:grab;color:var(--dimtext);font-size:14px;flex-shrink:0;width:20px;text-align:center}
+.ro-drag:active{cursor:grabbing}
+.ro-pos{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
+.ro-cover{width:32px;height:48px;border-radius:3px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+.ro-info{flex:1;min-width:0}
+.ro-info-title{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--text)}
+.ro-info-sub{font-family:var(--cf);font-size:10px;color:var(--muted)}
+.ro-remove{width:20px;height:20px;border-radius:3px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--dimtext);flex-shrink:0;transition:all .15s}
+.ro-remove:hover{border-color:var(--red);color:var(--red)}
+.ro-actions{display:flex;gap:8px;padding:12px 0}
+.ro-empty{color:var(--muted);font-family:var(--cf);font-size:14px;letter-spacing:2px;text-align:center;padding:40px 20px}
+
 /* ─── LOADING OVERLAY ─── */
 .loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .5s}
 .loading-overlay.hidden{opacity:0;pointer-events:none}
@@ -740,9 +824,20 @@ footer a{color:var(--gold);text-decoration:none}
     <button class="ptab dc"     onclick="setPub('dc',this)">DC Finest <span class="ptab-count" id="tabDCCnt">–</span></button>
     <button class="ptab omni"   onclick="setPub('omni',this)">Omnis <span class="ptab-count" id="tabOmniCnt">–</span></button>
   </div>
+  <!-- Main Navigation -->
+  <div class="main-nav" id="mainNav">
+    <button class="main-nav-btn active" onclick="switchView('dashboard',this)">Dashboard</button>
+    <button class="main-nav-btn" onclick="switchView('browse',this)">Browse</button>
+    <button class="main-nav-btn" onclick="switchView('runs',this)">Runs</button>
+    <button class="main-nav-btn" onclick="switchView('era',this)">Era Explorer</button>
+    <button class="main-nav-btn" onclick="switchView('reading-order',this)">Reading Order</button>
+  </div>
 </div>
 
 <div class="wrap">
+  <!-- ═══ DASHBOARD VIEW ═══ -->
+  <div class="view-section active" id="viewDashboard">
+
   <!-- Filter bar -->
   <div class="fbar">
     <div class="fg"><div class="flabel">Search</div><input type="text" id="fSearch" placeholder="Series, subtitle…" oninput="applyFilters()" style="width:200px"></div>
@@ -884,7 +979,111 @@ footer a{color:var(--gold);text-decoration:none}
       </select></span>
     </div>
   </div>
-</div>
+
+  </div><!-- /viewDashboard -->
+
+  <!-- ═══ BROWSE VIEW ═══ -->
+  <div class="view-section" id="viewBrowse">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="fg"><div class="flabel">Search</div><input type="text" id="browseSearch" placeholder="Series, subtitle…" oninput="applyBrowseFilters()" style="width:200px"></div>
+      <div class="fg"><div class="flabel">Series Group</div>
+        <select id="browseGroup" onchange="applyBrowseFilters()"><option value="">All Groups</option></select></div>
+      <div class="fg"><div class="flabel">Format</div>
+        <select id="browseType" onchange="applyBrowseFilters()">
+          <option value="">All Types</option>
+          <option value="Epic">Classic Epic</option><option value="Modern">Modern Era</option>
+          <option value="Ultimate">Ultimate</option><option value="DC Finest">DC Finest</option>
+          <option value="Omnibus">Omnibus</option>
+        </select></div>
+      <div class="fg"><div class="flabel">Owned By</div>
+        <select id="browseOwner" onchange="applyBrowseFilters()"><option value="">Anyone</option></select></div>
+      <label style="display:flex;align-items:center;gap:5px;font-family:var(--cf);font-size:12px;color:var(--muted);cursor:pointer;margin-left:8px">
+        <input type="checkbox" id="browseHideReprints" checked onchange="applyBrowseFilters()"> Hide Reprints
+      </label>
+      <div class="grid-toggle">
+        <button class="grid-toggle-btn active" onclick="setBrowseMode('grid',this)">Grid</button>
+        <button class="grid-toggle-btn" onclick="setBrowseMode('table',this)">Table</button>
+      </div>
+    </div>
+    <div class="abanner" id="browseBanner" style="display:none">
+      <span id="browseBannerText"></span>
+    </div>
+    <div id="browseContent">
+      <div class="browse-grid" id="browseGrid"></div>
+    </div>
+  </div><!-- /viewBrowse -->
+
+  <!-- ═══ RUNS VIEW (Inline) ═══ -->
+  <div class="view-section" id="viewRuns">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="rv-mode-btn" id="inlineRvGroupToggle" onclick="inlineRvToggleGroupMode()" style="font-size:11px;padding:4px 10px">By: Series</button>
+        <div class="rv-select-wrap" style="min-width:250px">
+          <select id="inlineRvSelect" onchange="inlineRvSelectSeries(this.value)">
+            <option value="">— Select a series —</option>
+          </select>
+        </div>
+      </div>
+      <div class="rv-type-pills" id="inlineRvTypePills">
+        <span class="rv-pill epic on" data-type="Epic" onclick="inlineRvTogglePill(this)">Classic Epic</span>
+        <span class="rv-pill modern on" data-type="Modern" onclick="inlineRvTogglePill(this)">Modern Era</span>
+        <span class="rv-pill omni on" data-type="Omnibus" onclick="inlineRvTogglePill(this)">Omnibus</span>
+        <span class="rv-pill dc on" data-type="DC Finest" onclick="inlineRvTogglePill(this)">DC Finest</span>
+      </div>
+      <span class="rv-pill" id="inlineRvReprintToggle" style="cursor:pointer;font-size:11px" onclick="inlineRvToggleReprints(this)">Hide Reprints</span>
+      <button class="rv-mode-btn" id="inlineRvMultiBtn" onclick="inlineRvToggleMultiMode()">Multi-Series</button>
+    </div>
+    <!-- Run completeness overview -->
+    <div class="run-completeness" id="runCompletenessPanel">
+      <div class="rc-title">
+        <span>Run Completeness</span>
+        <span style="font-size:11px;font-weight:400;color:var(--dimtext)">click a run to explore</span>
+      </div>
+      <div class="rc-grid" id="rcGrid"></div>
+    </div>
+    <!-- Inline run view content -->
+    <div id="inlineRvBody" style="min-height:200px">
+      <div class="rv-empty">Select a series or group above to view its issue run</div>
+    </div>
+  </div><!-- /viewRuns -->
+
+  <!-- ═══ ERA EXPLORER VIEW ═══ -->
+  <div class="view-section" id="viewEra">
+    <div class="era-explorer">
+      <div class="era-decades" id="eraDecades">
+        <button class="era-decade-btn" onclick="setEraDecade(1960,this)">1960s</button>
+        <button class="era-decade-btn" onclick="setEraDecade(1970,this)">1970s</button>
+        <button class="era-decade-btn active" onclick="setEraDecade(1980,this)">1980s</button>
+        <button class="era-decade-btn" onclick="setEraDecade(1990,this)">1990s</button>
+        <button class="era-decade-btn" onclick="setEraDecade(2000,this)">2000s</button>
+        <button class="era-decade-btn" onclick="setEraDecade(2010,this)">2010s</button>
+        <button class="era-decade-btn" onclick="setEraDecade(2020,this)">2020s</button>
+      </div>
+      <div class="era-slider-wrap">
+        <span class="era-slider-label" id="eraRangeLabel">1980 – 1989</span>
+        <input type="range" class="era-slider" id="eraSliderStart" min="0" max="9" value="0" oninput="updateEraSlider()">
+        <input type="range" class="era-slider" id="eraSliderEnd" min="0" max="9" value="9" oninput="updateEraSlider()">
+        <span class="era-count" id="eraCount">0 books</span>
+      </div>
+      <div class="era-groups" id="eraGroups"></div>
+      <div class="browse-grid" id="eraGrid"></div>
+    </div>
+  </div><!-- /viewEra -->
+
+  <!-- ═══ READING ORDER VIEW ═══ -->
+  <div class="view-section" id="viewReadingOrder">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <div class="fg"><div class="flabel">Series Group</div>
+        <select id="roGroupSelect" onchange="roSelectGroup(this.value)"><option value="">— Select a Group —</option></select></div>
+      <button class="rbtn" onclick="roAutoGenerate()" id="roAutoBtn" style="display:none">Auto-Generate Order</button>
+      <div style="flex:1"></div>
+    </div>
+    <div id="roContent">
+      <div class="ro-empty">Select a Series Group to view or create a reading order</div>
+    </div>
+  </div><!-- /viewReadingOrder -->
+
+</div><!-- /wrap -->
 
 <footer>
   <div>BCE COMICS POD — EPIC DATABASE · Powered by Supabase · Data synced across devices</div>
