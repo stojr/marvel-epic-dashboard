@@ -21,7 +21,7 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--text);font-family:var(--bf);font-size:15px;line-height:1.5;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--bf);font-size:16px;line-height:1.5;min-height:100vh}
 body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#ffffff05 1px,transparent 1px);background-size:28px 28px;pointer-events:none;z-index:0}
 
 /* ─── HEADER ─── */
@@ -188,6 +188,8 @@ td{padding:8px 10px;vertical-align:middle;white-space:nowrap}
 .tb-ultimate{background:#0a2216;color:#4de088;border:1px solid #164830}
 .tb-dcfinest{background:#0a1528;color:var(--blue);border:1px solid #163060}
 .tb-omnibus{background:#1e0a28;color:#c97ef5;border:1px solid #4a1870}
+.tb-complete{background:#2a1400;color:#ff9f2a;border:1px solid #503000}
+.tb-tpb{background:#001a0e;color:#3eff8a;border:1px solid #005030}
 .td-lic{font-family:var(--cf);font-size:12px}
 .td-lic.y{color:#d4a030}.td-lic.n{color:var(--dimtext)}
 .td-rep{font-family:var(--cf);font-size:12px;color:var(--dimtext)}
@@ -616,6 +618,8 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-pill.modern{color:var(--gold);border-color:var(--gold)}.rv-pill.modern.on{background:#221c00}
 .rv-pill.omni{color:#c97ef5;border-color:#c97ef5}.rv-pill.omni.on{background:#1e0a28}
 .rv-pill.dc{color:var(--blue);border-color:var(--blue)}.rv-pill.dc.on{background:#0a1528}
+.rv-pill.complete{color:#ff9f2a;border-color:#ff9f2a}.rv-pill.complete.on{background:#2a1800}
+.rv-pill.tpb{color:#3eff8a;border-color:#3eff8a}.rv-pill.tpb.on{background:#001a0e}
 /* Multi-series mode toggle */
 .rv-mode-btn{padding:4px 12px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;background:transparent;white-space:nowrap}
 .rv-mode-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.1)}
@@ -630,7 +634,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:16px 0}
 /* ─── 1990s TRADING CARD ─── */
 /* Scene: perspective container + animated gradient border */
-.rv-card-scene{width:210px;height:310px;flex-shrink:0;perspective:1100px;cursor:pointer;position:relative;user-select:none}
+.rv-card-scene{width:250px;height:370px;flex-shrink:0;perspective:1300px;cursor:pointer;position:relative;user-select:none}
 .rv-card-scene.placeholder-scene{cursor:default}
 /* Gradient foil border: background shows through padding — thick 90s card border */
 .rv-card-border{width:100%;height:100%;padding:3px;border-radius:12px;background:linear-gradient(135deg,#ffd234 0%,#e8352a 15%,#c97fff 30%,#3aa8ff 50%,#3eff8a 65%,#ffd234 80%,#e8352a 100%);background-size:400% 400%;position:relative;transition:transform .7s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
@@ -645,81 +649,95 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-card-front,.rv-card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:9px;overflow:hidden;display:flex;flex-direction:column}
 .rv-card-back{transform:rotateY(180deg)}
 /* Per-type card backgrounds */
-.rv-card-front.tc-epic  {background:linear-gradient(165deg,#0c1a2e 0%,#0e2040 60%,#0a1830 100%)}
-.rv-card-front.tc-modern{background:linear-gradient(165deg,#1a1100 0%,#221600 60%,#180e00 100%)}
-.rv-card-front.tc-omni  {background:linear-gradient(165deg,#14082a 0%,#1c0a38 60%,#0e0620 100%)}
-.rv-card-front.tc-dc    {background:linear-gradient(165deg,#080e22 0%,#0a1530 60%,#060c1c 100%)}
-.rv-card-back.tc-epic   {background:linear-gradient(165deg,#0e2040 0%,#0a1428 100%)}
-.rv-card-back.tc-modern {background:linear-gradient(165deg,#221600 0%,#130e00 100%)}
-.rv-card-back.tc-omni   {background:linear-gradient(165deg,#1c0a38 0%,#0e0620 100%)}
-.rv-card-back.tc-dc     {background:linear-gradient(165deg,#0a1530 0%,#060c1c 100%)}
+.rv-card-front.tc-epic    {background:linear-gradient(165deg,#0c1a2e 0%,#0e2040 60%,#0a1830 100%)}
+.rv-card-front.tc-modern  {background:linear-gradient(165deg,#1a1100 0%,#221600 60%,#180e00 100%)}
+.rv-card-front.tc-omni    {background:linear-gradient(165deg,#14082a 0%,#1c0a38 60%,#0e0620 100%)}
+.rv-card-front.tc-dc      {background:linear-gradient(165deg,#080e22 0%,#0a1530 60%,#060c1c 100%)}
+.rv-card-front.tc-complete{background:linear-gradient(165deg,#1a0e00 0%,#2a1600 60%,#180e00 100%)}
+.rv-card-front.tc-tpb     {background:linear-gradient(165deg,#001a10 0%,#002218 60%,#001408 100%)}
+.rv-card-back.tc-epic     {background:linear-gradient(165deg,#0e2040 0%,#0a1428 100%)}
+.rv-card-back.tc-modern   {background:linear-gradient(165deg,#221600 0%,#130e00 100%)}
+.rv-card-back.tc-omni     {background:linear-gradient(165deg,#1c0a38 0%,#0e0620 100%)}
+.rv-card-back.tc-dc       {background:linear-gradient(165deg,#0a1530 0%,#060c1c 100%)}
+.rv-card-back.tc-complete  {background:linear-gradient(165deg,#2a1600 0%,#180e00 100%)}
+.rv-card-back.tc-tpb       {background:linear-gradient(165deg,#002218 0%,#001408 100%)}
 /* Header strip */
 .rv-card-header,.rv-card-back-header{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;flex-shrink:0}
-.tc-epic   .rv-card-header,.tc-epic   .rv-card-back-header{background:linear-gradient(90deg,#1a3a6a,#2a5090);border-bottom:1px solid #3a6fa8}
-.tc-modern .rv-card-header,.tc-modern .rv-card-back-header{background:linear-gradient(90deg,#3a2400,#503000);border-bottom:1px solid #a07800}
-.tc-omni   .rv-card-header,.tc-omni   .rv-card-back-header{background:linear-gradient(90deg,#2a0a50,#3c1260);border-bottom:1px solid #8050b0}
-.tc-dc     .rv-card-header,.tc-dc     .rv-card-back-header{background:linear-gradient(90deg,#0a1e50,#103068);border-bottom:1px solid #1a6db5}
-.rv-card-type-lbl{font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.7)}
-.rv-card-vol-badge{font-family:var(--hf);font-size:18px;line-height:1;color:#fff;text-shadow:0 0 10px rgba(255,255,255,.4)}
+.tc-epic     .rv-card-header,.tc-epic     .rv-card-back-header{background:linear-gradient(90deg,#1a3a6a,#2a5090);border-bottom:1px solid #3a6fa8}
+.tc-modern   .rv-card-header,.tc-modern   .rv-card-back-header{background:linear-gradient(90deg,#3a2400,#503000);border-bottom:1px solid #a07800}
+.tc-omni     .rv-card-header,.tc-omni     .rv-card-back-header{background:linear-gradient(90deg,#2a0a50,#3c1260);border-bottom:1px solid #8050b0}
+.tc-dc       .rv-card-header,.tc-dc       .rv-card-back-header{background:linear-gradient(90deg,#0a1e50,#103068);border-bottom:1px solid #1a6db5}
+.tc-complete .rv-card-header,.tc-complete .rv-card-back-header{background:linear-gradient(90deg,#3a2000,#502c00);border-bottom:1px solid #a06000}
+.tc-tpb      .rv-card-header,.tc-tpb      .rv-card-back-header{background:linear-gradient(90deg,#003020,#004030);border-bottom:1px solid #006040}
+.rv-card-type-lbl{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.7)}
+.rv-card-vol-badge{font-family:var(--hf);font-size:22px;line-height:1;color:#fff;text-shadow:0 0 10px rgba(255,255,255,.4)}
 /* Image area — full art display */
 .rv-card-img{flex:1;overflow:hidden;position:relative;display:block}
 .rv-card-img img{width:100%;height:100%;object-fit:contain;display:block;background:#000}
 .rv-card-img-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
-.tc-epic   .rv-card-img-ph{background:radial-gradient(ellipse at center,#1a3060 0%,#091428 100%)}
-.tc-modern .rv-card-img-ph{background:radial-gradient(ellipse at center,#3a2800 0%,#191000 100%)}
-.tc-omni   .rv-card-img-ph{background:radial-gradient(ellipse at center,#280c50 0%,#100618 100%)}
-.tc-dc     .rv-card-img-ph{background:radial-gradient(ellipse at center,#0e2050 0%,#06080e 100%)}
-.rv-card-img-ph-icon{font-size:38px;opacity:.25}
-.rv-card-img-ph-vol{font-family:var(--hf);font-size:36px;letter-spacing:3px;opacity:.3;color:#fff}
+.tc-epic     .rv-card-img-ph{background:radial-gradient(ellipse at center,#1a3060 0%,#091428 100%)}
+.tc-modern   .rv-card-img-ph{background:radial-gradient(ellipse at center,#3a2800 0%,#191000 100%)}
+.tc-omni     .rv-card-img-ph{background:radial-gradient(ellipse at center,#280c50 0%,#100618 100%)}
+.tc-dc       .rv-card-img-ph{background:radial-gradient(ellipse at center,#0e2050 0%,#06080e 100%)}
+.tc-complete .rv-card-img-ph{background:radial-gradient(ellipse at center,#3a2000 0%,#190e00 100%)}
+.tc-tpb      .rv-card-img-ph{background:radial-gradient(ellipse at center,#003020 0%,#001008 100%)}
+.rv-card-img-ph-icon{font-size:46px;opacity:.25}
+.rv-card-img-ph-vol{font-family:var(--hf);font-size:44px;letter-spacing:3px;opacity:.3;color:#fff}
 /* Holographic shimmer overlay on image */
 .rv-card-holo{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:linear-gradient(115deg,transparent 20%,transparent 30%,rgba(255,255,255,.05) 35%,rgba(180,60,255,.14) 43%,rgba(60,180,255,.14) 51%,rgba(255,210,52,.14) 59%,rgba(255,255,255,.05) 65%,transparent 70%,transparent 100%);background-size:300% 100%;animation:rv-holo-shine 2.8s ease-in-out infinite paused}
 .rv-card-scene:hover .rv-card-holo{opacity:1;animation-play-state:running}
 @keyframes rv-holo-shine{0%{background-position:200% 0}100%{background-position:-100% 0}}
 /* Card name banner — 90s bold bottom strip */
 .rv-card-footer{padding:7px 10px 6px;flex-shrink:0}
-.tc-epic  .rv-card-footer{background:linear-gradient(0deg,#08101c 0%,rgba(10,20,40,.85) 100%);border-top:2px solid rgba(58,111,168,.5)}
-.tc-modern .rv-card-footer{background:linear-gradient(0deg,#0c0800 0%,rgba(26,18,0,.85) 100%);border-top:2px solid rgba(160,120,0,.5)}
-.tc-omni  .rv-card-footer{background:linear-gradient(0deg,#0a0414 0%,rgba(20,8,40,.85) 100%);border-top:2px solid rgba(128,80,176,.5)}
-.tc-dc    .rv-card-footer{background:linear-gradient(0deg,#04060e 0%,rgba(8,14,30,.85) 100%);border-top:2px solid rgba(26,109,181,.5)}
-.rv-card-series-name{font-family:var(--hf);font-size:15px;color:rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:.5px;line-height:1}
+.tc-epic     .rv-card-footer{background:linear-gradient(0deg,#08101c 0%,rgba(10,20,40,.85) 100%);border-top:2px solid rgba(58,111,168,.5)}
+.tc-modern   .rv-card-footer{background:linear-gradient(0deg,#0c0800 0%,rgba(26,18,0,.85) 100%);border-top:2px solid rgba(160,120,0,.5)}
+.tc-omni     .rv-card-footer{background:linear-gradient(0deg,#0a0414 0%,rgba(20,8,40,.85) 100%);border-top:2px solid rgba(128,80,176,.5)}
+.tc-dc       .rv-card-footer{background:linear-gradient(0deg,#04060e 0%,rgba(8,14,30,.85) 100%);border-top:2px solid rgba(26,109,181,.5)}
+.tc-complete .rv-card-footer{background:linear-gradient(0deg,#100800 0%,rgba(26,16,0,.85) 100%);border-top:2px solid rgba(160,96,0,.5)}
+.tc-tpb      .rv-card-footer{background:linear-gradient(0deg,#001408 0%,rgba(0,20,8,.85) 100%);border-top:2px solid rgba(0,96,64,.5)}
+.rv-card-series-name{font-family:var(--hf);font-size:18px;color:rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:.5px;line-height:1}
 .rv-card-badges{display:flex;gap:5px;align-items:center}
-.rv-card-issue-pill{font-family:var(--cf);font-size:12px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;white-space:nowrap}
-.tc-epic   .rv-card-issue-pill{background:rgba(58,111,168,.4);color:#7ab8f5;border:1px solid rgba(58,111,168,.6)}
-.tc-modern .rv-card-issue-pill{background:rgba(160,120,0,.4);color:var(--gold);border:1px solid rgba(160,120,0,.6)}
-.tc-omni   .rv-card-issue-pill{background:rgba(128,80,176,.4);color:#c97ef5;border:1px solid rgba(128,80,176,.6)}
-.tc-dc     .rv-card-issue-pill{background:rgba(26,109,181,.4);color:var(--blue);border:1px solid rgba(26,109,181,.6)}
-.rv-card-year-pill{font-family:var(--cf);font-size:11px;font-weight:600;color:rgba(255,255,255,.5);flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-card-issue-pill{font-family:var(--cf);font-size:13px;font-weight:700;padding:2px 7px;border-radius:3px;flex-shrink:0;white-space:nowrap}
+.tc-epic     .rv-card-issue-pill{background:rgba(58,111,168,.4);color:#7ab8f5;border:1px solid rgba(58,111,168,.6)}
+.tc-modern   .rv-card-issue-pill{background:rgba(160,120,0,.4);color:var(--gold);border:1px solid rgba(160,120,0,.6)}
+.tc-omni     .rv-card-issue-pill{background:rgba(128,80,176,.4);color:#c97ef5;border:1px solid rgba(128,80,176,.6)}
+.tc-dc       .rv-card-issue-pill{background:rgba(26,109,181,.4);color:var(--blue);border:1px solid rgba(26,109,181,.6)}
+.tc-complete .rv-card-issue-pill{background:rgba(160,96,0,.4);color:#ff9f2a;border:1px solid rgba(160,96,0,.6)}
+.tc-tpb      .rv-card-issue-pill{background:rgba(0,128,80,.4);color:#3eff8a;border:1px solid rgba(0,128,80,.6)}
+.rv-card-year-pill{font-family:var(--cf);font-size:12px;font-weight:600;color:rgba(255,255,255,.5);flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Card number badge (e.g. "3 of 12") */
-.rv-card-num{position:absolute;bottom:52px;right:6px;font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35);pointer-events:none;z-index:2}
+.rv-card-num{position:absolute;bottom:58px;right:7px;font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35);pointer-events:none;z-index:2}
 /* ─── CARD BACK ─── */
-.rv-card-back-body{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
-.rv-card-back-series{font-family:var(--hf);font-size:16px;color:#fff;letter-spacing:.5px;line-height:1}
-.rv-card-back-sub{font-family:var(--cf);font-size:10px;color:rgba(255,255,255,.5);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rv-card-back-body{flex:1;padding:9px 12px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.rv-card-back-series{font-family:var(--hf);font-size:19px;color:#fff;letter-spacing:.5px;line-height:1}
+.rv-card-back-sub{font-family:var(--cf);font-size:11px;color:rgba(255,255,255,.5);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .rv-card-divider{height:1px;background:rgba(255,255,255,.12);flex-shrink:0;margin:3px 0}
 /* Description area — takes up most of the back */
-.rv-card-back-desc{font-family:var(--bf);font-size:9px;line-height:1.45;color:rgba(255,255,255,.7);flex:1;overflow-y:auto;overflow-x:hidden;margin:2px 0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+.rv-card-back-desc{font-family:var(--bf);font-size:10px;line-height:1.45;color:rgba(255,255,255,.7);flex:1;overflow-y:auto;overflow-x:hidden;margin:2px 0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
 .rv-card-back-desc::-webkit-scrollbar{width:3px}
 .rv-card-back-desc::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
 /* Stat grid */
 .rv-cs-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 6px;flex-shrink:0}
 .rv-cs-item{display:flex;flex-direction:column;gap:1px;min-width:0}
 .rv-cs-item.wide{grid-column:1/-1}
-.rv-cs-l{font-family:var(--cf);font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3)}
-.rv-cs-v{font-family:var(--cf);font-size:10px;font-weight:700;color:rgba(255,255,255,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tc-epic   .rv-cs-v.accent{color:#7ab8f5}
-.tc-modern .rv-cs-v.accent{color:var(--gold)}
-.tc-omni   .rv-cs-v.accent{color:#c97ef5}
-.tc-dc     .rv-cs-v.accent{color:var(--blue)}
+.rv-cs-l{font-family:var(--cf);font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.3)}
+.rv-cs-v{font-family:var(--cf);font-size:11px;font-weight:700;color:rgba(255,255,255,.85);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc-epic     .rv-cs-v.accent{color:#7ab8f5}
+.tc-modern   .rv-cs-v.accent{color:var(--gold)}
+.tc-omni     .rv-cs-v.accent{color:#c97ef5}
+.tc-dc       .rv-cs-v.accent{color:var(--blue)}
+.tc-complete .rv-cs-v.accent{color:#ff9f2a}
+.tc-tpb      .rv-cs-v.accent{color:#3eff8a}
 /* Back footer */
-.rv-card-back-footer{padding:5px 10px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.1)}
-.rv-card-jump-btn{padding:3px 8px;border-radius:3px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
+.rv-card-back-footer{padding:6px 12px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.1)}
+.rv-card-jump-btn{padding:4px 10px;border-radius:3px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s}
 .rv-card-jump-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.08)}
-.rv-card-bce{font-family:var(--cf);font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.2)}
+.rv-card-bce{font-family:var(--cf);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.2)}
 /* ─── PLACEHOLDER CARD ─── */
 .rv-card-placeholder-wrap{width:100%;height:100%;padding:3px;border-radius:12px;background:var(--surface2);border:1.5px dashed var(--border)}
 .rv-card-placeholder-inner{width:100%;height:100%;border-radius:9px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.45}
-.rv-card-ph-vol{font-family:var(--hf);font-size:38px;color:var(--muted)}
-.rv-card-ph-label{font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext);text-align:center;padding:0 10px;line-height:1.5}
+.rv-card-ph-vol{font-family:var(--hf);font-size:46px;color:var(--muted)}
+.rv-card-ph-label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext);text-align:center;padding:0 10px;line-height:1.5}
 /* Connector between cards */
 .rv-connector{display:flex;align-items:center;justify-content:center;width:12px;flex-shrink:0;align-self:stretch;position:relative;margin-top:8px;margin-bottom:8px}
 .rv-connector-line{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:2px;background:var(--border)}
@@ -748,6 +766,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-tl-seg.highlighted{filter:brightness(1.3);box-shadow:0 0 0 2px var(--gold)}
 .rv-tl-seg.epic{background:#3a6fa8}.rv-tl-seg.modern{background:#a07800}
 .rv-tl-seg.omni{background:#8050b0}.rv-tl-seg.dc{background:#1a6db5}
+.rv-tl-seg.complete{background:#a06000}.rv-tl-seg.tpb{background:#007040}
 .rv-tl-seg-label{font-family:var(--cf);font-size:11px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 5px;pointer-events:none}
 /* Issue sub-label inside segment */
 .rv-tl-seg-issues{font-family:var(--cf);font-size:8px;font-weight:600;color:rgba(255,255,255,.55);white-space:nowrap;pointer-events:none;position:absolute;bottom:3px;left:0;right:0;text-align:center;overflow:hidden;text-overflow:clip}
@@ -1065,6 +1084,8 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         <span class="rv-pill modern on" data-type="Modern" onclick="inlineRvTogglePill(this)">Modern Era</span>
         <span class="rv-pill omni on" data-type="Omnibus" onclick="inlineRvTogglePill(this)">Omnibus</span>
         <span class="rv-pill dc on" data-type="DC Finest" onclick="inlineRvTogglePill(this)">DC Finest</span>
+        <span class="rv-pill complete on" data-type="Complete" onclick="inlineRvTogglePill(this)">Complete Collection</span>
+        <span class="rv-pill tpb on" data-type="TPB" onclick="inlineRvTogglePill(this)">TPB</span>
       </div>
       <span class="rv-pill" id="inlineRvReprintToggle" style="cursor:pointer;font-size:11px" onclick="inlineRvToggleReprints(this)">Hide Reprints</span>
       <button class="rv-mode-btn" id="inlineRvMultiBtn" onclick="inlineRvToggleMultiMode()">Multi-Series</button>
@@ -1152,6 +1173,8 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
           <option value="Ultimate">Ultimate</option>
           <option value="DC Finest">DC Finest</option>
           <option value="Omnibus">Omnibus</option>
+          <option value="Complete">Complete Collection</option>
+          <option value="TPB">TPB</option>
         </select>
       </div>
       <div class="modal-field full">
@@ -1168,7 +1191,9 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       </div>
       <div class="modal-field">
         <label class="modal-label">Release Date</label>
-        <input class="modal-input" id="mDate" type="text" placeholder="YYYY-MM-DD">
+        <input class="modal-input" id="mDate" type="date" placeholder="YYYY-MM-DD"
+          title="Select a date or type YYYY-MM-DD"
+          oninput="normalizeDateInput(this)" onblur="normalizeDateInput(this)">
       </div>
       <div class="modal-field full">
         <label class="modal-label">Subtitle</label>
@@ -1353,6 +1378,8 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       <span class="rv-pill modern on" data-type="Modern" onclick="rvTogglePill(this)">Modern Era</span>
       <span class="rv-pill omni on" data-type="Omnibus" onclick="rvTogglePill(this)">Omnibus</span>
       <span class="rv-pill dc on" data-type="DC Finest" onclick="rvTogglePill(this)">DC Finest</span>
+      <span class="rv-pill complete on" data-type="Complete" onclick="rvTogglePill(this)">Complete Collection</span>
+      <span class="rv-pill tpb on" data-type="TPB" onclick="rvTogglePill(this)">TPB</span>
     </div>
     <span class="rv-pill" id="rvReprintToggle" style="cursor:pointer;font-size:11px" onclick="rvToggleReprints(this)">Hide Reprints</span>
     <button class="rv-mode-btn" id="rvMultiBtn" onclick="rvToggleMultiMode()">⊞ Multi-Series</button>
@@ -2092,7 +2119,13 @@ async function toggleUserField(entryId, field, userId) {
   buildCards(currentFiltered);
   setSyncing(true);
   try {
-    await sbUpsert('user_entry_data', { user_id: userId, entry_id: entryId, [field]: !current }, 'user_id,entry_id');
+    // Legacy users (stojr/nick) save to the user_data table using prefixed columns
+    if (userId === LEGACY_STOJR_ID || userId === LEGACY_NICK_ID) {
+      const prefix = userId === LEGACY_STOJR_ID ? 'stojr' : 'nick';
+      await sbUpsert('user_data', { entry_id: entryId, [`${prefix}_${field}`]: !current }, 'entry_id');
+    } else {
+      await sbUpsert('user_entry_data', { user_id: userId, entry_id: entryId, [field]: !current }, 'user_id,entry_id');
+    }
     showToast('✓ Saved');
   } catch(e) {
     USER_DATA[entryId][userId][field] = current;
@@ -2111,7 +2144,12 @@ async function saveNotes(entryId, userId, value) {
   updateRowUDButtons(entryId);
   setSyncing(true);
   try {
-    await sbUpsert('user_entry_data', { user_id: userId, entry_id: entryId, notes: value }, 'user_id,entry_id');
+    if (userId === LEGACY_STOJR_ID || userId === LEGACY_NICK_ID) {
+      const prefix = userId === LEGACY_STOJR_ID ? 'stojr' : 'nick';
+      await sbUpsert('user_data', { entry_id: entryId, [`${prefix}_notes`]: value }, 'entry_id');
+    } else {
+      await sbUpsert('user_entry_data', { user_id: userId, entry_id: entryId, notes: value }, 'user_id,entry_id');
+    }
     showToast('✓ Notes saved');
   } catch(e) {
     showToast('Save failed', true);
@@ -2597,8 +2635,10 @@ function changePageSize(){pageSize=parseInt(document.getElementById('pgSize').va
 function changePage(dir){const max=Math.ceil(currentFiltered.length/pageSize);page=Math.max(1,Math.min(max,page+dir));buildTable(currentFiltered);}
 
 function typeBadge(d) {
-  const cls=d.type==='Epic'?'tb-epic':d.type==='Modern'?'tb-modern':d.type==='Ultimate'?'tb-ultimate':d.type==='Omnibus'?'tb-omnibus':'tb-dcfinest';
-  const lbl=d.type==='DC Finest'?'DC Finest':d.type==='Epic'?'Classic':d.type;
+  const typeClsMap = { 'Epic':'tb-epic', 'Modern':'tb-modern', 'Ultimate':'tb-ultimate', 'Omnibus':'tb-omnibus', 'DC Finest':'tb-dcfinest', 'Complete':'tb-complete', 'TPB':'tb-tpb' };
+  const typeLblMap = { 'DC Finest':'DC Finest', 'Epic':'Classic', 'Complete':'Complete', 'TPB':'TPB' };
+  const cls = typeClsMap[d.type] || 'tb-omnibus';
+  const lbl = typeLblMap[d.type] || d.type;
   return `<span class="type-badge ${cls}">${lbl}</span>`;
 }
 
@@ -3019,6 +3059,30 @@ function markCoverFailed(url) { if (url) _failedCoverUrls.add(url); }
 
 // ── ISBN helpers ────────────────────────────────
 let _isbnFetchTimer = null;
+// ── Date input normalizer ────────────────────────
+// Accepts typed strings like "2024-03-12", "03/12/2024", "March 12 2024" etc.
+// Converts to YYYY-MM-DD for the date input value.
+function normalizeDateInput(el) {
+  const raw = el.value.trim();
+  if (!raw) return;
+  // If already valid YYYY-MM-DD (the native date input format), do nothing
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return;
+  // Try common formats: MM/DD/YYYY or DD/MM/YYYY (favour US)
+  const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) {
+    const y = slashMatch[3], m = slashMatch[1].padStart(2,'0'), d = slashMatch[2].padStart(2,'0');
+    el.value = `${y}-${m}-${d}`; return;
+  }
+  // Try natural language via Date.parse
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth()+1).padStart(2,'0');
+    const d = String(parsed.getDate()).padStart(2,'0');
+    el.value = `${y}-${m}-${d}`;
+  }
+}
+
 function onIsbnInput() {
   const raw = document.getElementById('mIsbn').value.trim();
   const isbn = raw.replace(/-/g,'');
@@ -3352,7 +3416,15 @@ async function fetchDescription() {
   if (!isbn) { showToast('Enter an ISBN first', true); return; }
   showToast('Fetching description…');
 
-  const result = await lookupIsbn(isbn);
+  let result = await lookupIsbn(isbn);
+  // If cache has no description, bypass it and do a fresh lookup
+  if (result.cached && !result.data?.description && !result.failed) {
+    const cachedEntry = ISBN_CACHE[isbn];
+    delete ISBN_CACHE[isbn];
+    result = await lookupIsbn(isbn);
+    // If still no description, restore the cache entry
+    if (!result.data?.description) ISBN_CACHE[isbn] = cachedEntry;
+  }
   if (result.data?.description) {
     desc.value = result.data.description;
     const src = result.cached ? 'cache' : (result.data._source || 'ISBN lookup');
@@ -3981,7 +4053,7 @@ async function saveBulkEdits() {
 // ── RUN VIEW ────────────────────────────────────────────
 const RV = {
   series: null,
-  typeFilters: { 'Epic': true, 'Modern': true, 'Omnibus': true, 'DC Finest': true },
+  typeFilters: { 'Epic': true, 'Modern': true, 'Omnibus': true, 'DC Finest': true, 'Complete': true, 'TPB': true },
   multiMode: false,
   multiSelected: new Set(),
   groupMode: false,    // true = group by Series Group instead of Series
@@ -3990,9 +4062,9 @@ const RV = {
   segMap: {},
   cardMap: {}
 };
-const RV_TYPE_ORDER  = ['Epic', 'Modern', 'Omnibus', 'DC Finest'];
-const RV_TYPE_CLASS  = { 'Epic':'epic', 'Modern':'modern', 'Omnibus':'omni', 'DC Finest':'dc' };
-const RV_TYPE_LABEL  = { 'Epic':'Classic Epic', 'Modern':'Modern Era', 'Omnibus':'Omnibus', 'DC Finest':'DC Finest' };
+const RV_TYPE_ORDER  = ['Epic', 'Modern', 'Omnibus', 'DC Finest', 'Complete', 'TPB'];
+const RV_TYPE_CLASS  = { 'Epic':'epic', 'Modern':'modern', 'Omnibus':'omni', 'DC Finest':'dc', 'Complete':'complete', 'TPB':'tpb' };
+const RV_TYPE_LABEL  = { 'Epic':'Classic Epic', 'Modern':'Modern Era', 'Omnibus':'Omnibus', 'DC Finest':'DC Finest', 'Complete':'Complete Collection', 'TPB':'TPB' };
 
 // ── helpers ──
 function rvParseIssues(str) {
@@ -4825,7 +4897,7 @@ function renderBrowseGrid() {
   for (let i = 0; i < limit; i++) {
     const d = browseFiltered[i];
     const coverUrl = getCoverUrl(d);
-    const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : 'tb-omnibus';
+    const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : d.type === 'Complete' ? 'tb-complete' : d.type === 'TPB' ? 'tb-tpb' : 'tb-omnibus';
     const group = getEffectiveGroup(d);
     const ownedDots = ALL_USERS.filter(u => isOwned(d.id, u.id)).map(u =>
       `<span class="bc-owned-dot" style="background:${u.color}" title="${escHtml(u.display_name)} owns"></span>`
@@ -4865,7 +4937,7 @@ function renderBrowseTable() {
     const group = getEffectiveGroup(d);
     html += `<tr class="data-row" onclick="openEditModal(${d.id})" style="cursor:pointer">
       <td><span class="pub-badge ${pubCls}">${d.pub||''}</span></td>
-      <td><span class="type-badge ${d.type==='Epic'?'tb-epic':d.type==='Modern'?'tb-modern':d.type==='Ultimate'?'tb-ultimate':d.type==='DC Finest'?'tb-dcfinest':'tb-omnibus'}">${escHtml(d.type||'')}</span></td>
+      <td><span class="type-badge ${d.type==='Epic'?'tb-epic':d.type==='Modern'?'tb-modern':d.type==='Ultimate'?'tb-ultimate':d.type==='DC Finest'?'tb-dcfinest':d.type==='Complete'?'tb-complete':d.type==='TPB'?'tb-tpb':'tb-omnibus'}">${escHtml(d.type||'')}</span></td>
       <td class="td-vol">${d.vol||''}</td>
       <td class="td-series">${escHtml(d.series||'')}</td>
       <td class="td-sub">${escHtml(d.subtitle||'')}</td>
@@ -4933,7 +5005,7 @@ function jumpToRunSeries(name) {
 let inlineRvInited = false;
 let inlineRvGroupMode = false;
 let inlineRvHideReprints = false;
-let inlineRvActiveTypes = new Set(['Epic', 'Modern', 'Omnibus', 'DC Finest']);
+let inlineRvActiveTypes = new Set(['Epic', 'Modern', 'Omnibus', 'DC Finest', 'Complete', 'TPB']);
 
 function initRunsView() {
   if (!inlineRvInited) {
@@ -5011,7 +5083,7 @@ function inlineRvSelectSeries(name) {
   // Build a card-based run display (reuse rv-run/rv-card-scene styles)
   let html = '<div class="rv-run" style="padding:10px 0">';
   entries.forEach((d, i) => {
-    const typeKey = d.type === 'Epic' ? 'epic' : d.type === 'Modern' ? 'modern' : d.type === 'Omnibus' ? 'omni' : 'dc';
+    const typeKey = d.type === 'Epic' ? 'epic' : d.type === 'Modern' ? 'modern' : d.type === 'Omnibus' ? 'omni' : d.type === 'DC Finest' ? 'dc' : d.type === 'Complete' ? 'complete' : d.type === 'TPB' ? 'tpb' : 'dc';
     const coverUrl = getCoverUrl(d);
 
     // Connector between cards
@@ -5165,7 +5237,7 @@ function renderEraGrid() {
   for (let i = 0; i < limit; i++) {
     const d = entries[i];
     const coverUrl = getCoverUrl(d);
-    const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : 'tb-omnibus';
+    const typeClass = d.type === 'Epic' ? 'tb-epic' : d.type === 'Modern' ? 'tb-modern' : d.type === 'Ultimate' ? 'tb-ultimate' : d.type === 'DC Finest' ? 'tb-dcfinest' : d.type === 'Complete' ? 'tb-complete' : d.type === 'TPB' ? 'tb-tpb' : 'tb-omnibus';
 
     html += `<div class="browse-card" onclick="openEditModal(${d.id})">`;
     if (coverUrl && !coverUrl.startsWith('data:')) {
