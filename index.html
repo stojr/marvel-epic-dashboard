@@ -2165,10 +2165,15 @@ function updateRowUDButtons(entryId) {
   if (wBtn) wBtn.classList.toggle('on', uid ? isWishlist(entryId, uid) : false);
   if (rBtn) rBtn.classList.toggle('on', uid ? isRead(entryId, uid) : false);
   if (nInd) nInd.classList.toggle('has-note', uid ? hasNotes(entryId, uid) : false);
-  // Update all ownership buttons
+  // Update all ownership buttons (class + inline styles, since buttons use inline color/background)
   ALL_USERS.forEach(u => {
     const btn = document.querySelector(`.ob[data-uid="${u.id}"][data-id="${entryId}"]`);
-    if (btn) btn.classList.toggle('on', isOwned(entryId, u.id));
+    if (btn) {
+      const owned = isOwned(entryId, u.id);
+      btn.classList.toggle('on', owned);
+      btn.style.color = owned ? '#fff' : u.color;
+      btn.style.background = owned ? u.color : 'transparent';
+    }
   });
 }
 
