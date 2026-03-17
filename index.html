@@ -669,6 +669,9 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .tc-dc       .rv-card-header,.tc-dc       .rv-card-back-header{background:linear-gradient(90deg,#0a1e50,#103068);border-bottom:1px solid #1a6db5}
 .tc-complete .rv-card-header,.tc-complete .rv-card-back-header{background:linear-gradient(90deg,#3a2000,#502c00);border-bottom:1px solid #a06000}
 .tc-tpb      .rv-card-header,.tc-tpb      .rv-card-back-header{background:linear-gradient(90deg,#003020,#004030);border-bottom:1px solid #006040}
+/* Header context line: "{Series} {Type} VOL {n}" */
+.rv-card-context{font-family:var(--hf);font-size:13px;line-height:1.15;color:rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;letter-spacing:.3px}
+/* Back header still uses separate type label + vol badge */
 .rv-card-type-lbl{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.7)}
 .rv-card-vol-badge{font-family:var(--hf);font-size:22px;line-height:1;color:#fff;text-shadow:0 0 10px rgba(255,255,255,.4)}
 /* Image area — full art display */
@@ -695,7 +698,8 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .tc-dc       .rv-card-footer{background:linear-gradient(0deg,#04060e 0%,rgba(8,14,30,.85) 100%);border-top:2px solid rgba(26,109,181,.5)}
 .tc-complete .rv-card-footer{background:linear-gradient(0deg,#100800 0%,rgba(26,16,0,.85) 100%);border-top:2px solid rgba(160,96,0,.5)}
 .tc-tpb      .rv-card-footer{background:linear-gradient(0deg,#001408 0%,rgba(0,20,8,.85) 100%);border-top:2px solid rgba(0,96,64,.5)}
-.rv-card-series-name{font-family:var(--hf);font-size:18px;color:rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:.5px;line-height:1}
+/* Footer bottom: subtitle (or series fallback) */
+.rv-card-series-name{font-family:var(--cf);font-size:13px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:.5px;line-height:1.1}
 .rv-card-badges{display:flex;gap:5px;align-items:center}
 .rv-card-issue-pill{font-family:var(--cf);font-size:13px;font-weight:700;padding:2px 7px;border-radius:3px;flex-shrink:0;white-space:nowrap}
 .tc-epic     .rv-card-issue-pill{background:rgba(58,111,168,.4);color:#7ab8f5;border:1px solid rgba(58,111,168,.6)}
@@ -2109,13 +2113,13 @@ function hasNotes(entryId, userId) { return !!(USER_DATA[entryId]?.[userId]?.not
 function currentUserId() { return currentUser?.id || null; }
 
 async function toggleUserField(entryId, field, userId) {
-  userId = userId || currentUserId();
-  if (!userId) { showToast('Sign in to track your collection', true); return; }
+  // Fall back to legacy stojr when not signed in so buttons work pre-auth
+  userId = userId || currentUserId() || LEGACY_STOJR_ID;
   if (!USER_DATA[entryId]) USER_DATA[entryId] = {};
   if (!USER_DATA[entryId][userId]) USER_DATA[entryId][userId] = { user_id: userId, entry_id: entryId, owned: false, wishlist: false, read: false, notes: '' };
   const current = !!USER_DATA[entryId][userId][field];
   USER_DATA[entryId][userId][field] = !current;
-  updateRowUDButtons(entryId);
+  updateRowUDButtons(entryId, userId);
   buildCards(currentFiltered);
   setSyncing(true);
   try {
@@ -2136,8 +2140,7 @@ async function toggleUserField(entryId, field, userId) {
 }
 
 async function saveNotes(entryId, userId, value) {
-  userId = userId || currentUserId();
-  if (!userId) { showToast('Sign in to save notes', true); return; }
+  userId = userId || currentUserId() || LEGACY_STOJR_ID;
   if (!USER_DATA[entryId]) USER_DATA[entryId] = {};
   if (!USER_DATA[entryId][userId]) USER_DATA[entryId][userId] = { user_id: userId, entry_id: entryId, owned: false, wishlist: false, read: false, notes: '' };
   USER_DATA[entryId][userId].notes = value;
@@ -2157,14 +2160,15 @@ async function saveNotes(entryId, userId, value) {
   setSyncing(false);
 }
 
-function updateRowUDButtons(entryId) {
-  const uid = currentUserId();
+function updateRowUDButtons(entryId, callerUserId) {
+  // Use caller's userId if provided, otherwise current signed-in user, else legacy stojr fallback
+  const uid = callerUserId || currentUserId() || LEGACY_STOJR_ID;
   const wBtn = document.querySelector(`.udb.wish[data-id="${entryId}"]`);
   const rBtn = document.querySelector(`.udb.read[data-id="${entryId}"]`);
   const nInd = document.querySelector(`.note-indicator[data-id="${entryId}"]`);
-  if (wBtn) wBtn.classList.toggle('on', uid ? isWishlist(entryId, uid) : false);
-  if (rBtn) rBtn.classList.toggle('on', uid ? isRead(entryId, uid) : false);
-  if (nInd) nInd.classList.toggle('has-note', uid ? hasNotes(entryId, uid) : false);
+  if (wBtn) wBtn.classList.toggle('on', isWishlist(entryId, uid));
+  if (rBtn) rBtn.classList.toggle('on', isRead(entryId, uid));
+  if (nInd) nInd.classList.toggle('has-note', hasNotes(entryId, uid));
   // Update all ownership buttons (class + inline styles, since buttons use inline color/background)
   ALL_USERS.forEach(u => {
     const btn = document.querySelector(`.ob[data-uid="${u.id}"][data-id="${entryId}"]`);
@@ -2875,10 +2879,11 @@ function buildRowEl(d, cols) {
   const volTxt=d.type==='DC Finest'?(d.years||'–'):(d.vol!=null?`Vol. ${d.vol}`:'–');
   const subTxt=d.subtitle||'–';
   const licIcon=d.licensed==='Yes'?' <span class="lic-icon" title="Licensed IP">™</span>':'';
-  const uid = currentUserId();
-  const wl = uid ? isWishlist(d.id, uid) : false;
-  const rd = uid ? isRead(d.id, uid) : false;
-  const hn = uid ? hasNotes(d.id, uid) : false;
+  // Fall back to legacy stojr when not yet signed in so wishlist/read work pre-auth
+  const uid = currentUserId() || LEGACY_STOJR_ID;
+  const wl = isWishlist(d.id, uid);
+  const rd = isRead(d.id, uid);
+  const hn = hasNotes(d.id, uid);
   // Dynamic ownership buttons per user
   const ownerBtns = ALL_USERS.map((u, i) => {
     const own = isOwned(d.id, u.id);
@@ -2890,8 +2895,8 @@ function buildRowEl(d, cols) {
   tr.innerHTML=`
     ${ownerBtns}
     <td><div class="ud-cell">
-      <button class="udb wish${wl?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'wishlist')" title="Wishlist">★</button>
-      <button class="udb read${rd?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'read')" title="Read">✓</button>
+      <button class="udb wish${wl?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'wishlist','${uid}')" title="Wishlist">★</button>
+      <button class="udb read${rd?' on':''}" data-id="${d.id}" onclick="event.stopPropagation();toggleUserField(${d.id},'read','${uid}')" title="Read">✓</button>
       <div class="note-indicator${hn?' has-note':''}" data-id="${d.id}" title="Has notes"></div>
     </div></td>
     <td>${pubBadge}</td>
@@ -3111,11 +3116,6 @@ function onIsbnInput() {
 }
 
 async function fetchIsbnFields(isbn) {
-  // Only attempt if at least some key fields are blank
-  const hasData = document.getElementById('mSeries').value.trim()
-    && document.getElementById('mPages').value.trim();
-  if (hasData) return;
-
   // Use cached pipeline
   const result = await lookupIsbn(isbn);
   if (result.failed || !result.data) return;
@@ -3127,14 +3127,20 @@ async function fetchIsbnFields(isbn) {
     if (el && !el.value.trim()) el.value = val;
   };
 
+  // Always populate description and issues if blank — regardless of other fields
+  setIfBlank('mDescription', info.description);
+  if (info.issues_covered) setIfBlank('mIssuesCovered', info.issues_covered);
+
+  // Only auto-fill remaining fields when series+pages are both still blank
+  const hasData = document.getElementById('mSeries').value.trim()
+    && document.getElementById('mPages').value.trim();
+  if (hasData) return;
+
   setIfBlank('mSeries', info.title);
   setIfBlank('mSubtitle', info.subtitle);
   if (info.authors) setIfBlank('mWriters', info.authors);
   if (info.page_count) setIfBlank('mPages', info.page_count);
   if (info.pub_date) setIfBlank('mDate', info.pub_date.slice(0,10));
-  setIfBlank('mDescription', info.description);
-  // Wikipedia enrichment: populate issues_covered if available
-  if (info.issues_covered) setIfBlank('mIssuesCovered', info.issues_covered);
 
   // Cover fallback from lookup source
   if (info.cover_url) {
@@ -3421,22 +3427,32 @@ async function fetchDescription() {
   if (!isbn) { showToast('Enter an ISBN first', true); return; }
   showToast('Fetching description…');
 
-  let result = await lookupIsbn(isbn);
-  // If cache has no description, bypass it and do a fresh lookup
-  if (result.cached && !result.data?.description && !result.failed) {
-    const cachedEntry = ISBN_CACHE[isbn];
-    delete ISBN_CACHE[isbn];
-    result = await lookupIsbn(isbn);
-    // If still no description, restore the cache entry
-    if (!result.data?.description) ISBN_CACHE[isbn] = cachedEntry;
+  // Check cache first — use it only if it actually has a description
+  const cached = ISBN_CACHE[isbn];
+  if (cached && !cached.failed && cached.description) {
+    desc.value = cached.description;
+    showToast('✓ Description fetched (cache)');
+    return;
   }
-  if (result.data?.description) {
-    desc.value = result.data.description;
-    const src = result.cached ? 'cache' : (result.data._source || 'ISBN lookup');
-    showToast(`✓ Description fetched (${src})`);
-  } else {
-    showToast('No description found — enter manually', true);
+
+  // Bypass all caches and hit APIs directly (cache may have null description from earlier fetch)
+  const sources = [
+    [_tryGoogleBooks,  'Google Books'],
+    [_tryOpenLibrary,  'OpenLibrary'],
+    [_tryPrh,          'PRH'],
+  ];
+  for (const [fn, src] of sources) {
+    const data = await fn(isbn);
+    if (data?.description) {
+      desc.value = data.description;
+      // Patch the cached entry so future calls get the description too
+      if (ISBN_CACHE[isbn]) ISBN_CACHE[isbn].description = data.description;
+      try { await sbUpsert('isbn_cache', { isbn, description: data.description }, 'isbn'); } catch(e) {}
+      showToast(`✓ Description fetched (${src})`);
+      return;
+    }
   }
+  showToast('No description found — enter manually', true);
 }
 
 // ── Add/Edit Modal ─────────────────────────────
@@ -4366,7 +4382,7 @@ function rvRender() {
         // Description for back
         const descText = v.description ? rvEsc(v.description) : '';
         // Ownership badge
-        const owned = currentUserId() ? isOwned(v.id, currentUserId()) : false;
+        const owned = isOwned(v.id, currentUserId() || LEGACY_STOJR_ID);
         const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
         html += `<div class="rv-card-scene" id="rvCard_${v.id}"
             onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false);rvResetTilt(this)" onmousemove="rvTiltCard(event)">
@@ -4374,12 +4390,11 @@ function rvRender() {
             <div class="rv-card-inner">
               <div class="rv-card-front tc-${cls}">
                 <div class="rv-card-header">
-                  <span class="rv-card-type-lbl">${RV_TYPE_LABEL[type]}</span>
-                  <span class="rv-card-vol-badge">Vol ${v.vol||'?'}</span>
+                  <span class="rv-card-context" title="${rvEsc(v.series)} ${RV_TYPE_LABEL[type]} VOL ${v.vol||'?'}">${rvEsc(v.series)} ${RV_TYPE_LABEL[type]} VOL ${v.vol||'?'}</span>
                 </div>
                 <div class="rv-card-img">${coverImgHTML}</div>
                 <div class="rv-card-footer">
-                  <div class="rv-card-series-name" title="${rvEsc(v.series)}">${rvEsc(v.series)}</div>
+                  <div class="rv-card-series-name" title="${rvEsc(v.subtitle||v.series)}">${rvEsc(v.subtitle||v.series)}</div>
                   <div class="rv-card-badges">
                     <span class="rv-card-issue-pill">${issLabelEsc}</span>
                     <span class="rv-card-year-pill">${rvEsc(v.years||'')}</span>
@@ -5110,15 +5125,14 @@ function inlineRvSelectSeries(name) {
         <div class="rv-card-inner">
           <div class="rv-card-front tc-${typeKey}">
             <div class="rv-card-header">
-              <span class="rv-card-type-lbl">${escHtml(d.type||'')}</span>
-              <span class="rv-card-vol-badge">${d.vol||'?'}</span>
+              <span class="rv-card-context" title="${escHtml(d.series||'')} ${escHtml(d.type||'')} VOL ${d.vol||'?'}">${escHtml(d.series||'')} ${escHtml(d.type||'')} VOL ${d.vol||'?'}</span>
             </div>
             <div class="rv-card-img">
               ${coverUrl ? `<img src="${escHtml(coverUrl)}" alt="" loading="lazy">` : `<div class="rv-card-img-ph"><div class="rv-card-img-ph-icon">📖</div><div class="rv-card-img-ph-vol">Vol ${d.vol||'?'}</div></div>`}
               <div class="rv-card-holo"></div>
             </div>
             <div class="rv-card-footer">
-              <div class="rv-card-series-name">${escHtml(d.series||'')}</div>
+              <div class="rv-card-series-name">${escHtml(d.subtitle||d.series||'')}</div>
               <div class="rv-card-badges">
                 <span class="rv-card-issue-pill">${escHtml(d.issues_covered||'')}</span>
                 <span class="rv-card-year-pill">${escHtml(d.years||'')}</span>
