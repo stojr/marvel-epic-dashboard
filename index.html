@@ -902,7 +902,6 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
   <!-- Main Navigation -->
   <div class="main-nav" id="mainNav">
     <button class="main-nav-btn active" onclick="switchView('dashboard',this)">Dashboard</button>
-    <button class="main-nav-btn" onclick="switchView('run-view',this)">Run View</button>
     <button class="main-nav-btn" onclick="switchView('runs',this)">Runs Collected</button>
     <button class="main-nav-btn" onclick="switchView('browse',this)">Browse</button>
     <button class="main-nav-btn" onclick="switchView('era',this)">Era Explorer</button>
@@ -959,7 +958,6 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
     <!-- Desktop "Add Entry" button — hidden on mobile (FAB takes over) -->
     <button class="rbtn primary add-desktop" onclick="openAddModal()" title="Add new entry">＋ Add Entry</button>
     <button class="rbtn add-desktop" onclick="openBulkEdit()" title="Bulk edit all entries">✎ Bulk Edit</button>
-    <button class="rbtn" onclick="rvOpen()" title="View issue runs by series">📚 Run View</button>
     <button class="rbtn" onclick="exportCSV(false)">⬇ Export View</button>
     <button class="rbtn" onclick="exportCSV(true)">⬇ Export All</button>
     <button class="rbtn" onclick="resetAll()">↺ Reset</button>
@@ -1406,10 +1404,10 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
   <div class="rv-hdr">
     <div class="rv-title">📚 Run View</div>
     <div style="display:flex;align-items:center;gap:6px">
-      <button class="rv-mode-btn" id="rvGroupToggle" onclick="rvToggleGroupMode()" title="Toggle between Series and Series Group" style="font-size:11px;padding:4px 10px">By: Series</button>
+      <button class="rv-mode-btn on" id="rvGroupToggle" onclick="rvToggleGroupMode()" title="Toggle between Series and Series Group" style="font-size:11px;padding:4px 10px">By: Group</button>
       <div class="rv-select-wrap">
         <select id="rvSeriesSelect" onchange="rvSelectSeries(this.value)">
-          <option value="">— Select a series —</option>
+          <option value="">— Select a group —</option>
         </select>
       </div>
     </div>
@@ -1441,6 +1439,12 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         <div class="rv-tl-bar" id="rvTlBar"></div>
       </div>
       <div class="rv-timeline-years" id="rvTimelineYears"></div>
+    </div>
+    <!-- Card size slider for overlay -->
+    <div class="rv-scale-wrap" id="rvOverlayScaleWrap" style="display:none">
+      <label>Card Size</label>
+      <input type="range" class="rv-scale-slider" id="rvOverlayScaleSlider" min="0.4" max="2" step="0.05" value="1" oninput="rvOverlaySetScale(this.value)">
+      <span class="rv-scale-val" id="rvOverlayScaleVal">100%</span>
     </div>
   </div>
   <!-- Multi-series view -->
@@ -4113,7 +4117,7 @@ const RV = {
   typeFilters: { 'Epic': true, 'Modern': true, 'Omnibus': true, 'DC Finest': true, 'Complete': true, 'TPB': true },
   multiMode: false,
   multiSelected: new Set(),
-  groupMode: false,    // true = group by Series Group instead of Series
+  groupMode: true,     // true = group by Series Group instead of Series
   hideReprints: false, // true = exclude reprints from run views
   // Map: entryId -> timeline segment element (for hover cross-link)
   segMap: {},
@@ -4148,7 +4152,7 @@ function rvOpen() {
   rvPopulateSelect();
   RV.series = null;
   document.getElementById('rvSeriesSelect').value = '';
-  document.getElementById('rvBody').innerHTML = '<div class="rv-empty">Select a series above to view its issue run</div>';
+  document.getElementById('rvBody').innerHTML = '<div class="rv-empty">Select a ' + (RV.groupMode ? 'group' : 'series') + ' above to view its issue run</div>';
   document.getElementById('rvTimelineWrap').style.display = 'none';
   rvSetMultiMode(false);
 }
@@ -4319,9 +4323,11 @@ function rvBuildAllItems(vols, cls) {
 function rvRender() {
   const body = document.getElementById('rvBody');
   const tlWrap = document.getElementById('rvTimelineWrap');
+  const scaleWrap = document.getElementById('rvOverlayScaleWrap');
   if (!RV.series) {
     body.innerHTML = '<div class="rv-empty">Select a series above to view its issue run</div>';
     tlWrap.style.display = 'none';
+    if (scaleWrap) scaleWrap.style.display = 'none';
     return;
   }
   let vols;
@@ -4341,6 +4347,7 @@ function rvRender() {
     const label = RV.groupMode ? 'group' : 'series';
     body.innerHTML = `<div class="rv-empty">No <em>issues_covered</em> data for "${rvEsc(RV.series)}" yet — use Bulk Edit to populate it.</div>`;
     tlWrap.style.display = 'none';
+    if (scaleWrap) scaleWrap.style.display = 'none';
     return;
   }
   // In group mode, sort chronologically across all series in the group
@@ -4362,116 +4369,142 @@ function rvRender() {
     });
   }
 
-  // Group by type
-  const groups = {};
-  RV_TYPE_ORDER.forEach(t => { groups[t] = []; });
-  vols.forEach(v => { const t = v.type || 'Epic'; if (groups[t]) groups[t].push(v); });
-
   // Collect all real volumes with parsed issues for the timeline
   const allForTimeline = []; // { id, cls, iss, vol, years, series }
   let html = '';
   RV.segMap = {}; RV.cardMap = {};
 
-  RV_TYPE_ORDER.forEach(type => {
-    if (!RV.typeFilters[type]) return;
-    const rawItems = groups[type];
-    if (!rawItems.length) return;
-    const cls = RV_TYPE_CLASS[type];
-    const allItems = rvBuildAllItems(rawItems, cls);
-    const realCount = rawItems.length;
-    html += `<div class="rv-group"><div class="rv-group-label">${RV_TYPE_LABEL[type]} &mdash; ${realCount} vol${realCount>1?'s':''}</div><div class="rv-run">`;
+  // Helper to render a single card (shared by both modes)
+  function rvRenderCard(v, cls, type, totalCount) {
+    const iss = rvParseIssues(v.issues_covered);
+    const issLabel = iss ? `#${iss.start}–${iss.end}` : (v.issues_covered || '?');
+    if (iss) allForTimeline.push({ id: v.id, cls, iss, vol: v.vol, years: v.years, series: v.series });
+    const coverSrc = getCoverUrl(v);
+    const coverImgHTML = coverSrc
+      ? `<img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="markCoverFailed(this.src);this.parentNode.innerHTML='<div class=rv-card-img-ph><span class=rv-card-img-ph-icon>📚</span><span class=rv-card-img-ph-vol>VOL ${v.vol||'?'}</span></div>'">`
+      : `<div class="rv-card-img-ph"><span class="rv-card-img-ph-icon">📚</span><span class="rv-card-img-ph-vol">VOL ${v.vol||'?'}</span></div>`;
+    const issLabelEsc = issLabel.replace(/</g,'&lt;');
+    const cardNum = v.vol ? `${v.vol} of ${totalCount}` : '';
+    const descText = v.description ? rvEsc(v.description) : '';
+    const owned = isOwned(v.id, currentUserId() || LEGACY_STOJR_ID);
+    const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
+    const typeLbl = RV_TYPE_LABEL[type] || type;
+    return `<div class="rv-card-scene" id="rvCard_${v.id}" data-entry-id="${v.id}"
+        onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false);rvResetTilt(this)" onmousemove="rvTiltCard(event)"
+        onclick="rvCardZoneClick(event, this)">
+      <div class="rv-card-border">
+        <div class="rv-card-inner">
+          <div class="rv-card-front tc-${cls}">
+            <div class="rv-card-header">
+              <span class="rv-card-context" title="${rvEsc(v.series)} ${typeLbl} VOL ${v.vol||'?'}">${rvEsc(v.series)} ${typeLbl} VOL ${v.vol||'?'}</span>
+            </div>
+            <div class="rv-card-img">${coverImgHTML}</div>
+            <div class="rv-card-footer">
+              <div class="rv-card-series-name" title="${rvEsc(v.subtitle||v.series)}">${rvEsc(v.subtitle||v.series)}</div>
+              <div class="rv-card-badges">
+                <span class="rv-card-issue-pill">${issLabelEsc}</span>
+                <span class="rv-card-year-pill">${rvEsc(v.years||'')}</span>
+              </div>
+            </div>
+            ${cardNum ? `<div class="rv-card-num">${cardNum}</div>` : ''}
+            <div class="rv-card-holo"></div>
+          </div>
+          <div class="rv-card-back tc-${cls}">
+            <div class="rv-card-back-header">
+              <span class="rv-card-type-lbl">${typeLbl}</span>
+              <span class="rv-card-vol-badge" style="display:flex;align-items:center;gap:6px">Vol ${v.vol||'?'}${ownedBadge}</span>
+            </div>
+            <div class="rv-card-back-body">
+              <div class="rv-card-back-series">${rvEsc(v.series)}</div>
+              ${v.subtitle ? `<div class="rv-card-back-sub">${rvEsc(v.subtitle)}</div>` : ''}
+              <div class="rv-card-divider"></div>
+              ${descText ? `<div class="rv-card-back-desc">${descText}</div><div class="rv-card-divider"></div>` : ''}
+              <div class="rv-cs-grid">
+                <div class="rv-cs-item"><span class="rv-cs-l">Issues</span><span class="rv-cs-v accent">${issLabelEsc}</span></div>
+                <div class="rv-cs-item"><span class="rv-cs-l">Years</span><span class="rv-cs-v accent">${rvEsc(v.years||'—')}</span></div>
+                ${v.pages ? `<div class="rv-cs-item"><span class="rv-cs-l">Pages</span><span class="rv-cs-v">${v.pages}</span></div>` : ''}
+                ${v.writers ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Writers</span><span class="rv-cs-v">${rvEsc(v.writers)}</span></div>` : ''}
+                ${v.artists ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Artists</span><span class="rv-cs-v">${rvEsc(v.artists)}</span></div>` : ''}
+                ${v.isbn ? `<div class="rv-cs-item wide"><span class="rv-cs-l">ISBN</span><span class="rv-cs-v" style="font-size:9px">${rvEsc(v.isbn)}</span></div>` : ''}
+                ${v.pub ? `<div class="rv-cs-item"><span class="rv-cs-l">Publisher</span><span class="rv-cs-v">${rvEsc(v.pub)}</span></div>` : ''}
+                ${cardNum ? `<div class="rv-cs-item"><span class="rv-cs-l">Card</span><span class="rv-cs-v">${cardNum}</span></div>` : ''}
+              </div>
+            </div>
+            <div class="rv-card-back-footer">
+              <button class="rv-card-jump-btn" onclick="event.stopPropagation();rvJumpTo(${v.id})">View in table ↗</button>
+              <span class="rv-card-bce">BCE COMICS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
 
-    allItems.forEach((v, i) => {
-      const isPlaceholder = !!v.__placeholder;
-      const iss = isPlaceholder ? null : rvParseIssues(v.issues_covered);
-
+  if (RV.groupMode) {
+    // Group mode: flat list sorted by issue coverage (already sorted above)
+    // Filter by active type pills
+    const filtered = vols.filter(v => RV.typeFilters[v.type || 'Epic']);
+    html += '<div class="rv-run">';
+    filtered.forEach((v, i) => {
+      const cls = RV_TYPE_CLASS[v.type] || 'dc';
+      // Connector between cards
       if (i > 0) {
-        // Connector between items
-        const prevV = allItems[i-1];
-        const prevIss = prevV.__placeholder ? null : rvParseIssues(prevV.issues_covered);
-        if (isPlaceholder || prevV.__placeholder) {
-          html += `<div class="rv-connector placeholder-conn"><div class="rv-connector-line"></div></div>`;
+        const prev = filtered[i - 1];
+        const prevIss = rvParseIssues(prev.issues_covered);
+        const curIss = rvParseIssues(v.issues_covered);
+        if (prevIss && curIss) {
+          html += rvConnectorHTML(prevIss, curIss);
         } else {
-          html += rvConnectorHTML(prevIss, iss);
+          html += `<div class="rv-connector"><div class="rv-connector-line"></div><div class="rv-connector-badge">→</div></div>`;
         }
       }
-
-      if (isPlaceholder) {
-        html += `<div class="rv-card-scene placeholder-scene">
-          <div class="rv-card-placeholder-wrap">
-            <div class="rv-card-placeholder-inner">
-              <div class="rv-card-ph-vol">Vol ${v.vol}</div>
-              <div class="rv-card-ph-label">Not in<br>collection</div>
-            </div>
-          </div>
-        </div>`;
-      } else {
-        const issLabel = iss ? `#${iss.start}–${iss.end}` : (v.issues_covered || '?');
-        if (iss) allForTimeline.push({ id: v.id, cls, iss, vol: v.vol, years: v.years, series: v.series });
-        const coverSrc = getCoverUrl(v);
-        const coverImgHTML = coverSrc
-          ? `<img src="${rvEsc(coverSrc)}" alt="Vol ${v.vol} cover" loading="lazy" onerror="markCoverFailed(this.src);this.parentNode.innerHTML='<div class=rv-card-img-ph><span class=rv-card-img-ph-icon>📚</span><span class=rv-card-img-ph-vol>VOL ${v.vol||'?'}</span></div>'">`
-          : `<div class="rv-card-img-ph"><span class="rv-card-img-ph-icon">📚</span><span class="rv-card-img-ph-vol">VOL ${v.vol||'?'}</span></div>`;
-        const issLabelEsc = issLabel.replace(/</g,'&lt;');
-        // Card number (e.g. "3 of 12")
-        const cardNum = v.vol ? `${v.vol} of ${rawItems.length}` : '';
-        // Description for back
-        const descText = v.description ? rvEsc(v.description) : '';
-        // Ownership badge
-        const owned = isOwned(v.id, currentUserId() || LEGACY_STOJR_ID);
-        const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
-        html += `<div class="rv-card-scene" id="rvCard_${v.id}"
-            onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false);rvResetTilt(this)" onmousemove="rvTiltCard(event)">
-          <div class="rv-card-border" onclick="rvFlipCard(this)">
-            <div class="rv-card-inner">
-              <div class="rv-card-front tc-${cls}">
-                <div class="rv-card-header">
-                  <span class="rv-card-context" title="${rvEsc(v.series)} ${RV_TYPE_LABEL[type]} VOL ${v.vol||'?'}">${rvEsc(v.series)} ${RV_TYPE_LABEL[type]} VOL ${v.vol||'?'}</span>
-                </div>
-                <div class="rv-card-img">${coverImgHTML}</div>
-                <div class="rv-card-footer">
-                  <div class="rv-card-series-name" title="${rvEsc(v.subtitle||v.series)}">${rvEsc(v.subtitle||v.series)}</div>
-                  <div class="rv-card-badges">
-                    <span class="rv-card-issue-pill">${issLabelEsc}</span>
-                    <span class="rv-card-year-pill">${rvEsc(v.years||'')}</span>
-                  </div>
-                </div>
-                ${cardNum ? `<div class="rv-card-num">${cardNum}</div>` : ''}
-                <div class="rv-card-holo"></div>
-              </div>
-              <div class="rv-card-back tc-${cls}">
-                <div class="rv-card-back-header">
-                  <span class="rv-card-type-lbl">${RV_TYPE_LABEL[type]}</span>
-                  <span class="rv-card-vol-badge" style="display:flex;align-items:center;gap:6px">Vol ${v.vol||'?'}${ownedBadge}</span>
-                </div>
-                <div class="rv-card-back-body">
-                  <div class="rv-card-back-series">${rvEsc(v.series)}</div>
-                  ${v.subtitle ? `<div class="rv-card-back-sub">${rvEsc(v.subtitle)}</div>` : ''}
-                  <div class="rv-card-divider"></div>
-                  ${descText ? `<div class="rv-card-back-desc">${descText}</div><div class="rv-card-divider"></div>` : ''}
-                  <div class="rv-cs-grid">
-                    <div class="rv-cs-item"><span class="rv-cs-l">Issues</span><span class="rv-cs-v accent">${issLabelEsc}</span></div>
-                    <div class="rv-cs-item"><span class="rv-cs-l">Years</span><span class="rv-cs-v accent">${rvEsc(v.years||'—')}</span></div>
-                    ${v.pages ? `<div class="rv-cs-item"><span class="rv-cs-l">Pages</span><span class="rv-cs-v">${v.pages}</span></div>` : ''}
-                    ${v.writers ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Writers</span><span class="rv-cs-v">${rvEsc(v.writers)}</span></div>` : ''}
-                    ${v.artists ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Artists</span><span class="rv-cs-v">${rvEsc(v.artists)}</span></div>` : ''}
-                    ${v.isbn ? `<div class="rv-cs-item wide"><span class="rv-cs-l">ISBN</span><span class="rv-cs-v" style="font-size:9px">${rvEsc(v.isbn)}</span></div>` : ''}
-                    ${v.pub ? `<div class="rv-cs-item"><span class="rv-cs-l">Publisher</span><span class="rv-cs-v">${rvEsc(v.pub)}</span></div>` : ''}
-                    ${cardNum ? `<div class="rv-cs-item"><span class="rv-cs-l">Card</span><span class="rv-cs-v">${cardNum}</span></div>` : ''}
-                  </div>
-                </div>
-                <div class="rv-card-back-footer">
-                  <button class="rv-card-jump-btn" onclick="event.stopPropagation();rvJumpTo(${v.id})">View in table ↗</button>
-                  <span class="rv-card-bce">BCE COMICS</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>`;
-      }
+      html += rvRenderCard(v, cls, v.type || 'Epic', filtered.length);
     });
-    html += '</div></div>';
-  });
+    html += '</div>';
+  } else {
+    // Series mode: group by type
+    const groups = {};
+    RV_TYPE_ORDER.forEach(t => { groups[t] = []; });
+    vols.forEach(v => { const t = v.type || 'Epic'; if (groups[t]) groups[t].push(v); });
+
+    RV_TYPE_ORDER.forEach(type => {
+      if (!RV.typeFilters[type]) return;
+      const rawItems = groups[type];
+      if (!rawItems.length) return;
+      const cls = RV_TYPE_CLASS[type];
+      const allItems = rvBuildAllItems(rawItems, cls);
+      const realCount = rawItems.length;
+      html += `<div class="rv-group"><div class="rv-group-label">${RV_TYPE_LABEL[type]} &mdash; ${realCount} vol${realCount>1?'s':''}</div><div class="rv-run">`;
+
+      allItems.forEach((v, i) => {
+        const isPlaceholder = !!v.__placeholder;
+        if (i > 0) {
+          const prevV = allItems[i-1];
+          const prevIss = prevV.__placeholder ? null : rvParseIssues(prevV.issues_covered);
+          const curIss = isPlaceholder ? null : rvParseIssues(v.issues_covered);
+          if (isPlaceholder || prevV.__placeholder) {
+            html += `<div class="rv-connector placeholder-conn"><div class="rv-connector-line"></div></div>`;
+          } else {
+            html += rvConnectorHTML(prevIss, curIss);
+          }
+        }
+
+        if (isPlaceholder) {
+          html += `<div class="rv-card-scene placeholder-scene">
+            <div class="rv-card-placeholder-wrap">
+              <div class="rv-card-placeholder-inner">
+                <div class="rv-card-ph-vol">Vol ${v.vol}</div>
+                <div class="rv-card-ph-label">Not in<br>collection</div>
+              </div>
+            </div>
+          </div>`;
+        } else {
+          html += rvRenderCard(v, cls, type, realCount);
+        }
+      });
+      html += '</div></div>';
+    });
+  }
 
   body.innerHTML = html || '<div class="rv-empty">No volumes match the active type filters</div>';
 
@@ -4482,6 +4515,8 @@ function rvRender() {
   } else {
     tlWrap.style.display = 'none';
   }
+  // Show card size slider
+  if (scaleWrap) scaleWrap.style.display = html ? 'flex' : 'none';
 }
 
 // ── Timeline bar rendering ──
@@ -4608,6 +4643,29 @@ function rvHoverCard(id, on) {
 function rvFlipCard(border) {
   border.style.transform = ''; // reset any tilt
   border.classList.toggle('flipped');
+}
+
+// Zone-based click for overlay Run View: center=enlarge, edges=flip
+function rvCardZoneClick(e, scene) {
+  // Don't intercept clicks on buttons inside the card back
+  if (e.target.closest('.rv-card-jump-btn')) return;
+  const border = scene.querySelector('.rv-card-border');
+  if (!border) return;
+  const rect = scene.getBoundingClientRect();
+  const xPct = (e.clientX - rect.left) / rect.width;
+  if (xPct < 0.2 || xPct > 0.8) {
+    // Edge click → flip
+    rvFlipCard(border);
+  } else {
+    // Center click → enlarge
+    rvEnlargeCard(scene);
+  }
+}
+
+function rvOverlaySetScale(val) {
+  const scale = parseFloat(val);
+  document.getElementById('rvBody').style.setProperty('--rv-card-scale', scale);
+  document.getElementById('rvOverlayScaleVal').textContent = Math.round(scale * 100) + '%';
 }
 
 function rvHoverSeg(d, e, on) {
@@ -4852,11 +4910,6 @@ function closeDataQualityPanel() {
 let currentView = 'dashboard';
 
 function switchView(view, btn) {
-  // Run View opens the overlay instead of a view-section
-  if (view === 'run-view') {
-    rvOpen();
-    return;
-  }
   currentView = view;
   document.querySelectorAll('.main-nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
