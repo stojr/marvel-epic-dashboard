@@ -249,6 +249,10 @@ tr.expand-detail td{padding:10px 16px;border-bottom:1px solid var(--border)}
 .img-lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity .2s}
 .img-lightbox-overlay.open{opacity:1;pointer-events:auto}
 .img-lightbox-overlay img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:6px;box-shadow:0 8px 48px rgba(0,0,0,.7);cursor:zoom-out}
+/* Card enlarge lightbox */
+.rv-card-enlarge-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9998;opacity:0;pointer-events:none;transition:opacity .25s;cursor:zoom-out}
+.rv-card-enlarge-overlay.open{opacity:1;pointer-events:auto}
+.rv-card-enlarge-overlay .rv-card-scene{width:400px;height:592px;cursor:default;zoom:1}
 .cover-placeholder{font-family:var(--cf);font-size:10px;letter-spacing:1px;color:var(--dimtext);text-align:center;padding:8px}
 .cover-detail-row{display:flex;gap:14px;align-items:flex-start}
 .cover-detail-meta{display:flex;flex-direction:column;gap:8px;flex:1}
@@ -329,7 +333,7 @@ tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 /* ─── LIGHT MODE ─── */
 body.light{
   --bg:#f0f2f8;--surface:#ffffff;--surface2:#e8eaf2;--surface3:#dde0ee;
-  --border:#c8cad8;--border2:#b0b3c8;--text:#1a1a2e;--muted:#3d3d5c;--dimtext:#5a5a72;
+  --border:#c8cad8;--border2:#b0b3c8;--text:#111120;--muted:#2a2a44;--dimtext:#3d3d55;--dim:#4a4a66;
   --gold:#9c6e00; /* darken amber so it reads on white/light-grey backgrounds */
 }
 body.light::before{background-image:radial-gradient(circle,#00000009 1px,transparent 1px)}
@@ -463,24 +467,24 @@ footer a{color:var(--gold);text-decoration:none}
 .ro-hdr{background:var(--surface);border-bottom:2px solid var(--border2);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
 .ro-title{font-family:var(--hf);font-size:26px;letter-spacing:1px;color:var(--gold);white-space:nowrap}
 .ro-body{flex:1;overflow-y:auto;padding:20px 24px}
-.ro-list{display:flex;flex-direction:column;gap:0}
-.ro-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-bottom:none;transition:all .15s}
+.ro-list{display:flex;flex-direction:column;gap:0;max-width:900px}
+.ro-item{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-bottom:none;transition:all .15s}
 .ro-item:first-child{border-radius:var(--r) var(--r) 0 0}
 .ro-item:last-child{border-bottom:1px solid var(--border);border-radius:0 0 var(--r) var(--r)}
 .ro-item:hover{background:var(--surface2)}
 .ro-item.dragging{opacity:.35;background:var(--surface3)}
 .ro-item.ro-drop-above{box-shadow:0 -2px 0 0 var(--gold)}
 .ro-item.ro-drop-below{box-shadow:0 2px 0 0 var(--gold)}
-.ro-drag{cursor:grab;color:var(--dimtext);font-size:18px;flex-shrink:0;width:44px;min-height:44px;text-align:center;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none}
+.ro-drag{cursor:grab;color:var(--dimtext);font-size:20px;flex-shrink:0;width:44px;min-height:44px;text-align:center;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none}
 .ro-drag:active{cursor:grabbing}
-.ro-pos{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
-.ro-cover{width:32px;height:48px;border-radius:3px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+.ro-pos{font-family:var(--cf);font-size:15px;font-weight:700;color:var(--muted);width:32px;text-align:right;flex-shrink:0}
+.ro-cover{width:52px;height:78px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
 .ro-info{flex:1;min-width:0}
-.ro-info-title{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--text)}
-.ro-info-sub{font-family:var(--cf);font-size:10px;color:var(--muted)}
-.ro-remove{width:20px;height:20px;border-radius:3px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--dimtext);flex-shrink:0;transition:all .15s}
+.ro-info-title{font-family:var(--cf);font-size:16px;font-weight:700;color:var(--text);line-height:1.2}
+.ro-info-sub{font-family:var(--cf);font-size:13px;color:var(--muted);margin-top:2px;line-height:1.3}
+.ro-remove{width:32px;height:32px;border-radius:4px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--dimtext);flex-shrink:0;transition:all .15s}
 .ro-remove:hover{border-color:var(--red);color:var(--red)}
-.ro-actions{display:flex;gap:8px;padding:12px 0}
+.ro-actions{display:flex;gap:8px;padding:12px 0;align-items:center}
 .ro-empty{color:var(--muted);font-family:var(--cf);font-size:14px;letter-spacing:2px;text-align:center;padding:40px 20px}
 
 /* ─── LOADING OVERLAY ─── */
@@ -631,7 +635,14 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-group{margin-bottom:32px}
 .rv-group-label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 /* ─── CARD ROW ─── */
-.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:16px 0}
+.rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:16px 0;zoom:var(--rv-card-scale, 1)}
+/* ─── CARD SIZE SLIDER ─── */
+.rv-scale-wrap{position:fixed;bottom:24px;right:24px;z-index:50;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.rv-scale-wrap label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.rv-scale-slider{-webkit-appearance:none;appearance:none;width:120px;height:6px;border-radius:3px;background:var(--border);outline:none;cursor:pointer}
+.rv-scale-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--surface);box-shadow:0 0 6px rgba(255,210,52,.4)}
+.rv-scale-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--surface)}
+.rv-scale-val{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--gold);min-width:32px;text-align:center}
 /* ─── 1990s TRADING CARD ─── */
 /* Scene: perspective container + animated gradient border */
 .rv-card-scene{width:250px;height:370px;flex-shrink:0;perspective:1300px;cursor:pointer;position:relative;user-select:none}
@@ -754,31 +765,31 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-connector.gap .rv-connector-badge{background:rgba(255,65,54,.18);color:var(--red);border:1px dashed rgba(255,65,54,.5)}
 .rv-connector.overlap .rv-connector-badge{background:rgba(255,159,42,.18);color:var(--orange);border:1px solid rgba(255,159,42,.35)}
 /* ─── TIMELINE BAR ─── */
-.rv-timeline-wrap{background:var(--surface);border-top:2px solid var(--border2);padding:18px 24px 20px;flex-shrink:0}
-.rv-timeline-label{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-.rv-timeline-info{font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0}
-.rv-timeline-outer{position:relative;margin-bottom:6px}
+.rv-timeline-wrap{background:var(--surface);border-top:2px solid var(--border2);padding:20px 24px 24px;flex-shrink:0}
+.rv-timeline-label{font-family:var(--cf);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.rv-timeline-info{font-size:13px;color:var(--muted);font-weight:400;letter-spacing:0}
+.rv-timeline-outer{position:relative;margin-bottom:8px}
 /* Issue axis labels */
-.rv-timeline-axis{display:flex;justify-content:space-between;font-family:var(--cf);font-size:11px;font-weight:600;color:var(--dimtext);margin-bottom:4px;padding:0 2px}
+.rv-timeline-axis{display:flex;justify-content:space-between;font-family:var(--cf);font-size:13px;font-weight:600;color:var(--dimtext);margin-bottom:6px;padding:0 2px}
 /* Year axis labels below bar */
-.rv-timeline-years{display:flex;justify-content:space-between;font-family:var(--cf);font-size:11px;font-weight:600;color:var(--muted);margin-top:5px;padding:0 2px}
+.rv-timeline-years{display:flex;justify-content:space-between;font-family:var(--cf);font-size:13px;font-weight:600;color:var(--muted);margin-top:8px;padding:0 2px}
 /* The bar itself */
-.rv-tl-bar{width:100%;height:52px;background:var(--surface2);border-radius:6px;position:relative;overflow:visible;display:flex;align-items:stretch;border:1px solid var(--border)}
+.rv-tl-bar{width:100%;height:80px;background:var(--surface2);border-radius:6px;position:relative;overflow:visible;display:flex;align-items:stretch;border:1px solid var(--border)}
 /* Segments */
-.rv-tl-seg{position:absolute;top:0;bottom:0;border-radius:4px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:filter .15s,box-shadow .15s}
+.rv-tl-seg{position:absolute;top:0;bottom:0;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:filter .15s,box-shadow .15s}
 .rv-tl-seg:hover{filter:brightness(1.25);box-shadow:0 0 0 2px rgba(255,255,255,.3)}
 .rv-tl-seg.highlighted{filter:brightness(1.3);box-shadow:0 0 0 2px var(--gold)}
 .rv-tl-seg.epic{background:#3a6fa8}.rv-tl-seg.modern{background:#a07800}
 .rv-tl-seg.omni{background:#8050b0}.rv-tl-seg.dc{background:#1a6db5}
 .rv-tl-seg.complete{background:#a06000}.rv-tl-seg.tpb{background:#007040}
-.rv-tl-seg-label{font-family:var(--cf);font-size:11px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 5px;pointer-events:none}
+.rv-tl-seg-label{font-family:var(--cf);font-size:14px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 6px;pointer-events:none}
 /* Issue sub-label inside segment */
-.rv-tl-seg-issues{font-family:var(--cf);font-size:8px;font-weight:600;color:rgba(255,255,255,.55);white-space:nowrap;pointer-events:none;position:absolute;bottom:3px;left:0;right:0;text-align:center;overflow:hidden;text-overflow:clip}
+.rv-tl-seg-issues{font-family:var(--cf);font-size:11px;font-weight:600;color:rgba(255,255,255,.65);white-space:nowrap;pointer-events:none;position:absolute;bottom:4px;left:0;right:0;text-align:center;overflow:hidden;text-overflow:clip}
 /* Gap regions */
 .rv-tl-gap{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(255,65,54,.07) 0,rgba(255,65,54,.07) 4px,transparent 4px,transparent 8px);border-left:1px dashed rgba(255,65,54,.3);border-right:1px dashed rgba(255,65,54,.3);pointer-events:none}
-/* Tooltip */
-.rv-tl-tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:8px 12px;font-family:var(--cf);font-size:13px;color:var(--text);pointer-events:none;z-index:300;white-space:nowrap;display:none;box-shadow:0 4px 16px rgba(0,0,0,.6)}
-.rv-tl-tooltip.show{display:block}
+/* Tooltip — enhanced with card preview */
+.rv-tl-tooltip{position:fixed;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:10px 14px;font-family:var(--cf);font-size:14px;color:var(--text);pointer-events:none;z-index:300;display:none;box-shadow:0 6px 24px rgba(0,0,0,.7);max-width:300px}
+.rv-tl-tooltip.show{display:flex;gap:10px;align-items:flex-start}
 .rv-tl-tooltip-vol{font-size:15px;font-weight:700;color:var(--gold);margin-bottom:3px}
 /* ─── MULTI-SERIES TIMELINE ─── */
 .rv-multi-wrap{padding:20px 24px}
@@ -819,6 +830,11 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 </style>
 </head>
 <body>
+
+<!-- Card enlarge lightbox -->
+<div class="rv-card-enlarge-overlay" id="rvCardEnlargeOverlay" onclick="rvCloseEnlarge(event)">
+  <div id="rvCardEnlargeContent"></div>
+</div>
 
 <!-- Image lightbox -->
 <div class="img-lightbox-overlay" id="imgLightbox" onclick="closeImgLightbox()">
@@ -886,8 +902,9 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
   <!-- Main Navigation -->
   <div class="main-nav" id="mainNav">
     <button class="main-nav-btn active" onclick="switchView('dashboard',this)">Dashboard</button>
+    <button class="main-nav-btn" onclick="switchView('run-view',this)">Run View</button>
+    <button class="main-nav-btn" onclick="switchView('runs',this)">Runs Collected</button>
     <button class="main-nav-btn" onclick="switchView('browse',this)">Browse</button>
-    <button class="main-nav-btn" onclick="switchView('runs',this)">Runs</button>
     <button class="main-nav-btn" onclick="switchView('era',this)">Era Explorer</button>
     <button class="main-nav-btn" onclick="switchView('reading-order',this)">Reading Order</button>
   </div>
@@ -1076,10 +1093,10 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
   <div class="view-section" id="viewRuns">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:6px">
-        <button class="rv-mode-btn" id="inlineRvGroupToggle" onclick="inlineRvToggleGroupMode()" style="font-size:11px;padding:4px 10px">By: Series</button>
+        <button class="rv-mode-btn on" id="inlineRvGroupToggle" onclick="inlineRvToggleGroupMode()" style="font-size:11px;padding:4px 10px">By: Group</button>
         <div class="rv-select-wrap" style="min-width:250px">
           <select id="inlineRvSelect" onchange="inlineRvSelectSeries(this.value)">
-            <option value="">— Select a series —</option>
+            <option value="">— Select a group —</option>
           </select>
         </div>
       </div>
@@ -1104,7 +1121,25 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
     </div>
     <!-- Inline run view content -->
     <div id="inlineRvBody" style="min-height:200px">
-      <div class="rv-empty">Select a series or group above to view its issue run</div>
+      <div class="rv-empty">Select a group above to view its issue run</div>
+    </div>
+    <!-- Inline timeline -->
+    <div class="rv-timeline-wrap" id="inlineRvTimelineWrap" style="display:none">
+      <div class="rv-timeline-label">
+        <span>Issue Timeline</span>
+        <span class="rv-timeline-info" id="inlineRvTimelineInfo"></span>
+      </div>
+      <div class="rv-timeline-axis" id="inlineRvTimelineAxis"></div>
+      <div class="rv-timeline-outer">
+        <div class="rv-tl-bar" id="inlineRvTlBar"></div>
+      </div>
+      <div class="rv-timeline-years" id="inlineRvTimelineYears"></div>
+    </div>
+    <!-- Card size slider -->
+    <div class="rv-scale-wrap" id="inlineRvScaleWrap" style="display:none">
+      <label>Card Size</label>
+      <input type="range" class="rv-scale-slider" id="inlineRvScaleSlider" min="0.4" max="2" step="0.05" value="1" oninput="inlineRvSetScale(this.value)">
+      <span class="rv-scale-val" id="inlineRvScaleVal">100%</span>
     </div>
   </div><!-- /viewRuns -->
 
@@ -1136,7 +1171,8 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <div class="fg"><div class="flabel">Series Group</div>
         <select id="roGroupSelect" onchange="roSelectGroup(this.value)"><option value="">— Select a Group —</option></select></div>
-      <button class="rbtn" onclick="roAutoGenerate()" id="roAutoBtn" style="display:none">Auto-Generate Order</button>
+      <button class="rbtn" onclick="roAutoGenerate()" id="roAutoBtn" style="display:none" title="Automatically orders entries by year and issue number, excluding reprints. You can drag to reorder after generating.">Auto-Generate Order</button>
+      <span id="roAutoHelp" style="display:none;font-family:var(--cf);font-size:12px;color:var(--muted);max-width:360px;line-height:1.3">Sorts entries by year and issue number, excluding reprints. Drag items to customize the order.</span>
       <div style="flex:1"></div>
     </div>
     <div id="roContent">
@@ -4582,9 +4618,15 @@ function rvHoverSeg(d, e, on) {
   }
   const tooltip = document.getElementById('rvTooltip');
   if (on) {
-    tooltip.innerHTML = `<div class="rv-tl-tooltip-vol">Vol ${d.vol}</div>
-      <div>Issues: #${d.iss.start}–${d.iss.end} (${d.iss.end - d.iss.start + 1})</div>
-      ${d.years ? `<div>Years: ${d.years}</div>` : ''}`;
+    const entry = ALL_DATA.find(x => x.id === d.id);
+    const coverUrl = entry ? getCoverUrl(entry) : '';
+    const coverHtml = coverUrl ? `<img src="${rvEsc(coverUrl)}" alt="" style="width:60px;height:90px;object-fit:cover;border-radius:4px;border:1px solid var(--border);flex-shrink:0">` : '';
+    tooltip.innerHTML = `${coverHtml}<div>
+      <div class="rv-tl-tooltip-vol">Vol ${d.vol}</div>
+      <div style="font-size:13px;font-weight:600">Issues: #${d.iss.start}–${d.iss.end} (${d.iss.end - d.iss.start + 1})</div>
+      ${d.years ? `<div style="font-size:13px;color:var(--muted)">Years: ${d.years}</div>` : ''}
+      ${d.series ? `<div style="font-size:11px;color:var(--dimtext);margin-top:2px">${rvEsc(d.series)}</div>` : ''}
+    </div>`;
     rvMoveTooltip(e);
     tooltip.classList.add('show');
   } else {
@@ -4810,6 +4852,11 @@ function closeDataQualityPanel() {
 let currentView = 'dashboard';
 
 function switchView(view, btn) {
+  // Run View opens the overlay instead of a view-section
+  if (view === 'run-view') {
+    rvOpen();
+    return;
+  }
   currentView = view;
   document.querySelectorAll('.main-nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -4982,8 +5029,13 @@ function buildRunCompleteness() {
     if (d.reprint === 'Yes') return;
     const g = getEffectiveGroup(d);
     if (!g) return;
-    if (!groups[g]) groups[g] = { total: 0, owned: 0, name: g };
+    if (!groups[g]) groups[g] = { total: 0, owned: 0, name: g, minIssue: Infinity, minYear: Infinity };
     groups[g].total++;
+    // Track earliest issue and year for sorting
+    const issStart = d.issue_start || 0;
+    if (issStart && issStart < groups[g].minIssue) groups[g].minIssue = issStart;
+    const yrStart = d.year_start || parseYearStart(d.years) || 9999;
+    if (yrStart < groups[g].minYear) groups[g].minYear = yrStart;
     // Check if any user owns it
     if (currentUser && isOwned(d.id, currentUser.id)) groups[g].owned++;
     else if (!currentUser) {
@@ -4993,10 +5045,10 @@ function buildRunCompleteness() {
     }
   });
 
+  // Sort by earliest year then earliest issue (reading order)
   const sorted = Object.values(groups).filter(g => g.total >= 2).sort((a, b) => {
-    const pa = a.total ? a.owned / a.total : 0;
-    const pb = b.total ? b.owned / b.total : 0;
-    return pb - pa || b.total - a.total;
+    if (a.minYear !== b.minYear) return a.minYear - b.minYear;
+    return (a.minIssue === Infinity ? 0 : a.minIssue) - (b.minIssue === Infinity ? 0 : b.minIssue);
   });
 
   grid.innerHTML = sorted.slice(0, 50).map(g => {
@@ -5019,11 +5071,57 @@ function jumpToRunSeries(name) {
   }
 }
 
+function inlineRvSetScale(val) {
+  const scale = parseFloat(val);
+  document.getElementById('inlineRvBody').style.setProperty('--rv-card-scale', scale);
+  document.getElementById('inlineRvScaleVal').textContent = Math.round(scale * 100) + '%';
+}
+
+// Zone-based card click: center (60%) = enlarge, edges (20% each) = flip
+function inlineRvCardClick(e, scene) {
+  const border = scene.querySelector('.rv-card-border');
+  if (!border) return;
+  const rect = scene.getBoundingClientRect();
+  const xPct = (e.clientX - rect.left) / rect.width;
+  if (xPct < 0.2 || xPct > 0.8) {
+    // Edge click → flip
+    border.classList.toggle('flipped');
+  } else {
+    // Center click → enlarge card
+    rvEnlargeCard(scene);
+  }
+}
+
+function rvEnlargeCard(scene) {
+  const overlay = document.getElementById('rvCardEnlargeOverlay');
+  const content = document.getElementById('rvCardEnlargeContent');
+  const clone = scene.cloneNode(true);
+  clone.removeAttribute('onclick');
+  clone.style.zoom = '1';
+  // Allow flip on enlarged card edges
+  clone.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const border = clone.querySelector('.rv-card-border');
+    if (!border) return;
+    const rect = clone.getBoundingClientRect();
+    const xPct = (e.clientX - rect.left) / rect.width;
+    if (xPct < 0.2 || xPct > 0.8) border.classList.toggle('flipped');
+  });
+  content.innerHTML = '';
+  content.appendChild(clone);
+  overlay.classList.add('open');
+}
+
+function rvCloseEnlarge(e) {
+  if (e.target.closest('.rv-card-scene')) return;
+  document.getElementById('rvCardEnlargeOverlay').classList.remove('open');
+}
+
 // ═══════════════════════════════════════════════════
 //  INLINE RUNS VIEW (mirrors Run View overlay logic)
 // ═══════════════════════════════════════════════════
 let inlineRvInited = false;
-let inlineRvGroupMode = false;
+let inlineRvGroupMode = true;
 let inlineRvHideReprints = false;
 let inlineRvActiveTypes = new Set(['Epic', 'Modern', 'Omnibus', 'DC Finest', 'Complete', 'TPB']);
 
@@ -5083,7 +5181,9 @@ function inlineRvToggleMultiMode() {
 
 function inlineRvSelectSeries(name) {
   if (!name) {
-    document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">Select a series above to view its issue run</div>';
+    document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">Select a group above to view its issue run</div>';
+    document.getElementById('inlineRvScaleWrap').style.display = 'none';
+    document.getElementById('inlineRvTimelineWrap').style.display = 'none';
     return;
   }
   // Filter entries matching the selected series/group
@@ -5093,7 +5193,22 @@ function inlineRvSelectSeries(name) {
   });
   if (inlineRvHideReprints) entries = entries.filter(d => d.reprint !== 'Yes');
   entries = entries.filter(d => inlineRvActiveTypes.has(d.type));
-  entries.sort((a, b) => (a.vol || 0) - (b.vol || 0));
+  if (inlineRvGroupMode) {
+    // In group mode, sort by issue coverage (chronological reading order)
+    entries.sort((a, b) => {
+      if (a.sort_order != null && b.sort_order != null) return a.sort_order - b.sort_order;
+      if (a.sort_order != null) return -1;
+      if (b.sort_order != null) return 1;
+      const ya = a.year_start || parseYearStart(a.years) || 9999;
+      const yb = b.year_start || parseYearStart(b.years) || 9999;
+      if (ya !== yb) return ya - yb;
+      const ia = a.issue_start || 0, ib = b.issue_start || 0;
+      if (ia !== ib) return ia - ib;
+      return (a.date || '').localeCompare(b.date || '');
+    });
+  } else {
+    entries.sort((a, b) => (a.vol || 0) - (b.vol || 0));
+  }
 
   if (!entries.length) {
     document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">No matching entries for this selection</div>';
@@ -5120,7 +5235,14 @@ function inlineRvSelectSeries(name) {
       html += `<div class="rv-connector ${connType}"><div class="rv-connector-line"></div><div class="rv-connector-badge">${connLabel}</div></div>`;
     }
 
-    html += `<div class="rv-card-scene" onclick="openEditModal(${d.id})">
+    const descText = d.description ? escHtml(d.description) : '';
+    const issLabel = d.issues_covered ? escHtml(d.issues_covered) : '?';
+    const owned = isOwned(d.id, currentUserId() || LEGACY_STOJR_ID);
+    const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
+    const cardNum = d.vol ? `${d.vol} of ${entries.length}` : '';
+    const typeLbl = d.type === 'Epic' ? 'Classic Epic' : d.type === 'Modern' ? 'Modern Era' : d.type === 'Complete' ? 'Complete Collection' : d.type || '';
+
+    html += `<div class="rv-card-scene" data-entry-id="${d.id}" onclick="inlineRvCardClick(event, this)">
       <div class="rv-card-border">
         <div class="rv-card-inner">
           <div class="rv-card-front tc-${typeKey}">
@@ -5134,9 +5256,36 @@ function inlineRvSelectSeries(name) {
             <div class="rv-card-footer">
               <div class="rv-card-series-name">${escHtml(d.subtitle||d.series||'')}</div>
               <div class="rv-card-badges">
-                <span class="rv-card-issue-pill">${escHtml(d.issues_covered||'')}</span>
+                <span class="rv-card-issue-pill">${issLabel}</span>
                 <span class="rv-card-year-pill">${escHtml(d.years||'')}</span>
               </div>
+            </div>
+            ${cardNum ? `<div class="rv-card-num">${cardNum}</div>` : ''}
+          </div>
+          <div class="rv-card-back tc-${typeKey}">
+            <div class="rv-card-back-header">
+              <span class="rv-card-type-lbl">${typeLbl}</span>
+              <span class="rv-card-vol-badge" style="display:flex;align-items:center;gap:6px">Vol ${d.vol||'?'}${ownedBadge}</span>
+            </div>
+            <div class="rv-card-back-body">
+              <div class="rv-card-back-series">${escHtml(d.series||'')}</div>
+              ${d.subtitle ? `<div class="rv-card-back-sub">${escHtml(d.subtitle)}</div>` : ''}
+              <div class="rv-card-divider"></div>
+              ${descText ? `<div class="rv-card-back-desc">${descText}</div><div class="rv-card-divider"></div>` : ''}
+              <div class="rv-cs-grid">
+                <div class="rv-cs-item"><span class="rv-cs-l">Issues</span><span class="rv-cs-v accent">${issLabel}</span></div>
+                <div class="rv-cs-item"><span class="rv-cs-l">Years</span><span class="rv-cs-v accent">${escHtml(d.years||'—')}</span></div>
+                ${d.pages ? `<div class="rv-cs-item"><span class="rv-cs-l">Pages</span><span class="rv-cs-v">${d.pages}</span></div>` : ''}
+                ${d.writers ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Writers</span><span class="rv-cs-v">${escHtml(d.writers)}</span></div>` : ''}
+                ${d.artists ? `<div class="rv-cs-item wide"><span class="rv-cs-l">Artists</span><span class="rv-cs-v">${escHtml(d.artists)}</span></div>` : ''}
+                ${d.isbn ? `<div class="rv-cs-item wide"><span class="rv-cs-l">ISBN</span><span class="rv-cs-v" style="font-size:9px">${escHtml(d.isbn)}</span></div>` : ''}
+                ${d.pub ? `<div class="rv-cs-item"><span class="rv-cs-l">Publisher</span><span class="rv-cs-v">${escHtml(d.pub)}</span></div>` : ''}
+                ${cardNum ? `<div class="rv-cs-item"><span class="rv-cs-l">Card</span><span class="rv-cs-v">${cardNum}</span></div>` : ''}
+              </div>
+            </div>
+            <div class="rv-card-back-footer">
+              <button class="rv-card-jump-btn" onclick="event.stopPropagation();openEditModal(${d.id})">Edit entry ↗</button>
+              <span class="rv-card-bce">BCE COMICS</span>
             </div>
           </div>
         </div>
@@ -5146,6 +5295,100 @@ function inlineRvSelectSeries(name) {
   html += '</div>';
 
   document.getElementById('inlineRvBody').innerHTML = html;
+  // Show the card size slider
+  document.getElementById('inlineRvScaleWrap').style.display = 'flex';
+
+  // Build inline timeline
+  inlineRvBuildTimeline(entries);
+}
+
+function inlineRvBuildTimeline(entries) {
+  const tlWrap = document.getElementById('inlineRvTimelineWrap');
+  // Parse issues for each entry
+  const items = [];
+  entries.forEach(d => {
+    const iss = rvParseIssues(d.issues_covered);
+    if (!iss) return;
+    const typeKey = d.type === 'Epic' ? 'epic' : d.type === 'Modern' ? 'modern' : d.type === 'Omnibus' ? 'omni' : d.type === 'DC Finest' ? 'dc' : d.type === 'Complete' ? 'complete' : d.type === 'TPB' ? 'tpb' : 'dc';
+    items.push({ id: d.id, cls: typeKey, iss, vol: d.vol, years: d.years, series: d.series });
+  });
+  if (!items.length) { tlWrap.style.display = 'none'; return; }
+  tlWrap.style.display = 'block';
+
+  const minIss = Math.min(...items.map(d => d.iss.start));
+  const maxIss = Math.max(...items.map(d => d.iss.end));
+  const totalSpan = maxIss - minIss + 1;
+
+  const bar = document.getElementById('inlineRvTlBar');
+  bar.innerHTML = '';
+
+  // Gaps
+  const sorted = items.slice().sort((a,b) => a.iss.start - b.iss.start);
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i-1].iss.end;
+    const curr = sorted[i].iss.start;
+    if (curr > prev + 1) {
+      const gap = document.createElement('div');
+      gap.className = 'rv-tl-gap';
+      gap.style.left = ((prev + 1 - minIss) / totalSpan * 100).toFixed(3) + '%';
+      gap.style.width = ((curr - prev - 1) / totalSpan * 100).toFixed(3) + '%';
+      gap.title = `Gap: issues ${prev+1}–${curr-1}`;
+      bar.appendChild(gap);
+    }
+  }
+
+  // Segments
+  items.forEach(d => {
+    const left = ((d.iss.start - minIss) / totalSpan * 100).toFixed(3);
+    const width = ((d.iss.end - d.iss.start + 1) / totalSpan * 100).toFixed(3);
+    const seg = document.createElement('div');
+    seg.className = `rv-tl-seg ${d.cls}`;
+    seg.style.left = left + '%';
+    seg.style.width = `max(${width}%, 4px)`;
+    seg.innerHTML = `<span class="rv-tl-seg-label">V${d.vol}</span><span class="rv-tl-seg-issues">#${d.iss.start}–${d.iss.end}</span>`;
+    bar.appendChild(seg);
+  });
+
+  // Issue axis
+  const axisTop = document.getElementById('inlineRvTimelineAxis');
+  const tickCount = Math.min(10, totalSpan);
+  const step = Math.ceil(totalSpan / tickCount);
+  let axisTicks = '';
+  for (let i = minIss; i <= maxIss; i += step) axisTicks += `<span>#${i}</span>`;
+  axisTicks += `<span>#${maxIss}</span>`;
+  axisTop.innerHTML = axisTicks;
+
+  // Year axis
+  const yearAxis = document.getElementById('inlineRvTimelineYears');
+  const yearTicks = [];
+  sorted.forEach(d => {
+    if (d.years) {
+      const yrStart = d.years.match(/\d{4}/);
+      const yrAll = d.years.match(/\d{4}/g);
+      const yrEnd = yrAll ? yrAll[yrAll.length - 1] : null;
+      const pctStart = ((d.iss.start - minIss) / totalSpan * 100);
+      if (yrStart) yearTicks.push({ pct: pctStart, label: yrStart[0] });
+      if (yrEnd && yrEnd !== yrStart[0]) {
+        const pctEnd = ((d.iss.end - minIss) / totalSpan * 100);
+        yearTicks.push({ pct: pctEnd, label: yrEnd });
+      }
+    }
+  });
+  yearTicks.sort((a, b) => a.pct - b.pct);
+  const filtered = yearTicks.filter((t, i) =>
+    i === 0 || (Math.abs(t.pct - yearTicks[i-1].pct) > 6 && t.label !== yearTicks[i-1].label)
+  );
+  yearAxis.innerHTML = filtered.map(t => `<span>${t.label}</span>`).join('');
+
+  // Info line
+  const totalCovered = items.reduce((s, d) => s + (d.iss.end - d.iss.start + 1), 0);
+  const allYearStarts = items.map(d => rvYearStart(d.years)).filter(y => y < 9999);
+  const allYearEnds = items.map(d => rvYearEnd(d.years)).filter(y => y > 0);
+  const minYear = allYearStarts.length ? Math.min(...allYearStarts) : null;
+  const maxYear = allYearEnds.length ? Math.max(...allYearEnds) : null;
+  const yearRange = minYear && maxYear ? ` · ${minYear}–${maxYear}` : '';
+  document.getElementById('inlineRvTimelineInfo').textContent =
+    `#${minIss}–#${maxIss} · ${totalCovered} issues covered · ${items.length} vol${items.length>1?'s':''}${yearRange}`;
 }
 
 // ═══════════════════════════════════════════════════
@@ -5293,6 +5536,7 @@ function initReadingOrderView() {
 function roSelectGroup(name) {
   roCurrentGroup = name;
   document.getElementById('roAutoBtn').style.display = name ? '' : 'none';
+  document.getElementById('roAutoHelp').style.display = name ? '' : 'none';
   if (!name) {
     document.getElementById('roContent').innerHTML = '<div class="ro-empty">Select a Series Group to view or create a reading order</div>';
     return;
@@ -5340,10 +5584,11 @@ function renderReadingOrder() {
     html += `<div class="ro-item" data-ro-idx="${i}" data-ro-id="${id}">
       <span class="ro-drag" data-ro-idx="${i}">⠿</span>
       <span class="ro-pos">${i + 1}</span>
-      ${coverUrl ? `<img class="ro-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy">` : `<div class="ro-cover" style="display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--dimtext)">📖</div>`}
+      ${coverUrl ? `<img class="ro-cover" src="${escHtml(coverUrl)}" alt="" loading="lazy">` : `<div class="ro-cover" style="display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--dimtext)">📖</div>`}
       <div class="ro-info">
         <div class="ro-info-title">${escHtml(d.series||'')} ${d.vol ? 'Vol ' + d.vol : ''}</div>
-        <div class="ro-info-sub">${escHtml(d.type||'')} · ${escHtml(d.years||'')} · ${escHtml(d.issues_covered||'')}</div>
+        <div class="ro-info-sub">${escHtml(d.type||'')} · ${escHtml(d.years||'')}</div>
+        <div class="ro-info-sub" style="color:var(--text);font-weight:600">${escHtml(d.issues_covered||'')}</div>
       </div>
       <button class="ro-remove" onclick="event.stopPropagation();roRemove(${i})" title="Remove">✕</button>
     </div>`;
