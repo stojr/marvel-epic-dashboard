@@ -902,6 +902,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
   <!-- Main Navigation -->
   <div class="main-nav" id="mainNav">
     <button class="main-nav-btn active" onclick="switchView('dashboard',this)">Dashboard</button>
+    <button class="main-nav-btn" onclick="switchView('run-view',this)">Runs</button>
     <button class="main-nav-btn" onclick="switchView('runs',this)">Runs Collected</button>
     <button class="main-nav-btn" onclick="switchView('browse',this)">Browse</button>
     <button class="main-nav-btn" onclick="switchView('era',this)">Era Explorer</button>
@@ -4910,6 +4911,11 @@ function closeDataQualityPanel() {
 let currentView = 'dashboard';
 
 function switchView(view, btn) {
+  // Runs opens the overlay Run View
+  if (view === 'run-view') {
+    rvOpen();
+    return;
+  }
   currentView = view;
   document.querySelectorAll('.main-nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
