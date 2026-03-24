@@ -4603,11 +4603,9 @@ function rvRender() {
     });
   }
 
-  const singleView = document.getElementById('rvSingleView');
-  const centerLayout = document.getElementById('rvCenterLayout');
   if (RV.centerMode) {
     // Center timeline mode: hide card view, show centered layout
-    if (singleView) singleView.style.display = 'none';
+    if (singleViewEl) singleViewEl.style.display = 'none';
     if (centerLayout) centerLayout.style.display = 'flex';
     if (allForTimeline.length) {
       rvRenderCenterTimeline(allForTimeline, vols);
@@ -4617,7 +4615,7 @@ function rvRender() {
     }
   } else {
     // Standard card view
-    if (singleView) singleView.style.display = 'flex';
+    if (singleViewEl) singleViewEl.style.display = 'flex';
     if (centerLayout) centerLayout.style.display = 'none';
     body.style.display = '';
     body.innerHTML = html || '<div class="rv-empty">No volumes match the active type filters</div>';
