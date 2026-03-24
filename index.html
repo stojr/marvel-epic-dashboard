@@ -827,6 +827,57 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-mt-stat.released{background:rgba(62,255,138,.08);color:var(--green);border:1px solid rgba(62,255,138,.25)}
 .rv-mt-stat.owned{background:rgba(255,210,52,.08);color:var(--gold);border:1px solid rgba(255,210,52,.25)}
 .rv-mt-series-years{font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-top:-2px;text-align:right;width:170px;flex-shrink:0}
+/* ─── CENTERED TIMELINE LAYOUT ─── */
+#rvCenterLayout{overflow-x:auto;flex:1;background:var(--surface);display:flex;flex-direction:column}
+.rv-ctl-inner{position:relative;min-width:100%;display:flex;flex-direction:column;padding-bottom:16px}
+.rv-ctl-legend{display:flex;gap:20px;padding:12px 32px 8px;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;border-bottom:1px solid var(--border);margin-bottom:4px}
+.rv-ctl-legend-item{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.rv-ctl-legend-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+.rv-ctl-legend-dot.owned{background:var(--green)}
+.rv-ctl-legend-dot.missing{background:var(--orange);opacity:.75}
+.rv-ctl-legend-dot.upcoming{background:#4a9eff}
+.rv-ctl-top{position:relative;height:210px;flex-shrink:0}
+.rv-ctl-bottom{position:relative;height:210px;flex-shrink:0}
+.rv-ctl-spine{padding:0 32px;flex-shrink:0}
+.rv-ctl-axis-top{display:flex;justify-content:space-between;font-family:var(--cf);font-size:12px;color:var(--dimtext);padding:0 2px;margin-bottom:6px}
+.rv-ctl-bar{width:100%;height:60px;background:var(--surface2);border-radius:6px;position:relative;overflow:visible;border:1px solid var(--border)}
+.rv-ctl-axis-bottom{display:flex;justify-content:space-between;font-family:var(--cf);font-size:12px;color:var(--muted);padding:0 2px;margin-top:6px}
+/* Compact card tile — positioned absolute within top/bottom zones */
+.rv-ctl-tile{position:absolute;width:138px;transform:translateX(-50%);display:flex;flex-direction:column;cursor:default}
+.rv-ctl-tile-top{bottom:0}
+.rv-ctl-tile-bottom{top:0}
+/* Card box */
+.rv-ctl-card{border-radius:6px;padding:8px 10px;font-family:var(--cf);font-size:11px;line-height:1.4;background:var(--surface2);border:2px solid var(--border);position:relative}
+.rv-ctl-card.owned{border-color:var(--green);background:rgba(62,255,138,.08);box-shadow:0 0 10px rgba(62,255,138,.18)}
+.rv-ctl-card.missing{border-style:dashed;border-color:var(--orange);opacity:.78}
+.rv-ctl-card.upcoming{border-style:dotted;border-color:#4a9eff;background:rgba(74,158,255,.06)}
+/* Vertical connector line */
+.rv-ctl-connector{width:2px;flex-shrink:0;align-self:center}
+.rv-ctl-tile-top .rv-ctl-connector{height:20px;order:2}
+.rv-ctl-tile-bottom .rv-ctl-connector{height:20px;order:-1}
+.rv-ctl-connector.owned{background:var(--green)}
+.rv-ctl-connector.missing{background:var(--orange)}
+.rv-ctl-connector.upcoming{background:#4a9eff}
+.rv-ctl-connector.default{background:var(--border2)}
+/* Dot on the timeline bar where connector meets */
+.rv-ctl-dot{position:absolute;width:8px;height:8px;border-radius:50%;transform:translateX(-50%);top:50%;margin-top:-4px}
+.rv-ctl-dot.owned{background:var(--green)}
+.rv-ctl-dot.missing{background:var(--orange)}
+.rv-ctl-dot.upcoming{background:#4a9eff}
+/* Status badge */
+.rv-ctl-status{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:1px 5px;border-radius:2px;margin-bottom:4px}
+.rv-ctl-status.owned{background:rgba(62,255,138,.2);color:var(--green)}
+.rv-ctl-status.missing{background:rgba(255,159,42,.2);color:var(--orange)}
+.rv-ctl-status.upcoming{background:rgba(74,158,255,.2);color:#4a9eff}
+.rv-ctl-vol{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.rv-ctl-issues{font-size:12px;font-weight:700;color:var(--dimtext)}
+.rv-ctl-years{font-size:10px;color:var(--muted);margin-top:1px}
+.rv-ctl-series{font-size:10px;color:var(--dimtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+/* Segments inside center bar reuse existing segment CSS but scoped */
+.rv-ctl-bar .rv-tl-seg{cursor:default}
+.rv-ctl-bar .rv-tl-seg:hover{filter:brightness(1.15)}
+/* Center view toggle button active state */
+.rv-mode-btn.center-active{background:rgba(255,210,52,.15);border-color:var(--gold);color:var(--gold)}
 </style>
 </head>
 <body>
@@ -1422,6 +1473,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
     </div>
     <span class="rv-pill" id="rvReprintToggle" style="cursor:pointer;font-size:11px" onclick="rvToggleReprints(this)">Hide Reprints</span>
     <button class="rv-mode-btn" id="rvMultiBtn" onclick="rvToggleMultiMode()">⊞ Multi-Series</button>
+    <button class="rv-mode-btn" id="rvCenterToggle" onclick="rvToggleCenterView()" title="Centered timeline — cards above and below the timeline bar">⊟ Center Timeline</button>
     <div class="rv-hdr-spacer"></div>
     <button class="rbtn" onclick="rvClose()">✕ Close</button>
   </div>
@@ -1446,6 +1498,27 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       <label>Card Size</label>
       <input type="range" class="rv-scale-slider" id="rvOverlayScaleSlider" min="0.4" max="2" step="0.05" value="1" oninput="rvOverlaySetScale(this.value)">
       <span class="rv-scale-val" id="rvOverlayScaleVal">100%</span>
+    </div>
+  </div>
+  <!-- Center Timeline view -->
+  <div id="rvCenterLayout" style="display:none;flex:1;overflow-x:auto;overflow-y:auto;background:var(--surface)">
+    <div class="rv-ctl-inner" id="rvCtlInner">
+      <!-- Legend -->
+      <div class="rv-ctl-legend" id="rvCtlLegend">
+        <div class="rv-ctl-legend-item"><div class="rv-ctl-legend-dot owned"></div>In My Collection</div>
+        <div class="rv-ctl-legend-item"><div class="rv-ctl-legend-dot missing"></div>Not in Collection</div>
+        <div class="rv-ctl-legend-item"><div class="rv-ctl-legend-dot upcoming"></div>Not Yet Released</div>
+      </div>
+      <!-- Cards above timeline -->
+      <div class="rv-ctl-top" id="rvCtlTop"></div>
+      <!-- Timeline spine -->
+      <div class="rv-ctl-spine" id="rvCtlSpine">
+        <div class="rv-ctl-axis-top" id="rvCtlAxisTop"></div>
+        <div class="rv-ctl-bar" id="rvCtlBar"></div>
+        <div class="rv-ctl-axis-bottom" id="rvCtlAxisBottom"></div>
+      </div>
+      <!-- Cards below timeline -->
+      <div class="rv-ctl-bottom" id="rvCtlBottom"></div>
     </div>
   </div>
   <!-- Multi-series view -->
@@ -4120,6 +4193,7 @@ const RV = {
   multiSelected: new Set(),
   groupMode: true,     // true = group by Series Group instead of Series
   hideReprints: false, // true = exclude reprints from run views
+  centerMode: false,   // true = centered timeline view (cards above/below bar)
   // Map: entryId -> timeline segment element (for hover cross-link)
   segMap: {},
   cardMap: {}
@@ -4241,10 +4315,26 @@ function rvToggleMultiMode() {
 function rvSetMultiMode(on) {
   RV.multiMode = on;
   document.getElementById('rvMultiBtn').classList.toggle('on', on);
-  document.getElementById('rvSingleView').style.display = on ? 'none' : 'flex';
   document.getElementById('rvMultiView').style.display  = on ? 'block' : 'none';
   document.getElementById('rvTypePills').style.display  = on ? 'none' : '';
-  if (on) rvRenderMulti();
+  const cl = document.getElementById('rvCenterLayout');
+  const sv = document.getElementById('rvSingleView');
+  if (on) {
+    // Multi-series: hide both single-series and center layout
+    if (sv) sv.style.display = 'none';
+    if (cl) cl.style.display = 'none';
+    rvRenderMulti();
+  } else {
+    // Back to single-series: restore correct layout based on centerMode
+    if (RV.centerMode) {
+      if (sv) sv.style.display = 'none';
+      if (cl) cl.style.display = 'flex';
+    } else {
+      if (sv) sv.style.display = 'flex';
+      if (cl) cl.style.display = 'none';
+    }
+    rvRender();
+  }
 }
 function rvToggleMultiSeries(s) {
   if (RV.multiSelected.has(s)) RV.multiSelected.delete(s);
@@ -4325,10 +4415,14 @@ function rvRender() {
   const body = document.getElementById('rvBody');
   const tlWrap = document.getElementById('rvTimelineWrap');
   const scaleWrap = document.getElementById('rvOverlayScaleWrap');
+  const centerLayout = document.getElementById('rvCenterLayout');
+  const singleViewEl = document.getElementById('rvSingleView');
   if (!RV.series) {
+    if (singleViewEl) singleViewEl.style.display = 'flex';
     body.innerHTML = '<div class="rv-empty">Select a series above to view its issue run</div>';
     tlWrap.style.display = 'none';
     if (scaleWrap) scaleWrap.style.display = 'none';
+    if (centerLayout) centerLayout.style.display = 'none';
     return;
   }
   let vols;
@@ -4345,7 +4439,9 @@ function rvRender() {
   // Apply reprint filter
   if (RV.hideReprints) vols = vols.filter(d => d.reprint !== 'Yes');
   if (!vols.length) {
-    const label = RV.groupMode ? 'group' : 'series';
+    if (singleViewEl) singleViewEl.style.display = 'flex';
+    if (centerLayout) centerLayout.style.display = 'none';
+    body.style.display = '';
     body.innerHTML = `<div class="rv-empty">No <em>issues_covered</em> data for "${rvEsc(RV.series)}" yet — use Bulk Edit to populate it.</div>`;
     tlWrap.style.display = 'none';
     if (scaleWrap) scaleWrap.style.display = 'none';
@@ -4507,17 +4603,32 @@ function rvRender() {
     });
   }
 
-  body.innerHTML = html || '<div class="rv-empty">No volumes match the active type filters</div>';
-
-  // Build timeline
-  if (allForTimeline.length) {
-    rvRenderTimeline(allForTimeline);
-    tlWrap.style.display = 'block';
+  const singleView = document.getElementById('rvSingleView');
+  const centerLayout = document.getElementById('rvCenterLayout');
+  if (RV.centerMode) {
+    // Center timeline mode: hide card view, show centered layout
+    if (singleView) singleView.style.display = 'none';
+    if (centerLayout) centerLayout.style.display = 'flex';
+    if (allForTimeline.length) {
+      rvRenderCenterTimeline(allForTimeline, vols);
+    } else {
+      const inner = document.getElementById('rvCtlInner');
+      if (inner) inner.innerHTML = '<div class="rv-empty" style="padding:40px">No issue coverage data to display in this view.</div>';
+    }
   } else {
-    tlWrap.style.display = 'none';
+    // Standard card view
+    if (singleView) singleView.style.display = 'flex';
+    if (centerLayout) centerLayout.style.display = 'none';
+    body.style.display = '';
+    body.innerHTML = html || '<div class="rv-empty">No volumes match the active type filters</div>';
+    if (allForTimeline.length) {
+      rvRenderTimeline(allForTimeline);
+      tlWrap.style.display = 'block';
+    } else {
+      tlWrap.style.display = 'none';
+    }
+    if (scaleWrap) scaleWrap.style.display = html ? 'flex' : 'none';
   }
-  // Show card size slider
-  if (scaleWrap) scaleWrap.style.display = html ? 'flex' : 'none';
 }
 
 // ── Timeline bar rendering ──
@@ -4611,6 +4722,166 @@ function rvRenderTimeline(items) {
   const yearRange = minYear && maxYear ? ` · ${minYear}–${maxYear}` : '';
   document.getElementById('rvTimelineInfo').textContent =
     `#${minIss}–#${maxIss} · ${totalCovered} issues covered · ${items.length} vol${items.length>1?'s':''}${yearRange}`;
+}
+
+// ── Centered Timeline rendering ──
+function rvRenderCenterTimeline(items, allVols) {
+  if (!items.length) return;
+  const minIss = Math.min(...items.map(d => d.iss.start));
+  const maxIss = Math.max(...items.map(d => d.iss.end));
+  const totalSpan = maxIss - minIss + 1;
+  const today = new Date();
+  const userId = currentUserId() || LEGACY_STOJR_ID;
+
+  // Helper: percentage position along the bar for an issue number
+  function issPct(iss) { return ((iss - minIss) / totalSpan * 100); }
+
+  // ── Bar segments & gaps (reuse same logic as rvRenderTimeline) ──
+  const bar = document.getElementById('rvCtlBar');
+  bar.innerHTML = '';
+  const sorted = items.slice().sort((a,b) => a.iss.start - b.iss.start);
+
+  // Gaps first (behind segments)
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i-1].iss.end;
+    const curr = sorted[i].iss.start;
+    if (curr > prev + 1) {
+      const gapLeft  = ((prev + 1 - minIss) / totalSpan * 100).toFixed(3);
+      const gapWidth = ((curr - prev - 1) / totalSpan * 100).toFixed(3);
+      const gap = document.createElement('div');
+      gap.className = 'rv-tl-gap';
+      gap.style.left  = gapLeft + '%';
+      gap.style.width = gapWidth + '%';
+      gap.title = `Gap: issues ${prev+1}–${curr-1} not covered`;
+      bar.appendChild(gap);
+    }
+  }
+
+  // Determine status for each item
+  function getStatus(d) {
+    if (isOwned(d.id, userId)) return 'owned';
+    const v = (allVols || []).find(x => x.id === d.id);
+    if (v && v.date && new Date(v.date) > today) return 'upcoming';
+    return 'missing';
+  }
+
+  // Volume segments on bar
+  items.forEach(d => {
+    const left  = issPct(d.iss.start).toFixed(3);
+    const width = ((d.iss.end - d.iss.start + 1) / totalSpan * 100).toFixed(3);
+    const seg = document.createElement('div');
+    seg.className = `rv-tl-seg ${d.cls}`;
+    seg.style.left  = left + '%';
+    seg.style.width = `max(${width}%, 4px)`;
+    const status = getStatus(d);
+    if (status === 'owned') seg.style.outline = '2px solid var(--green)';
+    seg.innerHTML = `<span class="rv-tl-seg-label">V${d.vol}</span><span class="rv-tl-seg-issues">#${d.iss.start}–${d.iss.end}</span>`;
+    bar.appendChild(seg);
+  });
+
+  // ── Issue axis (top) ──
+  const axisTop = document.getElementById('rvCtlAxisTop');
+  const tickCount = Math.min(10, totalSpan);
+  const step = Math.ceil(totalSpan / tickCount);
+  let axisTicks = '';
+  for (let i = minIss; i <= maxIss; i += step) axisTicks += `<span>#${i}</span>`;
+  axisTicks += `<span>#${maxIss}</span>`;
+  axisTop.innerHTML = axisTicks;
+
+  // ── Year axis (bottom) ──
+  const yearAxis = document.getElementById('rvCtlAxisBottom');
+  const yearTicks = [];
+  sorted.forEach(d => {
+    if (d.years) {
+      const pctStart = issPct(d.iss.start).toFixed(1);
+      const pctEnd   = issPct(d.iss.end).toFixed(1);
+      const yrStart  = d.years.match(/\d{4}/);
+      const yrAll    = d.years.match(/\d{4}/g);
+      const yrEnd    = yrAll ? yrAll[yrAll.length - 1] : null;
+      if (yrStart) yearTicks.push({ pct: parseFloat(pctStart), label: yrStart[0] });
+      if (yrEnd && yrEnd !== yrStart[0]) yearTicks.push({ pct: parseFloat(pctEnd), label: yrEnd });
+    }
+  });
+  yearTicks.sort((a, b) => a.pct - b.pct);
+  const filteredYears = yearTicks.filter((t, i) =>
+    i === 0 || (Math.abs(t.pct - yearTicks[i-1].pct) > 6 && t.label !== yearTicks[i-1].label)
+  );
+  yearAxis.innerHTML = filteredYears.length >= 1
+    ? filteredYears.map(t => `<span>${t.label}</span>`).join('')
+    : '';
+
+  // ── Position cards above and below ──
+  const topZone    = document.getElementById('rvCtlTop');
+  const bottomZone = document.getElementById('rvCtlBottom');
+  topZone.innerHTML    = '';
+  bottomZone.innerHTML = '';
+
+  // Dot markers on bar per volume
+  const dotContainer = bar; // dots go inside bar at bar's left% position
+
+  // Sort by issue start for consistent alternation
+  const sortedItems = items.slice().sort((a,b) => a.iss.start - b.iss.start);
+
+  sortedItems.forEach((d, idx) => {
+    const centerIss = (d.iss.start + d.iss.end) / 2;
+    const pct = issPct(centerIss).toFixed(3);
+    const status = getStatus(d);
+    const isTop = (idx % 2 === 0); // even → above, odd → below
+    const zone  = isTop ? topZone : bottomZone;
+
+    // Issue label
+    const issLabel = `#${d.iss.start}–${d.iss.end}`;
+    const volLabel = d.vol ? `Vol ${d.vol}` : '';
+    const seriesLabel = d.series || '';
+    const yearsLabel = d.years || '';
+
+    // Build status badge text
+    const statusText = status === 'owned' ? 'In Collection' : status === 'upcoming' ? 'Upcoming' : 'Not Owned';
+
+    // Tile
+    const tile = document.createElement('div');
+    tile.className = `rv-ctl-tile rv-ctl-tile-${isTop ? 'top' : 'bottom'}`;
+    tile.style.left = pct + '%';
+
+    // Card
+    const card = document.createElement('div');
+    card.className = `rv-ctl-card ${status}`;
+    card.innerHTML = `
+      <div class="rv-ctl-status ${status}">${statusText}</div>
+      <div class="rv-ctl-vol">${rvEsc(volLabel)}</div>
+      <div class="rv-ctl-issues">${rvEsc(issLabel)}</div>
+      ${yearsLabel ? `<div class="rv-ctl-years">${rvEsc(yearsLabel)}</div>` : ''}
+      ${seriesLabel ? `<div class="rv-ctl-series" title="${rvEsc(seriesLabel)}">${rvEsc(seriesLabel)}</div>` : ''}
+    `;
+
+    // Connector line
+    const connector = document.createElement('div');
+    connector.className = `rv-ctl-connector ${status}`;
+
+    if (isTop) {
+      tile.appendChild(card);
+      tile.appendChild(connector);
+    } else {
+      tile.appendChild(connector);
+      tile.appendChild(card);
+    }
+    zone.appendChild(tile);
+
+    // Dot on the bar
+    const dot = document.createElement('div');
+    dot.className = `rv-ctl-dot ${status}`;
+    dot.style.left = pct + '%';
+    dotContainer.appendChild(dot);
+  });
+}
+
+// ── Toggle center timeline mode ──
+function rvToggleCenterView() {
+  if (RV.multiMode) return; // not compatible with multi-series mode
+  RV.centerMode = !RV.centerMode;
+  const btn = document.getElementById('rvCenterToggle');
+  if (btn) btn.classList.toggle('center-active', RV.centerMode);
+  rvRender();
 }
 
 // ── 3D parallax tilt on card hover ──
