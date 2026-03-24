@@ -637,7 +637,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 /* ─── CARD ROW ─── */
 .rv-run{display:flex;flex-wrap:wrap;align-items:stretch;gap:16px 0;zoom:var(--rv-card-scale, 1)}
 /* ─── CARD SIZE SLIDER ─── */
-.rv-scale-wrap{position:fixed;bottom:24px;right:24px;z-index:50;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.rv-scale-wrap{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:10px}
 .rv-scale-wrap label{font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .rv-scale-slider{-webkit-appearance:none;appearance:none;width:120px;height:6px;border-radius:3px;background:var(--border);outline:none;cursor:pointer}
 .rv-scale-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--surface);box-shadow:0 0 6px rgba(255,210,52,.4)}
@@ -776,15 +776,15 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 /* The bar itself */
 .rv-tl-bar{width:100%;height:80px;background:var(--surface2);border-radius:6px;position:relative;overflow:visible;display:flex;align-items:stretch;border:1px solid var(--border)}
 /* Segments */
-.rv-tl-seg{position:absolute;top:0;bottom:0;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:filter .15s,box-shadow .15s}
+.rv-tl-seg{position:absolute;top:0;bottom:0;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:filter .15s,box-shadow .15s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
 .rv-tl-seg:hover{filter:brightness(1.25);box-shadow:0 0 0 2px rgba(255,255,255,.3)}
 .rv-tl-seg.highlighted{filter:brightness(1.3);box-shadow:0 0 0 2px var(--gold)}
 .rv-tl-seg.epic{background:#3a6fa8}.rv-tl-seg.modern{background:#a07800}
 .rv-tl-seg.omni{background:#8050b0}.rv-tl-seg.dc{background:#1a6db5}
 .rv-tl-seg.complete{background:#a06000}.rv-tl-seg.tpb{background:#007040}
-.rv-tl-seg-label{font-family:var(--cf);font-size:14px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 6px;pointer-events:none}
+.rv-tl-seg-label{font-family:var(--cf);font-size:16px;font-weight:700;color:rgba(255,255,255,.9);white-space:nowrap;overflow:hidden;text-overflow:clip;padding:0 6px;pointer-events:none}
 /* Issue sub-label inside segment */
-.rv-tl-seg-issues{font-family:var(--cf);font-size:11px;font-weight:600;color:rgba(255,255,255,.65);white-space:nowrap;pointer-events:none;position:absolute;bottom:4px;left:0;right:0;text-align:center;overflow:hidden;text-overflow:clip}
+.rv-tl-seg-issues{font-family:var(--cf);font-size:13px;font-weight:600;color:rgba(255,255,255,.65);white-space:nowrap;pointer-events:none;position:absolute;bottom:4px;left:0;right:0;text-align:center;overflow:hidden;text-overflow:clip}
 /* Gap regions */
 .rv-tl-gap{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(255,65,54,.07) 0,rgba(255,65,54,.07) 4px,transparent 4px,transparent 8px);border-left:1px dashed rgba(255,65,54,.3);border-right:1px dashed rgba(255,65,54,.3);pointer-events:none}
 /* Tooltip — enhanced with card preview */
@@ -1181,6 +1181,11 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       </div>
       <span class="rv-pill" id="inlineRvReprintToggle" style="cursor:pointer;font-size:11px" onclick="inlineRvToggleReprints(this)">Hide Reprints</span>
       <button class="rv-mode-btn" id="inlineRvMultiBtn" onclick="inlineRvToggleMultiMode()">Multi-Series</button>
+      <div class="rv-scale-wrap" id="inlineRvScaleWrap" style="display:none;margin-left:auto">
+        <label>Card Size</label>
+        <input type="range" class="rv-scale-slider" id="inlineRvScaleSlider" min="0.4" max="2" step="0.05" value="1" oninput="inlineRvSetScale(this.value)">
+        <span class="rv-scale-val" id="inlineRvScaleVal">100%</span>
+      </div>
     </div>
     <!-- Run completeness overview -->
     <div class="run-completeness" id="runCompletenessPanel">
@@ -1205,12 +1210,6 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         <div class="rv-tl-bar" id="inlineRvTlBar"></div>
       </div>
       <div class="rv-timeline-years" id="inlineRvTimelineYears"></div>
-    </div>
-    <!-- Card size slider -->
-    <div class="rv-scale-wrap" id="inlineRvScaleWrap" style="display:none">
-      <label>Card Size</label>
-      <input type="range" class="rv-scale-slider" id="inlineRvScaleSlider" min="0.4" max="2" step="0.05" value="1" oninput="inlineRvSetScale(this.value)">
-      <span class="rv-scale-val" id="inlineRvScaleVal">100%</span>
     </div>
   </div><!-- /viewRuns -->
 
@@ -1495,6 +1494,11 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
     <span class="rv-pill" id="rvReprintToggle" style="cursor:pointer;font-size:11px" onclick="rvToggleReprints(this)">Hide Reprints</span>
     <button class="rv-mode-btn" id="rvMultiBtn" onclick="rvToggleMultiMode()">⊞ Multi-Series</button>
     <button class="rv-mode-btn" id="rvCenterToggle" onclick="rvToggleCenterView()" title="Centered timeline — cards above and below the timeline bar">⊟ Center Timeline</button>
+    <div class="rv-scale-wrap" id="rvOverlayScaleWrap" style="display:none">
+      <label>Card Size</label>
+      <input type="range" class="rv-scale-slider" id="rvOverlayScaleSlider" min="0.4" max="2" step="0.05" value="1" oninput="rvOverlaySetScale(this.value)">
+      <span class="rv-scale-val" id="rvOverlayScaleVal">100%</span>
+    </div>
     <div class="rv-hdr-spacer"></div>
     <button class="rbtn" onclick="rvClose()">✕ Close</button>
   </div>
@@ -1513,12 +1517,6 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         <div class="rv-tl-bar" id="rvTlBar"></div>
       </div>
       <div class="rv-timeline-years" id="rvTimelineYears"></div>
-    </div>
-    <!-- Card size slider for overlay -->
-    <div class="rv-scale-wrap" id="rvOverlayScaleWrap" style="display:none">
-      <label>Card Size</label>
-      <input type="range" class="rv-scale-slider" id="rvOverlayScaleSlider" min="0.4" max="2" step="0.05" value="1" oninput="rvOverlaySetScale(this.value)">
-      <span class="rv-scale-val" id="rvOverlayScaleVal">100%</span>
     </div>
   </div>
   <!-- Center Timeline view -->
@@ -4413,8 +4411,12 @@ document.addEventListener('click', e => {
 
 // ── Missing-volume detection ──
 function rvBuildAllItems(vols, cls) {
-  // Sort by vol number
-  const sorted = vols.slice().sort((a,b) => (a.vol||0) - (b.vol||0));
+  // Sort by issue start from issues_covered (matches timeline ordering)
+  const sorted = vols.slice().sort((a,b) => {
+    const ia = rvParseIssues(a.issues_covered);
+    const ib = rvParseIssues(b.issues_covered);
+    return (ia ? ia.start : (a.vol||0)*1000) - (ib ? ib.start : (b.vol||0)*1000);
+  });
   if (!sorted.length) return [];
   const result = [];
   for (let i = 0; i < sorted.length; i++) {
@@ -4468,22 +4470,12 @@ function rvRender() {
     if (scaleWrap) scaleWrap.style.display = 'none';
     return;
   }
-  // In group mode, sort chronologically across all series in the group
+  // In group mode, sort by issue start from issues_covered (matches timeline ordering)
   if (RV.groupMode) {
     vols.sort((a, b) => {
-      // Manual sort_order first if set
-      if (a.sort_order != null && b.sort_order != null) return a.sort_order - b.sort_order;
-      if (a.sort_order != null) return -1;
-      if (b.sort_order != null) return 1;
-      // Then by year_start
-      const ya = a.year_start || rvYearStart(a.years);
-      const yb = b.year_start || rvYearStart(b.years);
-      if (ya !== yb) return ya - yb;
-      // Then by issue_start
-      const ia = a.issue_start || 0, ib = b.issue_start || 0;
-      if (ia !== ib) return ia - ib;
-      // Then by date
-      return (a.date || '').localeCompare(b.date || '');
+      const ia = rvParseIssues(a.issues_covered);
+      const ib = rvParseIssues(b.issues_covered);
+      return (ia ? ia.start : (a.issue_start || 9999)) - (ib ? ib.start : (b.issue_start || 9999));
     });
   }
 
@@ -5596,20 +5588,19 @@ function inlineRvSelectSeries(name) {
   if (inlineRvHideReprints) entries = entries.filter(d => d.reprint !== 'Yes');
   entries = entries.filter(d => inlineRvActiveTypes.has(d.type));
   if (inlineRvGroupMode) {
-    // In group mode, sort by issue coverage (chronological reading order)
+    // Sort by issue start from issues_covered (matches timeline ordering)
     entries.sort((a, b) => {
-      if (a.sort_order != null && b.sort_order != null) return a.sort_order - b.sort_order;
-      if (a.sort_order != null) return -1;
-      if (b.sort_order != null) return 1;
-      const ya = a.year_start || parseYearStart(a.years) || 9999;
-      const yb = b.year_start || parseYearStart(b.years) || 9999;
-      if (ya !== yb) return ya - yb;
-      const ia = a.issue_start || 0, ib = b.issue_start || 0;
-      if (ia !== ib) return ia - ib;
-      return (a.date || '').localeCompare(b.date || '');
+      const ia = rvParseIssues(a.issues_covered);
+      const ib = rvParseIssues(b.issues_covered);
+      return (ia ? ia.start : (a.issue_start || 9999)) - (ib ? ib.start : (b.issue_start || 9999));
     });
   } else {
-    entries.sort((a, b) => (a.vol || 0) - (b.vol || 0));
+    // In single-series mode, sort by issue start to match timeline ordering
+    entries.sort((a, b) => {
+      const ia = rvParseIssues(a.issues_covered);
+      const ib = rvParseIssues(b.issues_covered);
+      return (ia ? ia.start : (a.vol||0)*1000) - (ib ? ib.start : (b.vol||0)*1000);
+    });
   }
 
   if (!entries.length) {
