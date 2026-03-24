@@ -829,55 +829,76 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-mt-series-years{font-family:var(--cf);font-size:10px;color:var(--dimtext);margin-top:-2px;text-align:right;width:170px;flex-shrink:0}
 /* ─── CENTERED TIMELINE LAYOUT ─── */
 #rvCenterLayout{overflow-x:auto;flex:1;background:var(--surface);display:flex;flex-direction:column}
-.rv-ctl-inner{position:relative;min-width:100%;display:flex;flex-direction:column;padding-bottom:16px}
-.rv-ctl-legend{display:flex;gap:20px;padding:12px 32px 8px;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;border-bottom:1px solid var(--border);margin-bottom:4px}
-.rv-ctl-legend-item{display:flex;align-items:center;gap:6px;color:var(--muted)}
-.rv-ctl-legend-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}
-.rv-ctl-legend-dot.owned{background:var(--green)}
-.rv-ctl-legend-dot.missing{background:var(--orange);opacity:.75}
+.rv-ctl-inner{position:relative;min-width:100%;display:flex;flex-direction:column;padding-bottom:28px}
+/* Legend bar */
+.rv-ctl-legend{display:flex;gap:28px;padding:13px 36px 11px;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0;border-bottom:1px solid var(--border);background:var(--surface2);align-items:center}
+.rv-ctl-legend-item{display:flex;align-items:center;gap:7px;color:var(--muted)}
+.rv-ctl-legend-dot{width:13px;height:13px;border-radius:3px;flex-shrink:0}
+.rv-ctl-legend-dot.owned{background:var(--green);box-shadow:0 0 6px rgba(62,255,138,.4)}
+.rv-ctl-legend-dot.missing{background:var(--orange);opacity:.8}
 .rv-ctl-legend-dot.upcoming{background:#4a9eff}
-.rv-ctl-top{position:relative;height:210px;flex-shrink:0}
-.rv-ctl-bottom{position:relative;height:210px;flex-shrink:0}
-.rv-ctl-spine{padding:0 32px;flex-shrink:0}
-.rv-ctl-axis-top{display:flex;justify-content:space-between;font-family:var(--cf);font-size:12px;color:var(--dimtext);padding:0 2px;margin-bottom:6px}
-.rv-ctl-bar{width:100%;height:60px;background:var(--surface2);border-radius:6px;position:relative;overflow:visible;border:1px solid var(--border)}
-.rv-ctl-axis-bottom{display:flex;justify-content:space-between;font-family:var(--cf);font-size:12px;color:var(--muted);padding:0 2px;margin-top:6px}
-/* Compact card tile — positioned absolute within top/bottom zones */
-.rv-ctl-tile{position:absolute;width:138px;transform:translateX(-50%);display:flex;flex-direction:column;cursor:default}
+/* Dynamic height zones — set by JS */
+.rv-ctl-top{position:relative;flex-shrink:0;min-height:40px}
+.rv-ctl-bottom{position:relative;flex-shrink:0;min-height:40px}
+/* Spine */
+.rv-ctl-spine{padding:0 36px;flex-shrink:0;position:relative;z-index:2}
+.rv-ctl-axis-top{display:flex;justify-content:space-between;font-family:var(--cf);font-size:12px;font-weight:700;color:var(--dimtext);padding:0 2px;margin-bottom:8px;letter-spacing:.3px}
+.rv-ctl-bar{width:100%;height:72px;background:var(--surface2);border-radius:8px;position:relative;overflow:visible;border:2px solid var(--border2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.rv-ctl-axis-bottom{display:flex;justify-content:space-between;font-family:var(--cf);font-size:12px;font-weight:700;color:var(--muted);padding:0 2px;margin-top:8px;letter-spacing:.3px}
+/* Tile — positioned absolute within top/bottom zones */
+.rv-ctl-tile{position:absolute;width:158px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;cursor:pointer;z-index:1}
 .rv-ctl-tile-top{bottom:0}
 .rv-ctl-tile-bottom{top:0}
+.rv-ctl-tile:hover{z-index:10}
+.rv-ctl-tile:hover .rv-ctl-card{filter:brightness(1.12);transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.5)}
 /* Card box */
-.rv-ctl-card{border-radius:6px;padding:8px 10px;font-family:var(--cf);font-size:11px;line-height:1.4;background:var(--surface2);border:2px solid var(--border);position:relative}
-.rv-ctl-card.owned{border-color:var(--green);background:rgba(62,255,138,.08);box-shadow:0 0 10px rgba(62,255,138,.18)}
-.rv-ctl-card.missing{border-style:dashed;border-color:var(--orange);opacity:.78}
-.rv-ctl-card.upcoming{border-style:dotted;border-color:#4a9eff;background:rgba(74,158,255,.06)}
-/* Vertical connector line */
+.rv-ctl-card{border-radius:7px;padding:9px 11px 9px 13px;font-family:var(--cf);font-size:11px;line-height:1.45;background:var(--surface2);border:1.5px solid var(--border);border-left-width:4px;position:relative;width:100%;box-sizing:border-box;transition:filter .15s,transform .15s,box-shadow .15s;flex-shrink:0}
+.rv-ctl-card.owned{border-color:var(--green);border-left-color:var(--green);background:rgba(62,255,138,.07);box-shadow:0 2px 10px rgba(62,255,138,.14)}
+.rv-ctl-card.missing{border-color:rgba(255,159,42,.6);border-left-color:var(--orange);background:rgba(255,159,42,.04);opacity:.88}
+.rv-ctl-card.upcoming{border-color:rgba(74,158,255,.6);border-left-color:#4a9eff;background:rgba(74,158,255,.06)}
+/* Type-tinted left border for owned cards */
+.rv-ctl-card[data-cls="epic"].owned{border-left-color:#5a8fc8}
+.rv-ctl-card[data-cls="modern"].owned{border-left-color:#c9a020}
+.rv-ctl-card[data-cls="omni"].owned{border-left-color:#9a70d0}
+.rv-ctl-card[data-cls="dc"].owned{border-left-color:#4a8dd5}
+.rv-ctl-card[data-cls="complete"].owned{border-left-color:#c08020}
+.rv-ctl-card[data-cls="tpb"].owned{border-left-color:#20a060}
+/* Connector line — variable height set by JS */
 .rv-ctl-connector{width:2px;flex-shrink:0;align-self:center}
-.rv-ctl-tile-top .rv-ctl-connector{height:20px;order:2}
-.rv-ctl-tile-bottom .rv-ctl-connector{height:20px;order:-1}
-.rv-ctl-connector.owned{background:var(--green)}
-.rv-ctl-connector.missing{background:var(--orange)}
-.rv-ctl-connector.upcoming{background:#4a9eff}
-.rv-ctl-connector.default{background:var(--border2)}
-/* Dot on the timeline bar where connector meets */
-.rv-ctl-dot{position:absolute;width:8px;height:8px;border-radius:50%;transform:translateX(-50%);top:50%;margin-top:-4px}
-.rv-ctl-dot.owned{background:var(--green)}
-.rv-ctl-dot.missing{background:var(--orange)}
-.rv-ctl-dot.upcoming{background:#4a9eff}
+.rv-ctl-tile-top .rv-ctl-connector{order:2}
+.rv-ctl-tile-bottom .rv-ctl-connector{order:-1}
+.rv-ctl-connector.owned{background:linear-gradient(180deg,rgba(62,255,138,.7) 0%,rgba(62,255,138,.2) 100%)}
+.rv-ctl-connector.missing{background:linear-gradient(180deg,rgba(255,159,42,.6) 0%,rgba(255,159,42,.15) 100%)}
+.rv-ctl-connector.upcoming{background:linear-gradient(180deg,rgba(74,158,255,.65) 0%,rgba(74,158,255,.15) 100%)}
+.rv-ctl-connector.default{background:linear-gradient(180deg,var(--border2) 0%,transparent 100%)}
+.rv-ctl-tile-bottom .rv-ctl-connector.owned{background:linear-gradient(0deg,rgba(62,255,138,.7) 0%,rgba(62,255,138,.2) 100%)}
+.rv-ctl-tile-bottom .rv-ctl-connector.missing{background:linear-gradient(0deg,rgba(255,159,42,.6) 0%,rgba(255,159,42,.15) 100%)}
+.rv-ctl-tile-bottom .rv-ctl-connector.upcoming{background:linear-gradient(0deg,rgba(74,158,255,.65) 0%,rgba(74,158,255,.15) 100%)}
+.rv-ctl-tile-bottom .rv-ctl-connector.default{background:linear-gradient(0deg,var(--border2) 0%,transparent 100%)}
+/* Dot on the timeline bar */
+.rv-ctl-dot{position:absolute;width:12px;height:12px;border-radius:50%;transform:translateX(-50%);top:50%;margin-top:-6px;border:2px solid var(--surface);z-index:3}
+.rv-ctl-dot.owned{background:var(--green);box-shadow:0 0 8px rgba(62,255,138,.65)}
+.rv-ctl-dot.missing{background:var(--orange);box-shadow:0 0 5px rgba(255,159,42,.4)}
+.rv-ctl-dot.upcoming{background:#4a9eff;box-shadow:0 0 5px rgba(74,158,255,.4)}
 /* Status badge */
-.rv-ctl-status{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:1px 5px;border-radius:2px;margin-bottom:4px}
-.rv-ctl-status.owned{background:rgba(62,255,138,.2);color:var(--green)}
-.rv-ctl-status.missing{background:rgba(255,159,42,.2);color:var(--orange)}
-.rv-ctl-status.upcoming{background:rgba(74,158,255,.2);color:#4a9eff}
-.rv-ctl-vol{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.rv-ctl-status{display:inline-block;font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 5px;border-radius:2px;margin-bottom:5px;line-height:1.2}
+.rv-ctl-status.owned{background:rgba(62,255,138,.18);color:var(--green)}
+.rv-ctl-status.missing{background:rgba(255,159,42,.18);color:var(--orange)}
+.rv-ctl-status.upcoming{background:rgba(74,158,255,.18);color:#4a9eff}
+/* Type badge */
+.rv-ctl-type-badge{position:absolute;top:7px;right:8px;font-size:8px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--dimtext);opacity:.75;line-height:1}
+/* Card content */
+.rv-ctl-vol{font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px;letter-spacing:.2px;line-height:1.2}
 .rv-ctl-issues{font-size:12px;font-weight:700;color:var(--dimtext)}
-.rv-ctl-years{font-size:10px;color:var(--muted);margin-top:1px}
-.rv-ctl-series{font-size:10px;color:var(--dimtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.rv-ctl-years{font-size:10px;color:var(--muted);margin-top:2px}
+.rv-ctl-series{font-size:9px;color:var(--dimtext);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,.07);line-height:1.3}
 /* Segments inside center bar reuse existing segment CSS but scoped */
-.rv-ctl-bar .rv-tl-seg{cursor:default}
-.rv-ctl-bar .rv-tl-seg:hover{filter:brightness(1.15)}
+.rv-ctl-bar .rv-tl-seg{cursor:default;border-radius:4px}
+.rv-ctl-bar .rv-tl-seg:hover{filter:brightness(1.2)}
 /* Center view toggle button active state */
 .rv-mode-btn.center-active{background:rgba(255,210,52,.15);border-color:var(--gold);color:var(--gold)}
+/* Info strip above center view */
+.rv-ctl-info-strip{font-family:var(--cf);font-size:11px;color:var(--dimtext);padding:6px 36px;letter-spacing:.3px;background:var(--surface);border-bottom:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -4731,15 +4752,14 @@ function rvRenderCenterTimeline(items, allVols) {
   const today = new Date();
   const userId = currentUserId() || LEGACY_STOJR_ID;
 
-  // Helper: percentage position along the bar for an issue number
   function issPct(iss) { return ((iss - minIss) / totalSpan * 100); }
 
-  // ── Bar segments & gaps (reuse same logic as rvRenderTimeline) ──
+  // ── Bar segments & gaps ──
   const bar = document.getElementById('rvCtlBar');
   bar.innerHTML = '';
   const sorted = items.slice().sort((a,b) => a.iss.start - b.iss.start);
 
-  // Gaps first (behind segments)
+  // Gaps first
   for (let i = 1; i < sorted.length; i++) {
     const prev = sorted[i-1].iss.end;
     const curr = sorted[i].iss.start;
@@ -4755,7 +4775,6 @@ function rvRenderCenterTimeline(items, allVols) {
     }
   }
 
-  // Determine status for each item
   function getStatus(d) {
     if (isOwned(d.id, userId)) return 'owned';
     const v = (allVols || []).find(x => x.id === d.id);
@@ -4770,20 +4789,21 @@ function rvRenderCenterTimeline(items, allVols) {
     const seg = document.createElement('div');
     seg.className = `rv-tl-seg ${d.cls}`;
     seg.style.left  = left + '%';
-    seg.style.width = `max(${width}%, 4px)`;
+    seg.style.width = `max(${width}%, 6px)`;
     const status = getStatus(d);
-    if (status === 'owned') seg.style.outline = '2px solid var(--green)';
-    seg.innerHTML = `<span class="rv-tl-seg-label">V${d.vol}</span><span class="rv-tl-seg-issues">#${d.iss.start}–${d.iss.end}</span>`;
+    if (status === 'owned') seg.style.outline = '2px solid rgba(62,255,138,.55)';
+    seg.title = `${d.series ? d.series + ' ' : ''}Vol ${d.vol} — #${d.iss.start}–${d.iss.end}`;
+    seg.innerHTML = `<span class="rv-tl-seg-label">V${d.vol}</span>`;
     bar.appendChild(seg);
   });
 
   // ── Issue axis (top) ──
   const axisTop = document.getElementById('rvCtlAxisTop');
-  const tickCount = Math.min(10, totalSpan);
+  const tickCount = Math.min(12, totalSpan);
   const step = Math.ceil(totalSpan / tickCount);
   let axisTicks = '';
   for (let i = minIss; i <= maxIss; i += step) axisTicks += `<span>#${i}</span>`;
-  axisTicks += `<span>#${maxIss}</span>`;
+  if (!axisTicks.endsWith(`<span>#${maxIss}</span>`)) axisTicks += `<span>#${maxIss}</span>`;
   axisTop.innerHTML = axisTicks;
 
   // ── Year axis (bottom) ──
@@ -4791,70 +4811,103 @@ function rvRenderCenterTimeline(items, allVols) {
   const yearTicks = [];
   sorted.forEach(d => {
     if (d.years) {
-      const pctStart = issPct(d.iss.start).toFixed(1);
-      const pctEnd   = issPct(d.iss.end).toFixed(1);
-      const yrStart  = d.years.match(/\d{4}/);
-      const yrAll    = d.years.match(/\d{4}/g);
-      const yrEnd    = yrAll ? yrAll[yrAll.length - 1] : null;
-      if (yrStart) yearTicks.push({ pct: parseFloat(pctStart), label: yrStart[0] });
-      if (yrEnd && yrEnd !== yrStart[0]) yearTicks.push({ pct: parseFloat(pctEnd), label: yrEnd });
+      const yrAll = d.years.match(/\d{4}/g);
+      if (yrAll) {
+        yearTicks.push({ pct: parseFloat(issPct(d.iss.start).toFixed(1)), label: yrAll[0] });
+        if (yrAll.length > 1 && yrAll[yrAll.length-1] !== yrAll[0])
+          yearTicks.push({ pct: parseFloat(issPct(d.iss.end).toFixed(1)), label: yrAll[yrAll.length-1] });
+      }
     }
   });
-  yearTicks.sort((a, b) => a.pct - b.pct);
-  const filteredYears = yearTicks.filter((t, i) =>
-    i === 0 || (Math.abs(t.pct - yearTicks[i-1].pct) > 6 && t.label !== yearTicks[i-1].label)
+  yearTicks.sort((a,b) => a.pct - b.pct);
+  const filteredYears = yearTicks.filter((t,i) =>
+    i === 0 || (Math.abs(t.pct - yearTicks[i-1].pct) > 5.5 && t.label !== yearTicks[i-1].label)
   );
-  yearAxis.innerHTML = filteredYears.length >= 1
-    ? filteredYears.map(t => `<span>${t.label}</span>`).join('')
-    : '';
+  yearAxis.innerHTML = filteredYears.map(t => `<span>${t.label}</span>`).join('');
 
-  // ── Position cards above and below ──
+  // ── Multi-row stacking ──
+  // Sort items by center issue, assign alternating top/bottom, then row within each zone
+  const sortedItems = items.slice().sort((a,b) => a.iss.start - b.iss.start);
+  sortedItems.forEach((d, idx) => {
+    d._pct    = parseFloat(issPct((d.iss.start + d.iss.end) / 2).toFixed(3));
+    d._isTop  = (idx % 2 === 0);
+    d._status = getStatus(d);
+  });
+
+  // Row assignment — left-to-right greedy: place in first row with sufficient gap
+  // 11% ≈ 158px card width at ~1440px bar; conservative to prevent overlaps
+  const MIN_GAP_PCT = 11.0;
+  function assignRows(tiles) {
+    const rowLastPct = [];
+    tiles.forEach(t => {
+      let r = 0;
+      while (r < rowLastPct.length && (t._pct - rowLastPct[r]) < MIN_GAP_PCT) r++;
+      t._row = r;
+      rowLastPct[r] = t._pct;
+    });
+  }
+  const topItems    = sortedItems.filter(d =>  d._isTop);
+  const bottomItems = sortedItems.filter(d => !d._isTop);
+  assignRows(topItems);
+  assignRows(bottomItems);
+
+  // Layout constants
+  const CARD_H       = 98;   // estimated card height px
+  const BASE_CONN_H  = 38;   // connector height for row-0 tile
+  const ROW_STEP     = CARD_H + 10; // height added per extra row
+
+  function connH(row)  { return BASE_CONN_H + row * ROW_STEP; }
+  function tileH(row)  { return CARD_H + connH(row); }
+
+  const maxTopRow    = topItems.length    ? Math.max(...topItems.map(d => d._row))    : 0;
+  const maxBottomRow = bottomItems.length ? Math.max(...bottomItems.map(d => d._row)) : 0;
+
   const topZone    = document.getElementById('rvCtlTop');
   const bottomZone = document.getElementById('rvCtlBottom');
+  topZone.style.height    = (tileH(maxTopRow)    + 16) + 'px';
+  bottomZone.style.height = (tileH(maxBottomRow) + 16) + 'px';
   topZone.innerHTML    = '';
   bottomZone.innerHTML = '';
 
-  // Dot markers on bar per volume
-  const dotContainer = bar; // dots go inside bar at bar's left% position
+  // Type display names
+  const typeLabels = { epic:'Epic', modern:'Modern', omni:'Omnibus', dc:'DC Finest', complete:'Complete', tpb:'TPB' };
 
-  // Sort by issue start for consistent alternation
-  const sortedItems = items.slice().sort((a,b) => a.iss.start - b.iss.start);
+  sortedItems.forEach(d => {
+    const status      = d._status;
+    const isTop       = d._isTop;
+    const row         = d._row;
+    const zone        = isTop ? topZone : bottomZone;
+    const cH          = connH(row);
 
-  sortedItems.forEach((d, idx) => {
-    const centerIss = (d.iss.start + d.iss.end) / 2;
-    const pct = issPct(centerIss).toFixed(3);
-    const status = getStatus(d);
-    const isTop = (idx % 2 === 0); // even → above, odd → below
-    const zone  = isTop ? topZone : bottomZone;
-
-    // Issue label
-    const issLabel = `#${d.iss.start}–${d.iss.end}`;
-    const volLabel = d.vol ? `Vol ${d.vol}` : '';
-    const seriesLabel = d.series || '';
-    const yearsLabel = d.years || '';
-
-    // Build status badge text
-    const statusText = status === 'owned' ? 'In Collection' : status === 'upcoming' ? 'Upcoming' : 'Not Owned';
-
-    // Tile
     const tile = document.createElement('div');
     tile.className = `rv-ctl-tile rv-ctl-tile-${isTop ? 'top' : 'bottom'}`;
-    tile.style.left = pct + '%';
+    tile.style.left = d._pct + '%';
+    if (isTop) tile.style.bottom = '0';
+    else       tile.style.top    = '0';
 
-    // Card
+    const issLabel   = `#${d.iss.start}–${d.iss.end}`;
+    const volLabel   = d.vol ? `Vol ${d.vol}` : (d.series || '');
+    const typeLabel  = typeLabels[d.cls] || '';
+    const statusText = status === 'owned' ? 'In Collection'
+                     : status === 'upcoming' ? 'Upcoming' : 'Not Owned';
+
     const card = document.createElement('div');
     card.className = `rv-ctl-card ${status}`;
+    card.dataset.cls = d.cls;
+    card.title = `${d.series ? d.series + ' ' : ''}${volLabel} · ${issLabel}${d.years ? ' · ' + d.years : ''}`;
     card.innerHTML = `
+      ${typeLabel ? `<div class="rv-ctl-type-badge">${rvEsc(typeLabel)}</div>` : ''}
       <div class="rv-ctl-status ${status}">${statusText}</div>
       <div class="rv-ctl-vol">${rvEsc(volLabel)}</div>
       <div class="rv-ctl-issues">${rvEsc(issLabel)}</div>
-      ${yearsLabel ? `<div class="rv-ctl-years">${rvEsc(yearsLabel)}</div>` : ''}
-      ${seriesLabel ? `<div class="rv-ctl-series" title="${rvEsc(seriesLabel)}">${rvEsc(seriesLabel)}</div>` : ''}
+      ${d.years  ? `<div class="rv-ctl-years">${rvEsc(d.years)}</div>` : ''}
+      ${d.series ? `<div class="rv-ctl-series" title="${rvEsc(d.series)}">${rvEsc(d.series)}</div>` : ''}
     `;
+    card.addEventListener('click', () => rvJumpTo(d.id));
 
-    // Connector line
     const connector = document.createElement('div');
     connector.className = `rv-ctl-connector ${status}`;
+    connector.style.height = cH + 'px';
 
     if (isTop) {
       tile.appendChild(card);
@@ -4865,12 +4918,33 @@ function rvRenderCenterTimeline(items, allVols) {
     }
     zone.appendChild(tile);
 
-    // Dot on the bar
+    // Dot on bar
     const dot = document.createElement('div');
     dot.className = `rv-ctl-dot ${status}`;
-    dot.style.left = pct + '%';
-    dotContainer.appendChild(dot);
+    dot.style.left = d._pct + '%';
+    bar.appendChild(dot);
   });
+
+  // ── Info strip ──
+  let infoStrip = document.getElementById('rvCtlInfoStrip');
+  if (!infoStrip) {
+    infoStrip = document.createElement('div');
+    infoStrip.id = 'rvCtlInfoStrip';
+    infoStrip.className = 'rv-ctl-info-strip';
+    const legend = document.getElementById('rvCtlLegend');
+    legend.after(infoStrip);
+  }
+  const ownedCount   = sortedItems.filter(d => d._status === 'owned').length;
+  const totalCount   = sortedItems.length;
+  const allYrStarts  = items.map(d => rvYearStart(d.years)).filter(y => y < 9999);
+  const allYrEnds    = items.map(d => rvYearEnd(d.years)).filter(y => y > 0);
+  const minYr = allYrStarts.length ? Math.min(...allYrStarts) : null;
+  const maxYr = allYrEnds.length   ? Math.max(...allYrEnds)   : null;
+  const yrRange = minYr && maxYr ? `${minYr}–${maxYr}` : '';
+  infoStrip.textContent =
+    `Issues #${minIss}–#${maxIss}  ·  ${totalCount} vol${totalCount !== 1 ? 's' : ''}` +
+    `${yrRange ? '  ·  ' + yrRange : ''}` +
+    `  ·  ${ownedCount} / ${totalCount} in collection`;
 }
 
 // ── Toggle center timeline mode ──
