@@ -4,11 +4,13 @@ on:
   # Trigger manually from the Actions tab in GitHub
   workflow_dispatch:
 
-  # Also auto-run when supabase-migration.sql changes on main
+  # Also auto-run when any migration file changes on main
   push:
     branches: [main]
     paths:
       - 'supabase-migration.sql'
+      - 'supabase-migration-v5.sql'
+      - 'supabase-migration-v6.sql'
 
 jobs:
   migrate:
@@ -47,9 +49,11 @@ jobs:
           psql "$DB_URL" -c "SELECT version();" -v ON_ERROR_STOP=1
           echo "✓ Connection successful"
 
-      - name: Run migration
+      - name: Run migrations
         run: |
           psql "$DB_URL" --file=supabase-migration.sql -v ON_ERROR_STOP=1
+          psql "$DB_URL" --file=supabase-migration-v5.sql -v ON_ERROR_STOP=1
+          psql "$DB_URL" --file=supabase-migration-v6.sql -v ON_ERROR_STOP=1
 
       - name: Confirm columns exist
         run: |

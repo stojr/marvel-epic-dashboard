@@ -938,8 +938,9 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         <button class="host-chip" id="btnSignIn" onclick="signInWithGoogle()" style="color:#fff;border-color:var(--gold);background:linear-gradient(135deg,#e8352a,#ff7a3d);font-size:13px;padding:6px 16px;text-shadow:0 1px 2px rgba(0,0,0,.4)">Sign in with Google</button>
       </div>
       <div class="hdr-host-names" id="authUser" style="display:none;align-items:center;gap:8px">
-        <img id="authAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--gold)" alt="">
-        <span id="authName" style="font-family:var(--cf);font-size:14px;font-weight:700;color:var(--text)"></span>
+        <img id="authAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--gold);cursor:pointer" alt="" onclick="showAccountSettings()">
+        <span id="authName" style="font-family:var(--cf);font-size:14px;font-weight:700;color:var(--text);cursor:pointer" onclick="showAccountSettings()"></span>
+        <button class="host-chip" onclick="showAccountSettings()" title="Account settings" style="color:var(--gold);border-color:var(--gold);font-size:11px;padding:3px 8px">⚙</button>
         <button class="host-chip" onclick="signOut()" style="color:var(--dim);border-color:var(--dim);font-size:11px;padding:3px 10px">Sign Out</button>
       </div>
     </div>
@@ -1581,26 +1582,33 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 // ═══════════════════════════════════════════════════
 const SB_URL = 'https://quxuidnmewcmovjbnfgy.supabase.co';
 const SB_KEY = 'sb_publishable_nXvg5ji8j6d_tUxLfp4N0A_KT3-vh-b';
-const HEADERS = { 'Content-Type':'application/json', 'apikey': SB_KEY, 'Authorization':'Bearer '+SB_KEY };
+// currentAccessToken starts as the anon key; replaced with the user's JWT on sign-in
+// so that authenticated REST writes satisfy RLS policies (auth.uid() checks).
+let currentAccessToken = SB_KEY;
+function getHeaders() {
+  return { 'Content-Type':'application/json', 'apikey': SB_KEY, 'Authorization':'Bearer '+currentAccessToken };
+}
 
 // ── Supabase REST helpers ────────────────────────
 async function sbFetch(table, params='', opts={}) {
-  const res = await fetch(`${SB_URL}/rest/v1/${table}${params}`, { headers: HEADERS, ...opts });
+  // Merge dynamic auth headers first; opts.headers can add Prefer/on-conflict etc.
+  const headers = { ...getHeaders(), ...(opts.headers || {}) };
+  const res = await fetch(`${SB_URL}/rest/v1/${table}${params}`, { ...opts, headers });
   if (!res.ok) { const err = await res.text(); throw new Error(err); }
   return res.status === 204 ? null : res.json();
 }
 async function sbSelect(table, params='') { return sbFetch(table, params); }
 async function sbInsert(table, body) {
-  return sbFetch(table, '', { method:'POST', headers:{...HEADERS,'Prefer':'return=representation'}, body: JSON.stringify(body) });
+  return sbFetch(table, '', { method:'POST', headers:{'Prefer':'return=representation'}, body: JSON.stringify(body) });
 }
 async function sbUpdate(table, match, body) {
-  return sbFetch(table, `?${match}`, { method:'PATCH', headers:{...HEADERS,'Prefer':'return=representation'}, body: JSON.stringify(body) });
+  return sbFetch(table, `?${match}`, { method:'PATCH', headers:{'Prefer':'return=representation'}, body: JSON.stringify(body) });
 }
 async function sbDelete(table, match) {
-  return sbFetch(table, `?${match}`, { method:'DELETE', headers: HEADERS });
+  return sbFetch(table, `?${match}`, { method:'DELETE' });
 }
 async function sbUpsert(table, body, onConflict) {
-  return sbFetch(table, '', { method:'POST', headers:{...HEADERS,'Prefer':`resolution=merge-duplicates,return=representation`,'on-conflict':onConflict}, body: JSON.stringify(body) });
+  return sbFetch(table, '', { method:'POST', headers:{'Prefer':`resolution=merge-duplicates,return=representation`,'on-conflict':onConflict}, body: JSON.stringify(body) });
 }
 
 // ── Supabase Auth Client ──────────────────────
@@ -2060,9 +2068,75 @@ function showGoogleSetupGuide() {
   document.body.appendChild(overlay);
 }
 
+function showAccountSettings() {
+  if (!currentUser) return;
+  const u = ALL_USERS.find(x => x.id === currentUser.id);
+  const name = u?.display_name || currentUser.user_metadata?.full_name || '';
+  const color = u?.color || '#c97fff';
+  const avatar = u?.avatar_url || currentUser.user_metadata?.avatar_url || '';
+  const email = currentUser.email || '';
+
+  const prev = document.getElementById('accountSettingsOverlay');
+  if (prev) prev.remove();
+
+  const PALETTE = ['#c97fff','#2ee8d4','#ff9f2a','#3eff8a','#3aa8ff','#ff4136','#ffd234','#ff69b4','#7fffd4','#ffa07a'];
+  const swatches = PALETTE.map(c =>
+    `<span onclick="document.getElementById('acctColor').value='${c}';document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));this.classList.add('active')"
+      class="color-swatch${c===color?' active':''}"
+      style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${c};cursor:pointer;margin:2px;border:2px solid ${c===color?'#fff':'transparent'};vertical-align:middle"></span>`
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'accountSettingsOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:28px 32px;max-width:400px;width:100%">
+      <h3 style="font-family:var(--hf);font-size:24px;color:var(--gold);margin-bottom:4px">Account Settings</h3>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:20px">${email}</p>
+      ${avatar ? `<div style="text-align:center;margin-bottom:16px"><img src="${avatar}" style="width:56px;height:56px;border-radius:50%;border:3px solid ${color}"></div>` : ''}
+      <label style="display:block;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px">Display Name</label>
+      <input id="acctName" value="${name.replace(/"/g,'&quot;')}"
+        style="width:100%;box-sizing:border-box;padding:9px 12px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--cf);font-size:14px;margin-bottom:16px">
+      <label style="display:block;font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Profile Color</label>
+      <div style="margin-bottom:8px">${swatches}</div>
+      <input id="acctColor" type="color" value="${color}"
+        style="width:100%;height:36px;padding:2px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;cursor:pointer;margin-bottom:20px">
+      <div style="display:flex;gap:8px">
+        <button onclick="saveAccountSettings()"
+          style="flex:1;padding:11px;background:var(--gold);border:none;border-radius:6px;color:#000;font-family:var(--cf);font-size:14px;font-weight:700;cursor:pointer">Save</button>
+        <button onclick="document.getElementById('accountSettingsOverlay').remove()"
+          style="flex:1;padding:11px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--muted);font-family:var(--cf);font-size:14px;cursor:pointer">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function saveAccountSettings() {
+  if (!currentUser) return;
+  const name = document.getElementById('acctName').value.trim();
+  const color = document.getElementById('acctColor').value;
+  if (!name) { showToast('Display name cannot be empty', true); return; }
+  document.getElementById('accountSettingsOverlay').remove();
+  setSyncing(true);
+  try {
+    await sbUpsert('users', { id: currentUser.id, display_name: name, color }, 'id');
+    const u = ALL_USERS.find(x => x.id === currentUser.id);
+    if (u) { u.display_name = name; u.color = color; }
+    showToast('✓ Profile updated');
+    updateAuthUI();
+    buildOwnerFilters();
+    buildTable(currentFiltered);
+    buildCards(currentFiltered);
+  } catch(e) {
+    showToast('Save failed — ' + (e.message || e), true);
+  }
+  setSyncing(false);
+}
+
 async function signOut() {
   await sbClient.auth.signOut();
   currentUser = null;
+  currentAccessToken = SB_KEY;
   updateAuthUI();
   buildTable(currentFiltered);
   buildCards(currentFiltered);
@@ -2100,6 +2174,8 @@ function updateAuthUI() {
 }
 
 async function onAuthStateChange(event, session) {
+  // Store the JWT so all subsequent REST writes satisfy RLS policies
+  currentAccessToken = session?.access_token || SB_KEY;
   if (session?.user) {
     currentUser = session.user;
     // Ensure user exists in our users table
@@ -2336,6 +2412,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await sbClient.auth.getSession();
   if (session?.user) {
     currentUser = session.user;
+    currentAccessToken = session.access_token || SB_KEY;
   }
   updateAuthUI();
 
