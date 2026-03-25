@@ -2068,6 +2068,38 @@ function showGoogleSetupGuide() {
   document.body.appendChild(overlay);
 }
 
+function showLoginWall() {
+  let wall = document.getElementById('loginWall');
+  if (wall) { wall.style.display = 'flex'; return; }
+  wall = document.createElement('div');
+  wall.id = 'loginWall';
+  wall.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;padding:24px';
+  wall.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-family:var(--hf);font-size:64px;font-weight:900;letter-spacing:-2px;color:var(--text);line-height:1">
+        <em style="color:var(--gold)">EPIC</em>
+      </div>
+      <div style="font-family:var(--hf);font-size:28px;color:var(--text);margin-top:4px">Database</div>
+      <div style="font-family:var(--cf);font-size:14px;color:var(--muted);margin-top:10px;letter-spacing:1px">
+        Marvel Epic Collections &middot; DC Finest &middot; stojr's Shelf
+      </div>
+    </div>
+    <button onclick="signInWithGoogle()"
+      style="display:flex;align-items:center;gap:12px;padding:14px 28px;background:#fff;border:none;border-radius:8px;font-family:var(--cf);font-size:16px;font-weight:700;color:#333;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.4)">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+    <p style="font-family:var(--cf);font-size:12px;color:var(--dim);max-width:320px;text-align:center;line-height:1.6">
+      Sign in to track your collection, wishlist, and reading progress.
+    </p>`;
+  document.body.appendChild(wall);
+}
+
+function hideLoginWall() {
+  const wall = document.getElementById('loginWall');
+  if (wall) wall.style.display = 'none';
+}
+
 function showAccountSettings() {
   if (!currentUser) return;
   const u = ALL_USERS.find(x => x.id === currentUser.id);
@@ -2137,9 +2169,9 @@ async function signOut() {
   await sbClient.auth.signOut();
   currentUser = null;
   currentAccessToken = SB_KEY;
+  ALL_DATA = []; USER_DATA = {}; ALL_USERS = []; currentFiltered = [];
   updateAuthUI();
-  buildTable(currentFiltered);
-  buildCards(currentFiltered);
+  showLoginWall();
 }
 
 function updateAuthUI() {
@@ -2194,16 +2226,20 @@ async function onAuthStateChange(event, session) {
       } catch(e) { console.warn('Could not create user profile:', e); }
     }
     updateAuthUI();
-    buildOwnerFilters();
-    // Check for legacy data claim
-    checkLegacyClaim();
-    buildTable(currentFiltered);
-    buildCards(currentFiltered);
+    hideLoginWall();
+    if (!ALL_DATA.length) {
+      loadData();
+    } else {
+      buildOwnerFilters();
+      checkLegacyClaim();
+      buildTable(currentFiltered);
+      buildCards(currentFiltered);
+    }
   } else {
     currentUser = null;
+    ALL_DATA = []; USER_DATA = {}; ALL_USERS = []; currentFiltered = [];
     updateAuthUI();
-    buildTable(currentFiltered);
-    buildCards(currentFiltered);
+    showLoginWall();
   }
 }
 
@@ -2416,7 +2452,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   updateAuthUI();
 
-  loadData();
+  if (currentUser) {
+    loadData();
+  } else {
+    showLoginWall();
+  }
 
   document.addEventListener('keydown', e => {
     if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
