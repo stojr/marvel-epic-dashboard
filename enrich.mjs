@@ -345,13 +345,21 @@ async function scrapeWikiPage(sourceLabel, url) {
     // Each column header says "Spine lettering: X". Every cell contains a full
     // book entry as free text: series name, vol, title, year, ISBN.
     if (h.every(c => c.includes('spine lettering') || c === '')) {
+      let modeAFound = 0;
+      let cellsDumped = 0;
       for (const row of parsed.rows) {
         for (const cell of row) {
           if (!cell) continue;
+          // Dump first 3 non-empty cells so we can see the raw format
+          if (cellsDumped < 3) {
+            console.log(`  [cell dump] "${cell.slice(0, 120)}"`);
+            cellsDumped++;
+          }
           const entry = parseCellEntry(cell, url, sourceLabel);
-          if (entry) results.push(entry);
+          if (entry) { results.push(entry); modeAFound++; }
         }
       }
+      console.log(`  Mode A table ${ti+1}: ${modeAFound} entries parsed`);
       continue;
     }
 
