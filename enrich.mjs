@@ -334,68 +334,93 @@ async function scrapeWikiPage(sourceLabel, url) {
 
   const results = [];
   const tableContents = extractTopLevelTables(body);
-  console.log(`  Top-level tables on page: ${tableContents.length}`);
 
   for (let ti = 0; ti < tableContents.length; ti++) {
     const parsed = parseTable(tableContents[ti]);
     if (!parsed) continue;
 
     const h = parsed.headers.map(s => s.toLowerCase());
+
+    // ── Mode A: "Spine lettering" gallery tables (Marvel Epic Collection format) ──
+    // Each column header says "Spine lettering: X". Every cell contains a full
+    // book entry as free text: series name, vol, title, year, ISBN.
+    if (h.every(c => c.includes('spine lettering') || c === '')) {
+      for (const row of parsed.rows) {
+        for (const cell of row) {
+          if (!cell) continue;
+          const entry = parseCellEntry(cell, url, sourceLabel);
+          if (entry) results.push(entry);
+        }
+      }
+      continue;
+    }
+
+    // ── Mode B: Standard column-based wikitable ──
     const colIsbn   = h.findIndex(c => c.includes('isbn'));
     const colIssues = h.findIndex(c => c.includes('issue') || c.includes('content') || c.includes('collected') || c.includes('material'));
-    const passes    = colIsbn !== -1 || colIssues !== -1;
-    // Always log every table so we can see what the page contains
-    console.log(`  Table ${ti+1} (${parsed.rows.length} rows) [${passes ? '✓' : '✗ skip'}]: ${parsed.headers.map(s => `"${s.slice(0,22)}"`).join(' | ')}`);
-    if (!passes) continue;
+    if (colIsbn === -1 && colIssues === -1) continue;
 
-    const colSeries  = h.findIndex(c => c.includes('series'));
-    const colVol     = h.findIndex(c => c === 'vol' || c === 'vol.' || c === 'volume' || c === '#' || c === 'no.' || c === 'no' || c.match(/^vol/));
-    const colTitle   = h.findIndex(c => c.includes('subtitle') || c.includes('collection title') || c.includes('collected title') || (c.includes('title') && !c.includes('series')));
-    const colYears   = h.findIndex(c => c.includes('year') || c.includes('published') || c.includes('original') || c.includes('date') || c.includes('era'));
-    console.log(`    cols: series=${colSeries} vol=${colVol} title=${colTitle} issues=${colIssues} years=${colYears} isbn=${colIsbn}`);
+    const colSeries = h.findIndex(c => c.includes('series'));
+    const colVol    = h.findIndex(c => c === 'vol' || c === 'vol.' || c === 'volume' || c === '#' || c === 'no.' || c === 'no' || /^vol/.test(c));
+    const colTitle  = h.findIndex(c => c.includes('subtitle') || c.includes('collection title') || c.includes('collected title') || (c.includes('title') && !c.includes('series')));
+    const colYears  = h.findIndex(c => c.includes('year') || c.includes('published') || c.includes('original') || c.includes('date') || c.includes('era'));
 
     let currentSeries = '';
-
     for (const row of parsed.rows) {
-      // Single-cell rows are often series section headers
       if (row.every(c => c === row[0]) || row.filter(Boolean).length <= 1) {
         currentSeries = row[0] || currentSeries;
         continue;
       }
-
       const get = col => (col !== -1 && row[col]) ? row[col] : '';
-
-      const rawSeries  = get(colSeries) || currentSeries;
-      const rawVol     = get(colVol);
-      const rawTitle   = get(colTitle !== -1 ? colTitle : (colSeries !== -1 ? -1 : 0));
-      const rawIssues  = get(colIssues);
-      const rawYears   = get(colYears);
-      const rawIsbn    = get(colIsbn);
-
+      const rawSeries = get(colSeries) || currentSeries;
+      const rawVol    = get(colVol);
+      const rawTitle  = get(colTitle !== -1 ? colTitle : (colSeries !== -1 ? -1 : 0));
+      const rawIssues = get(colIssues);
+      const rawYears  = get(colYears);
+      const rawIsbn   = get(colIsbn);
       if (!rawSeries && !rawTitle) continue;
       if (!rawIsbn && !rawIssues && !rawYears) continue;
-
       results.push({
-        series:      normaliseSeries(rawSeries),
-        vol:         parseVol(rawVol),
-        subtitle:    rawTitle,
-        rawIssues,
-        years:       normaliseYears(rawYears),
-        isbn:        normaliseIsbn(rawIsbn),
-        sourceUrl:   url,
-        sourceLabel,
+        series: normaliseSeries(rawSeries), vol: parseVol(rawVol),
+        subtitle: rawTitle, rawIssues,
+        years: normaliseYears(rawYears), isbn: normaliseIsbn(rawIsbn),
+        sourceUrl: url, sourceLabel,
       });
-    }
-
-    // Print first 2 entries from this table as a sanity check
-    const tableResults = results.slice(-Math.min(2, results.length));
-    for (const e of tableResults) {
-      console.log(`    sample: series="${e.series}" vol=${e.vol} issues="${(e.rawIssues||'').slice(0,40)}" isbn="${e.isbn}"`);
     }
   }
 
+  // Sample output for diagnosis
+  for (const e of results.slice(0, 3)) {
+    console.log(`  sample: series="${e.series}" vol=${e.vol} isbn="${e.isbn}" years="${e.years}"`);
+  }
   console.log(`  → ${results.length} entries parsed from ${sourceLabel}`);
   return results;
+}
+
+/**
+ * Parse a free-text cell from a "Spine lettering" gallery table.
+ * Cell text looks like:
+ *   "Amazing Spider-Man Vol. 1 Great Power 2014 978-0-7851-6605-2"
+ * Returns an entry object or null if not enough data.
+ */
+function parseCellEntry(text, sourceUrl, sourceLabel) {
+  // Must contain a vol indicator and an ISBN or year to be useful
+  const volMatch = text.match(/\bVol\.?\s*(\d+)/i);
+  const isbn     = normaliseIsbn(text);
+  const years    = normaliseYears(text);
+  if (!volMatch || (!isbn && !years)) return null;
+
+  const vol    = parseInt(volMatch[1], 10);
+  // Series = everything before "Vol."
+  const series = normaliseSeries(text.slice(0, volMatch.index));
+  if (!series) return null;
+
+  // Subtitle = text immediately after "Vol. N", before any year or ISBN digits
+  const afterVol   = text.slice(volMatch.index + volMatch[0].length).trim();
+  const subtitleM  = afterVol.match(/^([^\d\n]{3,60})/);
+  const subtitle   = subtitleM ? subtitleM[1].trim().replace(/\s+/g, ' ') : '';
+
+  return { series, vol, subtitle, rawIssues: '', years, isbn, sourceUrl, sourceLabel };
 }
 
 // ─── NORMALISATION HELPERS ────────────────────────────────────────────────────
