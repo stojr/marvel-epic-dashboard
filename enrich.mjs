@@ -61,9 +61,11 @@ const WIKI_SOURCES = [
 const args         = process.argv.slice(2);
 const isDry        = !args.includes('--apply');
 const isAll        = args.includes('--all');
-const showProgress = args.includes('--progress');
-const rollbackId   = (() => { const i = args.indexOf('--rollback'); return i !== -1 ? args[i+1] : null; })();
-const targetSeries = (() => { const i = args.indexOf('--series');   return i !== -1 ? args[i+1] : null; })();
+const showProgress  = args.includes('--progress');
+const debugTables   = args.includes('--debug-tables');
+const rollbackId    = (() => { const i = args.indexOf('--rollback'); return i !== -1 ? args[i+1] : null; })();
+const targetSeries  = (() => { const i = args.indexOf('--series');   return i !== -1 ? args[i+1] : null; })();
+const debugUrl      = (() => { const i = args.indexOf('--debug-tables'); return i !== -1 ? (args[i+1] || null) : null; })();
 
 // ─── HTTP HELPERS ─────────────────────────────────────────────────────────────
 
@@ -284,6 +286,40 @@ function extractTopLevelTables(html) {
     }
   }
   return tables;
+}
+
+/**
+ * Debug helper: fetch a URL and print every table's headers + row count.
+ * Run with: node enrich.mjs --debug-tables <url>
+ * This lets us see exactly what tables Wikipedia exposes without filtering.
+ */
+async function debugTablesOnPage(url) {
+  console.log(`\nFetching ${url} …`);
+  const { status, body } = await httpsGet(url);
+  console.log(`HTTP ${status}  (${body.length} bytes)\n`);
+  if (status !== 200) return;
+
+  const tableContents = extractTopLevelTables(body);
+  console.log(`Top-level tables found: ${tableContents.length}\n`);
+
+  for (let i = 0; i < tableContents.length; i++) {
+    const parsed = parseTable(tableContents[i]);
+    if (!parsed) {
+      console.log(`Table ${i+1}: (could not parse — too few rows)\n`);
+      continue;
+    }
+    const h = parsed.headers.map(s => s.toLowerCase().slice(0, 40));
+    const passFilter = h.some(c => c.includes('isbn')) ||
+                       h.some(c => c.includes('issue') || c.includes('content') || c.includes('collected') || c.includes('material'));
+    const marker = passFilter ? '✓ PASSES FILTER' : '✗ filtered out';
+    console.log(`Table ${i+1} [${marker}]:`);
+    console.log(`  Headers: ${parsed.headers.map(h => `"${h.slice(0,30)}"`).join(' | ')}`);
+    console.log(`  Rows: ${parsed.rows.length}`);
+    if (parsed.rows.length > 0) {
+      console.log(`  Row 1:  ${parsed.rows[0].map(c => `"${(c||'').slice(0,25)}"`).join(' | ')}`);
+    }
+    console.log('');
+  }
 }
 
 /**
@@ -727,6 +763,11 @@ async function main() {
 
   if (rollbackId)    { await rollback(rollbackId); return; }
   if (showProgress)  { await printProgress();       return; }
+  if (debugTables) {
+    const url = debugUrl || WIKI_SOURCES[0].url;
+    await debugTablesOnPage(url);
+    return;
+  }
 
   await run();
 }
