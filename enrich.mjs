@@ -334,21 +334,25 @@ async function scrapeWikiPage(sourceLabel, url) {
 
   const results = [];
   const tableContents = extractTopLevelTables(body);
+  console.log(`  Top-level tables on page: ${tableContents.length}`);
 
-  for (const tableContent of tableContents) {
-    const parsed = parseTable(tableContent);
+  for (let ti = 0; ti < tableContents.length; ti++) {
+    const parsed = parseTable(tableContents[ti]);
     if (!parsed) continue;
 
     const h = parsed.headers.map(s => s.toLowerCase());
-    // Only process tables that have an ISBN or Issues column
     const colIsbn   = h.findIndex(c => c.includes('isbn'));
-    const colIssues = h.findIndex(c => c.includes('issue') || c.includes('content') || c.includes('collected'));
-    if (colIsbn === -1 && colIssues === -1) continue;
+    const colIssues = h.findIndex(c => c.includes('issue') || c.includes('content') || c.includes('collected') || c.includes('material'));
+    const passes    = colIsbn !== -1 || colIssues !== -1;
+    // Always log every table so we can see what the page contains
+    console.log(`  Table ${ti+1} (${parsed.rows.length} rows) [${passes ? '✓' : '✗ skip'}]: ${parsed.headers.map(s => `"${s.slice(0,22)}"`).join(' | ')}`);
+    if (!passes) continue;
 
     const colSeries  = h.findIndex(c => c.includes('series'));
     const colVol     = h.findIndex(c => c === 'vol' || c === 'vol.' || c === 'volume' || c === '#' || c === 'no.' || c === 'no' || c.match(/^vol/));
     const colTitle   = h.findIndex(c => c.includes('subtitle') || c.includes('collection title') || c.includes('collected title') || (c.includes('title') && !c.includes('series')));
     const colYears   = h.findIndex(c => c.includes('year') || c.includes('published') || c.includes('original') || c.includes('date') || c.includes('era'));
+    console.log(`    cols: series=${colSeries} vol=${colVol} title=${colTitle} issues=${colIssues} years=${colYears} isbn=${colIsbn}`);
 
     let currentSeries = '';
 
@@ -384,11 +388,10 @@ async function scrapeWikiPage(sourceLabel, url) {
     }
   }
 
-  // Debug: print sample headers + first 3 rows of the largest table found
-  if (results.length > 0 && process.env.DEBUG_SCRAPE) {
-    console.log('  [debug] sample entries:');
-    for (const e of results.slice(0, 3)) {
-      console.log(`    series="${e.series}" vol=${e.vol} subtitle="${e.subtitle}" issues="${e.rawIssues?.slice(0,40)}" isbn="${e.isbn}"`);
+    // Print first 2 entries from this table as a sanity check
+    const tableResults = results.slice(-Math.min(2, results.length));
+    for (const e of tableResults) {
+      console.log(`    sample: series="${e.series}" vol=${e.vol} issues="${(e.rawIssues||'').slice(0,40)}" isbn="${e.isbn}"`);
     }
   }
 
