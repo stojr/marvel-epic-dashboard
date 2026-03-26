@@ -11,15 +11,21 @@ on:
         options:
           - dry-run
           - apply
+          - debug-tables
       series:
         description: 'Limit to one series (leave blank for all)'
+        required: false
+        default: ''
+        type: string
+      debug_url:
+        description: 'URL to inspect for debug-tables mode (leave blank for Marvel Epic)'
         required: false
         default: ''
         type: string
 
 jobs:
   enrich:
-    name: ${{ github.event.inputs.mode == 'apply' && 'Apply enrichment' || 'Dry run' }}
+    name: ${{ github.event.inputs.mode }}
     runs-on: ubuntu-latest
 
     steps:
@@ -31,26 +37,34 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Run enrichment
         env:
           SB_ANON_KEY:    ${{ secrets.SB_ANON_KEY }}
           SB_SERVICE_KEY: ${{ secrets.SB_SERVICE_KEY }}
         run: |
-          SERIES="${{ github.event.inputs.series }}"
           MODE="${{ github.event.inputs.mode }}"
+          SERIES="${{ github.event.inputs.series }}"
+          DEBUG_URL="${{ github.event.inputs.debug_url }}"
 
-          ARGS="--all"
-          if [ -n "$SERIES" ]; then
-            ARGS="--series \"$SERIES\""
+          if [ "$MODE" = "debug-tables" ]; then
+            if [ -n "$DEBUG_URL" ]; then
+              node enrich.mjs --debug-tables "$DEBUG_URL"
+            else
+              node enrich.mjs --debug-tables
+            fi
+          else
+            ARGS="--all"
+            if [ -n "$SERIES" ]; then
+              ARGS="--series \"$SERIES\""
+            fi
+            if [ "$MODE" = "apply" ]; then
+              ARGS="$ARGS --apply"
+            fi
+            echo "Running: node enrich.mjs $ARGS"
+            eval node enrich.mjs $ARGS
           fi
-          if [ "$MODE" = "apply" ]; then
-            ARGS="$ARGS --apply"
-          fi
-
-          echo "Running: node enrich.mjs $ARGS"
-          eval node enrich.mjs $ARGS
 
       - name: Show progress report
         if: github.event.inputs.mode == 'apply'
