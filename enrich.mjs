@@ -289,6 +289,43 @@ function extractTopLevelTables(html) {
 }
 
 /**
+ * Extract H2/H3 headings and top-level tables in document order.
+ * Returns [{type:'heading',text,pos}, {type:'table',content,pos}] sorted by pos.
+ * This lets scrapeWikiPage associate the nearest preceding heading (series name)
+ * with each spine-lettering table on the Marvel Epic Collection page.
+ */
+function extractElements(html) {
+  const elements = [];
+
+  // H2 / H3 headings
+  const headingRe = /<h[23][^>]*>([\s\S]*?)<\/h[23]>/gi;
+  let m;
+  while ((m = headingRe.exec(html)) !== null) {
+    elements.push({ type: 'heading', text: stripHtml(m[1]), pos: m.index });
+  }
+
+  // Top-level tables (depth-counting, same logic as extractTopLevelTables)
+  const tagRe = /<(\/?table)[\s>]/gi;
+  let depth = 0, start = -1;
+  while ((m = tagRe.exec(html)) !== null) {
+    if (!m[1].startsWith('/')) {
+      if (depth === 0) start = m.index;
+      depth++;
+    } else {
+      depth--;
+      if (depth === 0 && start !== -1) {
+        const openEnd = html.indexOf('>', start) + 1;
+        elements.push({ type: 'table', content: html.slice(openEnd, m.index), pos: start });
+        start = -1;
+      }
+    }
+  }
+
+  elements.sort((a, b) => a.pos - b.pos);
+  return elements;
+}
+
+/**
  * Debug helper: fetch a URL and print every table's headers + row count.
  * Run with: node enrich.mjs --debug-tables <url>
  * This lets us see exactly what tables Wikipedia exposes without filtering.
@@ -325,6 +362,15 @@ async function debugTablesOnPage(url) {
 /**
  * Scrape a Wikipedia page and return a flat array of:
  *   { series, vol, subtitle, rawIssues, years, isbn, sourceUrl, sourceLabel }
+ *
+ * Mode A — "Spine lettering" gallery tables (Marvel Epic Collection):
+ *   The H2/H3 heading before each table is the series name.
+ *   parsed.headers = ["Spine lettering: A", ...] (first grid row)
+ *   parsed.rows[0] = ["#", "Subtitle", "Years covered", "Issues collected", ...]
+ *   parsed.rows[1..] = data rows
+ *
+ * Mode B — Standard column-based wikitable (DC Finest, DC Omnibus, Marvel Omnibus):
+ *   Column headers contain "isbn", "issue", "series", etc. directly.
  */
 async function scrapeWikiPage(sourceLabel, url) {
   process.stdout.write(`  Fetching ${url} … `);
@@ -333,37 +379,65 @@ async function scrapeWikiPage(sourceLabel, url) {
   if (status !== 200) return [];
 
   const results = [];
-  const tableContents = extractTopLevelTables(body);
+  const SKIP_HEADINGS = new Set(['references', 'see also', 'notes', 'external links', 'contents', 'further reading']);
+  let currentSeries = '';
 
-  for (let ti = 0; ti < tableContents.length; ti++) {
-    const parsed = parseTable(tableContents[ti]);
+  for (const el of extractElements(body)) {
+    if (el.type === 'heading') {
+      // Strip footnote markers and edit-section link text ("[edit]", "[n]" etc.)
+      const text = el.text.replace(/\[.*?\]/g, '').trim();
+      if (text && !SKIP_HEADINGS.has(text.toLowerCase())) {
+        currentSeries = normaliseSeries(text);
+      }
+      continue;
+    }
+
+    // --- table element ---
+    const parsed = parseTable(el.content);
     if (!parsed) continue;
 
     const h = parsed.headers.map(s => s.toLowerCase());
 
-    // ── Mode A: "Spine lettering" gallery tables (Marvel Epic Collection format) ──
-    // Each column header says "Spine lettering: X". Every cell contains a full
-    // book entry as free text: series name, vol, title, year, ISBN.
+    // ── Mode A: "Spine lettering" gallery tables (Marvel Epic Collection) ──
+    // parsed.headers = "Spine lettering: X" columns
+    // parsed.rows[0] = actual column names: "#" | "Subtitle" | "Years covered" | ...
+    // parsed.rows[1..] = data rows
     if (h.every(c => c.includes('spine lettering') || c === '')) {
+      if (parsed.rows.length < 2) continue;
+      const colHeaders = parsed.rows[0].map(s => (s || '').toLowerCase());
+      const colVol    = colHeaders.findIndex(c => c === '#' || c === 'no.' || c === 'no' || /^vol/.test(c));
+      const colTitle  = colHeaders.findIndex(c => c.includes('subtitle') || (c.includes('title') && !c.includes('series')));
+      const colYears  = colHeaders.findIndex(c => c.includes('year') || c.includes('covered'));
+      const colIssues = colHeaders.findIndex(c => c.includes('issue') || c.includes('collected') || c.includes('content'));
+      const colIsbn   = colHeaders.findIndex(c => c.includes('isbn'));
+
       let modeAFound = 0;
-      let cellsDumped = 0;
-      for (const row of parsed.rows) {
-        for (const cell of row) {
-          if (!cell) continue;
-          // Dump first 3 non-empty cells so we can see the raw format
-          if (cellsDumped < 3) {
-            console.log(`  [cell dump] "${cell.slice(0, 120)}"`);
-            cellsDumped++;
-          }
-          const entry = parseCellEntry(cell, url, sourceLabel);
-          if (entry) { results.push(entry); modeAFound++; }
-        }
+      for (const row of parsed.rows.slice(1)) {
+        const get = col => (col !== -1 && row[col]) ? row[col] : '';
+        const rawVol    = get(colVol);
+        const rawTitle  = get(colTitle);
+        const rawYears  = get(colYears);
+        const rawIssues = get(colIssues);
+        const rawIsbn   = get(colIsbn);
+        if (!rawVol && !rawTitle) continue;
+        if (!rawIsbn && !rawIssues && !rawYears) continue;
+        results.push({
+          series:    currentSeries,
+          vol:       parseVol(rawVol),
+          subtitle:  rawTitle,
+          rawIssues,
+          years:     normaliseYears(rawYears),
+          isbn:      normaliseIsbn(rawIsbn),
+          sourceUrl: url,
+          sourceLabel,
+        });
+        modeAFound++;
       }
-      console.log(`  Mode A table ${ti+1}: ${modeAFound} entries parsed`);
+      if (modeAFound > 0) console.log(`  Mode A [${currentSeries}]: ${modeAFound} entries`);
       continue;
     }
 
-    // ── Mode B: Standard column-based wikitable ──
+    // ── Mode B: Standard column-based wikitable (DC Finest, DC Omnibus, Marvel Omnibus) ──
     const colIsbn   = h.findIndex(c => c.includes('isbn'));
     const colIssues = h.findIndex(c => c.includes('issue') || c.includes('content') || c.includes('collected') || c.includes('material'));
     if (colIsbn === -1 && colIssues === -1) continue;
@@ -373,14 +447,14 @@ async function scrapeWikiPage(sourceLabel, url) {
     const colTitle  = h.findIndex(c => c.includes('subtitle') || c.includes('collection title') || c.includes('collected title') || (c.includes('title') && !c.includes('series')));
     const colYears  = h.findIndex(c => c.includes('year') || c.includes('published') || c.includes('original') || c.includes('date') || c.includes('era'));
 
-    let currentSeries = '';
+    let localSeries = currentSeries;
     for (const row of parsed.rows) {
       if (row.every(c => c === row[0]) || row.filter(Boolean).length <= 1) {
-        currentSeries = row[0] || currentSeries;
+        localSeries = row[0] || localSeries;
         continue;
       }
       const get = col => (col !== -1 && row[col]) ? row[col] : '';
-      const rawSeries = get(colSeries) || currentSeries;
+      const rawSeries = get(colSeries) || localSeries;
       const rawVol    = get(colVol);
       const rawTitle  = get(colTitle !== -1 ? colTitle : (colSeries !== -1 ? -1 : 0));
       const rawIssues = get(colIssues);
@@ -403,32 +477,6 @@ async function scrapeWikiPage(sourceLabel, url) {
   }
   console.log(`  → ${results.length} entries parsed from ${sourceLabel}`);
   return results;
-}
-
-/**
- * Parse a free-text cell from a "Spine lettering" gallery table.
- * Cell text looks like:
- *   "Amazing Spider-Man Vol. 1 Great Power 2014 978-0-7851-6605-2"
- * Returns an entry object or null if not enough data.
- */
-function parseCellEntry(text, sourceUrl, sourceLabel) {
-  // Must contain a vol indicator and an ISBN or year to be useful
-  const volMatch = text.match(/\bVol\.?\s*(\d+)/i);
-  const isbn     = normaliseIsbn(text);
-  const years    = normaliseYears(text);
-  if (!volMatch || (!isbn && !years)) return null;
-
-  const vol    = parseInt(volMatch[1], 10);
-  // Series = everything before "Vol."
-  const series = normaliseSeries(text.slice(0, volMatch.index));
-  if (!series) return null;
-
-  // Subtitle = text immediately after "Vol. N", before any year or ISBN digits
-  const afterVol   = text.slice(volMatch.index + volMatch[0].length).trim();
-  const subtitleM  = afterVol.match(/^([^\d\n]{3,60})/);
-  const subtitle   = subtitleM ? subtitleM[1].trim().replace(/\s+/g, ' ') : '';
-
-  return { series, vol, subtitle, rawIssues: '', years, isbn, sourceUrl, sourceLabel };
 }
 
 // ─── NORMALISATION HELPERS ────────────────────────────────────────────────────
