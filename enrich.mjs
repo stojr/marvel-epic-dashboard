@@ -3,30 +3,38 @@
  * BCE Comics Pod — Wikipedia Data Enrichment Agent
  *
  * Populates missing `isbn`, `years`, and `issues_covered` fields in comic_entries
- * by scraping Wikipedia tables.
+ * by scraping Wikipedia tables for all Marvel/DC collected-edition pages.
  *
  * PREREQUISITES
- *   Node 18+ (built-in fetch)
+ *   Node 18+ (built-in fetch / https)
  *
  * USAGE
  *   # Dry-run for Amazing Spider-Man only (default — no DB writes)
  *   node enrich.mjs
  *
- *   # Apply updates for a specific series
- *   node enrich.mjs --series "Amazing Spider-Man" --apply
+ *   # Dry-run for a specific series
+ *   node enrich.mjs --series "Avengers"
  *
- *   # Apply updates for all series in order
+ *   # Dry-run for all series across all sources
+ *   node enrich.mjs --all
+ *
+ *   # Apply all updates (requires SB_SERVICE_KEY)
  *   node enrich.mjs --all --apply
  *
- *   # Rollback a previous run
- *   node enrich.mjs --rollback 2026-03-26T14:00:00
+ *   # Apply a specific series only
+ *   node enrich.mjs --series "Amazing Spider-Man" --apply
+ *
+ *   # Preview then rollback a previous run
+ *   node enrich.mjs --rollback 2026-03-26T14:00:00Z
+ *   node enrich.mjs --rollback 2026-03-26T14:00:00Z --apply   # + CONFIRM_ROLLBACK=yes
+ *
+ *   # Show progress report
+ *   node enrich.mjs --progress
  *
  * ENVIRONMENT VARIABLES
- *   SB_ANON_KEY    — publishable/anon key (for reads, set to index.html's SB_KEY)
- *   SB_SERVICE_KEY — service-role key (required for writes; find in Supabase dashboard)
- *
- * The anon key supports public SELECTs per RLS.
- * The service-role key bypasses RLS and is needed for DDL and UPDATE operations.
+ *   SB_ANON_KEY    — publishable/anon key (reads; defaults to the one in index.html)
+ *   SB_SERVICE_KEY — service-role key from Supabase Dashboard → Settings → API
+ *                    Required for --apply mode (bypasses RLS for UPDATE + INSERT)
  */
 
 import https from 'https';
@@ -37,45 +45,32 @@ import { URL } from 'url';
 const SB_URL     = 'https://quxuidnmewcmovjbnfgy.supabase.co';
 const SB_ANON    = process.env.SB_ANON_KEY    || 'sb_publishable_nXvg5ji8j6d_tUxLfp4N0A_KT3-vh-b';
 const SB_SERVICE = process.env.SB_SERVICE_KEY || '';
+const RUN_ID     = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-const RUN_ID = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-
-// Wikipedia sources in priority order
-const WIKI_SOURCES = {
-  'Marvel Epic':    'https://en.wikipedia.org/wiki/Marvel_Epic_Collection',
-  'Marvel Modern':  'https://en.wikipedia.org/wiki/List_of_Marvel_collected_editions',
-  'Marvel Omnibus': 'https://en.wikipedia.org/wiki/Marvel_Omnibus',
-  'DC Finest':      'https://en.wikipedia.org/wiki/DC_Finest',
-  'DC Omnibus':     'https://en.wikipedia.org/wiki/DC_Omnibus',
-};
-
-// Execution order from the prompt
-const SERIES_ORDER = [
-  'Amazing Spider-Man',
-  'Avengers',
-  'X-Men',
-  // remaining Marvel Epic series handled alphabetically after the above
+// Wikipedia sources mapped to (pub, type) combos in the database
+const WIKI_SOURCES = [
+  { label: 'Marvel Epic',    url: 'https://en.wikipedia.org/wiki/Marvel_Epic_Collection',            pub: 'Marvel', type: 'Epic' },
+  { label: 'Marvel Modern',  url: 'https://en.wikipedia.org/wiki/List_of_Marvel_collected_editions', pub: 'Marvel', type: 'Modern' },
+  { label: 'Marvel Omnibus', url: 'https://en.wikipedia.org/wiki/Marvel_Omnibus',                    pub: 'Marvel', type: 'Omnibus' },
+  { label: 'DC Finest',      url: 'https://en.wikipedia.org/wiki/DC_Finest',                         pub: 'DC',     type: 'DC Finest' },
+  { label: 'DC Omnibus',     url: 'https://en.wikipedia.org/wiki/DC_Omnibus',                        pub: 'DC',     type: 'Omnibus' },
 ];
 
 // ─── CLI ARGS ─────────────────────────────────────────────────────────────────
 
-const args   = process.argv.slice(2);
-const isDry  = !args.includes('--apply');
-const isAll  = args.includes('--all');
-const rollbackId = (() => {
-  const i = args.indexOf('--rollback');
-  return i !== -1 ? args[i + 1] : null;
-})();
-const targetSeries = (() => {
-  const i = args.indexOf('--series');
-  return i !== -1 ? args[i + 1] : null;
-})();
+const args         = process.argv.slice(2);
+const isDry        = !args.includes('--apply');
+const isAll        = args.includes('--all');
+const showProgress = args.includes('--progress');
+const rollbackId   = (() => { const i = args.indexOf('--rollback'); return i !== -1 ? args[i+1] : null; })();
+const targetSeries = (() => { const i = args.indexOf('--series');   return i !== -1 ? args[i+1] : null; })();
 
 // ─── HTTP HELPERS ─────────────────────────────────────────────────────────────
 
-function httpsGet(url) {
+function httpsGet(rawUrl, redirectCount = 0) {
+  if (redirectCount > 5) return Promise.reject(new Error('Too many redirects: ' + rawUrl));
   return new Promise((resolve, reject) => {
-    const parsed = new URL(url);
+    const parsed = new URL(rawUrl);
     const options = {
       hostname: parsed.hostname,
       path:     parsed.pathname + parsed.search,
@@ -83,11 +78,15 @@ function httpsGet(url) {
       headers:  {
         'User-Agent': 'BCE-Comics-Enrichment/1.0 (https://github.com/stojr/marvel-epic-dashboard)',
         'Accept':     'text/html,application/xhtml+xml',
+        'Accept-Encoding': 'identity',
       },
     };
     const req = https.request(options, res => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        resolve(httpsGet(res.headers.location));
+        const next = res.headers.location.startsWith('http')
+          ? res.headers.location
+          : `https://${parsed.hostname}${res.headers.location}`;
+        resolve(httpsGet(next, redirectCount + 1));
         return;
       }
       let data = '';
@@ -96,662 +95,549 @@ function httpsGet(url) {
       res.on('end', () => resolve({ status: res.statusCode, body: data }));
     });
     req.on('error', reject);
+    req.setTimeout(30000, () => { req.destroy(new Error('Timeout fetching ' + rawUrl)); });
     req.end();
   });
 }
 
-function sbRequest(method, path, body, useServiceKey = false) {
-  const key = useServiceKey ? SB_SERVICE : SB_ANON;
-  if (useServiceKey && !SB_SERVICE) {
-    throw new Error('SB_SERVICE_KEY environment variable is required for write operations. ' +
-      'Find it in Supabase Dashboard → Settings → API → service_role key.');
+function sbRequest(method, path, body = null, useService = false) {
+  const key = useService ? SB_SERVICE : SB_ANON;
+  if (useService && !key) {
+    throw new Error(
+      'SB_SERVICE_KEY is required for write operations.\n' +
+      'Find it at: Supabase Dashboard → Settings → API → service_role (secret)\n' +
+      'Then run: export SB_SERVICE_KEY="eyJ..."'
+    );
   }
   return new Promise((resolve, reject) => {
     const parsed  = new URL(SB_URL + path);
     const payload = body ? JSON.stringify(body) : null;
-    const options = {
-      hostname: parsed.hostname,
-      path:     parsed.pathname + parsed.search,
-      method,
-      headers: {
-        'Content-Type':  'application/json',
-        'apikey':        key,
-        'Authorization': 'Bearer ' + key,
-        'Prefer':        'return=representation',
-        ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {}),
-      },
+    const headers = {
+      'Content-Type':  'application/json',
+      'apikey':        key,
+      'Authorization': 'Bearer ' + key,
     };
+    if (payload) {
+      headers['Content-Length'] = Buffer.byteLength(payload);
+      headers['Prefer'] = 'return=minimal';
+    }
+    const options = { hostname: parsed.hostname, path: parsed.pathname + parsed.search, method, headers };
     const req = https.request(options, res => {
       let data = '';
       res.setEncoding('utf8');
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
         try {
-          const json = data ? JSON.parse(data) : null;
-          if (res.statusCode >= 400) {
-            reject(new Error(`Supabase ${method} ${path} → ${res.statusCode}: ${data}`));
-          } else {
-            resolve(json);
-          }
-        } catch {
-          resolve(data);
-        }
+          if (res.statusCode === 204) { resolve([]); return; }
+          const json = data ? JSON.parse(data) : [];
+          if (res.statusCode >= 400) reject(new Error(`Supabase ${method} ${path} → ${res.statusCode}: ${data}`));
+          else resolve(json);
+        } catch { resolve(data); }
       });
     });
     req.on('error', reject);
+    req.setTimeout(30000, () => req.destroy(new Error('Timeout')));
     if (payload) req.write(payload);
     req.end();
   });
 }
 
-// ─── PHASE 0: SETUP ──────────────────────────────────────────────────────────
-
-async function setupEnrichmentLog() {
-  console.log('\n=== PHASE 0: Setting up enrichment_log table ===\n');
-
-  const sql = `
-CREATE TABLE IF NOT EXISTS enrichment_log (
-  id            bigserial PRIMARY KEY,
-  entry_id      bigint NOT NULL REFERENCES comic_entries(id) ON DELETE CASCADE,
-  field         text NOT NULL CHECK (field IN ('isbn', 'years', 'issues_covered')),
-  old_value     text,
-  new_value     text NOT NULL,
-  source_url    text,
-  source_label  text,
-  run_id        text,
-  status        text NOT NULL DEFAULT 'applied'
-                CHECK (status IN ('applied', 'skipped', 'no_match', 'conflict')),
-  note          text,
-  created_at    timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS enrichment_log_entry_id_idx ON enrichment_log(entry_id);
-CREATE INDEX IF NOT EXISTS enrichment_log_run_id_idx   ON enrichment_log(run_id);
-CREATE INDEX IF NOT EXISTS enrichment_log_status_idx   ON enrichment_log(status);
-
-CREATE OR REPLACE VIEW enrichment_run_summary AS
-SELECT
-  run_id,
-  MIN(created_at)                                      AS started_at,
-  MAX(created_at)                                      AS finished_at,
-  COUNT(*) FILTER (WHERE status = 'applied')           AS applied,
-  COUNT(*) FILTER (WHERE status = 'skipped')           AS skipped,
-  COUNT(*) FILTER (WHERE status = 'no_match')          AS no_match,
-  COUNT(*) FILTER (WHERE status = 'conflict')          AS conflict,
-  COUNT(*)                                             AS total
-FROM enrichment_log
-GROUP BY run_id
-ORDER BY started_at DESC;
-  `.trim();
-
-  await sbRequest('POST', '/rest/v1/rpc/exec_sql', { query: sql }, true);
-  console.log('✓ enrichment_log table and enrichment_run_summary view ready.');
-  console.log(`✓ Run ID for this session: ${RUN_ID}\n`);
-}
-
-// ─── PHASE 1: QUERY DB ────────────────────────────────────────────────────────
-
-async function queryMissingEntries(seriesFilter) {
-  let url = '/rest/v1/comic_entries?select=id,pub,type,series,vol,subtitle,isbn,years,issues_covered' +
-    '&or=(isbn.is.null,isbn.eq.,issues_covered.is.null,issues_covered.eq.,years.is.null,years.eq.)' +
-    '&order=pub.asc,series.asc,vol.asc';
-  if (seriesFilter) {
-    url += `&series=eq.${encodeURIComponent(seriesFilter)}`;
+// Paginate through all rows (Supabase default limit is 1000)
+async function sbSelectAll(path) {
+  const rows = [];
+  let offset = 0;
+  const limit = 1000;
+  while (true) {
+    const sep   = path.includes('?') ? '&' : '?';
+    const chunk = await sbRequest('GET', `${path}${sep}limit=${limit}&offset=${offset}`);
+    if (!chunk || chunk.length === 0) break;
+    rows.push(...chunk);
+    if (chunk.length < limit) break;
+    offset += limit;
   }
-  const rows = await sbRequest('GET', url);
-  return rows || [];
+  return rows;
 }
 
-async function queryAllEntries(seriesFilter) {
-  let url = '/rest/v1/comic_entries?select=id,pub,type,series,vol,subtitle,isbn,years,issues_covered' +
-    '&order=series.asc,vol.asc';
-  if (seriesFilter) {
-    url += `&series=eq.${encodeURIComponent(seriesFilter)}`;
-  }
-  const rows = await sbRequest('GET', url);
-  return rows || [];
-}
-
-// ─── PHASE 2: WIKIPEDIA SCRAPING ──────────────────────────────────────────────
-
-/**
- * Minimal HTML table parser — extracts rows from <table> elements.
- * Returns: Array of objects { headers: string[], rows: string[][] }
- */
-function parseTables(html) {
-  const tables = [];
-  const tableRe = /<table[^>]*>([\s\S]*?)<\/table>/gi;
-  let tableMatch;
-
-  while ((tableMatch = tableRe.exec(html)) !== null) {
-    const tableHtml = tableMatch[1];
-    const rows = [];
-    const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-    let rowMatch;
-
-    while ((rowMatch = rowRe.exec(tableHtml)) !== null) {
-      const rowHtml = rowMatch[1];
-      const cells = [];
-      const cellRe = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
-      let cellMatch;
-      while ((cellMatch = cellRe.exec(rowHtml)) !== null) {
-        cells.push(stripHtml(cellMatch[1]));
-      }
-      if (cells.length > 0) rows.push(cells);
-    }
-
-    if (rows.length > 1) {
-      tables.push({ headers: rows[0], rows: rows.slice(1) });
-    }
-  }
-  return tables;
-}
+// ─── HTML → TEXT HELPERS ──────────────────────────────────────────────────────
 
 function stripHtml(html) {
   return html
+    .replace(/<sup[^>]*>[\s\S]*?<\/sup>/gi, '')   // remove footnotes
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&ndash;/g, '–')
-    .replace(/&mdash;/g, '—')
-    .replace(/&#8211;/g, '–')
-    .replace(/&#8212;/g, '—')
-    .replace(/&#160;/g, ' ')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ')
+    .replace(/&ndash;|&#8211;/g, '–').replace(/&mdash;|&#8212;/g, '—')
+    .replace(/&#160;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ').trim();
 }
 
 /**
- * Scrapes and returns structured entries from a Wikipedia comics collection page.
- * Returns array of: { series, vol, subtitle, issues, years, isbn }
+ * Extract colspan/rowspan-aware cell text from a <table> block.
+ * Returns { headers: string[], rows: string[][] }
  */
-async function scrapeWikiPage(url) {
-  console.log(`  Fetching: ${url}`);
-  const { status, body } = await httpsGet(url);
-  if (status !== 200) {
-    console.warn(`  ⚠ HTTP ${status} for ${url}`);
-    return [];
+function parseTable(tableHtml) {
+  const rawRows = [];
+  const rowRe   = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowM;
+  while ((rowM = rowRe.exec(tableHtml)) !== null) {
+    const cells = [];
+    const cellRe = /<t[dh][^>]*colspan="?(\d+)"?[^>]*>([\s\S]*?)<\/t[dh]>|<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    let cellM;
+    while ((cellM = cellRe.exec(rowM[1])) !== null) {
+      const span = parseInt(cellM[1] || '1', 10);
+      const text = stripHtml(cellM[2] ?? cellM[3] ?? '');
+      for (let i = 0; i < span; i++) cells.push(text);
+    }
+    if (cells.length) rawRows.push(cells);
   }
+  if (rawRows.length < 2) return null;
+  return { headers: rawRows[0], rows: rawRows.slice(1) };
+}
 
-  const tables = parseTables(body);
-  const entries = [];
+// ─── WIKIPEDIA SCRAPER ────────────────────────────────────────────────────────
 
-  for (const table of tables) {
-    const headers = table.headers.map(h => h.toLowerCase());
+/**
+ * Scrape a Wikipedia page and return a flat array of:
+ *   { series, vol, subtitle, rawIssues, years, isbn, sourceUrl, sourceLabel }
+ */
+async function scrapeWikiPage(sourceLabel, url) {
+  process.stdout.write(`  Fetching ${url} … `);
+  const { status, body } = await httpsGet(url);
+  process.stdout.write(`HTTP ${status}\n`);
+  if (status !== 200) return [];
 
-    // Detect columns
-    const colSeries   = headers.findIndex(h => h.includes('series'));
-    const colVol      = headers.findIndex(h => h.includes('vol') || h === '#' || h === 'volume');
-    const colTitle    = headers.findIndex(h => h.includes('title') || h.includes('subtitle') || h.includes('collection'));
-    const colIssues   = headers.findIndex(h => h.includes('issue') || h.includes('content'));
-    const colYears    = headers.findIndex(h => h.includes('year') || h.includes('publish') || h.includes('date'));
-    const colIsbn     = headers.findIndex(h => h.includes('isbn'));
+  const results = [];
 
-    if (colIsbn === -1 && colIssues === -1) continue; // skip non-comics tables
+  // Find every <table> block
+  const tableRe = /<table[^>]*>([\s\S]*?)<\/table>/gi;
+  let tableM;
+  while ((tableM = tableRe.exec(body)) !== null) {
+    const parsed = parseTable(tableM[1]);
+    if (!parsed) continue;
+
+    const h = parsed.headers.map(s => s.toLowerCase());
+    // Only process tables that have an ISBN or Issues column
+    const colIsbn   = h.findIndex(c => c.includes('isbn'));
+    const colIssues = h.findIndex(c => c.includes('issue') || c.includes('content'));
+    if (colIsbn === -1 && colIssues === -1) continue;
+
+    const colSeries  = h.findIndex(c => c.includes('series') || c === 'title');
+    const colVol     = h.findIndex(c => c === 'vol' || c === 'volume' || c === '#' || c === 'no.' || c === 'no');
+    const colTitle   = h.findIndex(c => c.includes('subtitle') || c.includes('collection title') || (c.includes('title') && c !== 'series title'));
+    const colYears   = h.findIndex(c => c.includes('year') || c.includes('published') || c.includes('date'));
 
     let currentSeries = '';
 
-    for (const row of table.rows) {
-      // Detect series header rows (single cell spanning full width)
-      if (row.length === 1 || (row.length < 3 && colSeries === -1)) {
-        currentSeries = row[0].trim();
+    for (const row of parsed.rows) {
+      // Single-cell rows are often series section headers
+      if (row.every(c => c === row[0]) || row.filter(Boolean).length <= 1) {
+        currentSeries = row[0] || currentSeries;
         continue;
       }
 
-      const get = (col) => (col !== -1 && row[col]) ? row[col].trim() : '';
+      const get = col => (col !== -1 && row[col]) ? row[col] : '';
 
       const rawSeries  = get(colSeries) || currentSeries;
       const rawVol     = get(colVol);
-      const rawTitle   = get(colTitle);
+      const rawTitle   = get(colTitle !== -1 ? colTitle : (colSeries !== -1 ? -1 : 0));
       const rawIssues  = get(colIssues);
       const rawYears   = get(colYears);
       const rawIsbn    = get(colIsbn);
 
       if (!rawSeries && !rawTitle) continue;
+      if (!rawIsbn && !rawIssues && !rawYears) continue;
 
-      entries.push({
-        series:   normaliseSeries(rawSeries),
-        vol:      parseVol(rawVol),
-        subtitle: rawTitle,
-        issues:   rawIssues,
-        years:    normaliseYears(rawYears),
-        isbn:     normaliseIsbn(rawIsbn),
+      results.push({
+        series:      normaliseSeries(rawSeries),
+        vol:         parseVol(rawVol),
+        subtitle:    rawTitle,
+        rawIssues,
+        years:       normaliseYears(rawYears),
+        isbn:        normaliseIsbn(rawIsbn),
+        sourceUrl:   url,
+        sourceLabel,
       });
     }
   }
 
-  return entries;
+  console.log(`  → ${results.length} entries parsed from ${sourceLabel}`);
+  return results;
 }
 
 // ─── NORMALISATION HELPERS ────────────────────────────────────────────────────
 
 function normaliseSeries(s) {
-  return s.replace(/\s+/g, ' ').replace(/^The\s+/i, '').trim();
+  return (s || '').replace(/\s+/g, ' ').replace(/^The\s+/i, '').trim();
 }
 
 function parseVol(v) {
-  const m = v.match(/\d+/);
+  const m = (v || '').match(/\d+/);
   return m ? parseInt(m[0], 10) : null;
 }
 
 function normaliseYears(raw) {
   if (!raw) return '';
-  // Extract 4-digit years
-  const years = [...raw.matchAll(/\b(19|20)\d{2}\b/g)].map(m => parseInt(m[0], 10));
-  if (years.length === 0) return '';
-  const min = Math.min(...years);
-  const max = Math.max(...years);
-  return min === max ? String(min) : `${min}–${max}`;
+  const years = [...(raw || '').matchAll(/\b(19|20)\d{2}\b/g)].map(m => parseInt(m[0], 10));
+  if (!years.length) return '';
+  const mn = Math.min(...years), mx = Math.max(...years);
+  // Format with regular hyphen (DB stores as text)
+  return mn === mx ? String(mn) : `${mn}-${mx}`;
 }
 
 function normaliseIsbn(raw) {
   if (!raw) return '';
-  // Find last ISBN-13 (978-xxxxxxxxxx)
-  const isbn13s = [...raw.matchAll(/978[-\s]?\d{1,5}[-\s]?\d{1,7}[-\s]?\d{1,7}[-\s]?\d/g)];
-  if (isbn13s.length > 0) {
-    // Use the last one (most recent printing)
-    const last = isbn13s[isbn13s.length - 1][0].replace(/[\s-]/g, '');
-    return `978-${last.slice(3)}`;
+  const s = (raw || '');
+  // Last ISBN-13 in string (most recent printing wins)
+  const all13 = [...s.matchAll(/978[-\s]?\d[\d\s-]{8,}/g)];
+  if (all13.length) {
+    const digits = all13[all13.length - 1][0].replace(/[\s-]/g, '');
+    if (digits.length >= 13) {
+      const d = digits.slice(0, 13);
+      return `978-${d.slice(3, 5)}-${d.slice(5, 10)}-${d.slice(10, 12)}-${d.slice(12)}`;
+    }
   }
-  // Try ISBN-10 → ISBN-13 conversion
-  const isbn10s = [...raw.matchAll(/\b\d{9}[\dXx]\b/g)];
-  if (isbn10s.length > 0) {
-    const last = isbn10s[isbn10s.length - 1][0];
-    return isbn10ToIsbn13(last);
+  // ISBN-10 → ISBN-13
+  const all10 = [...s.matchAll(/\b\d{9}[\dXx]\b/g)];
+  if (all10.length) {
+    const i10  = all10[all10.length - 1][0].toUpperCase();
+    const stem = '978' + i10.slice(0, 9);
+    let sum = 0;
+    for (let i = 0; i < 12; i++) sum += parseInt(stem[i], 10) * (i % 2 === 0 ? 1 : 3);
+    const check = (10 - (sum % 10)) % 10;
+    const full  = stem + check;
+    return `978-${full.slice(3, 5)}-${full.slice(5, 10)}-${full.slice(10, 12)}-${full.slice(12)}`;
   }
   return '';
 }
 
-function isbn10ToIsbn13(isbn10) {
-  const digits = '978' + isbn10.slice(0, 9);
-  let sum = 0;
-  for (let i = 0; i < 12; i++) {
-    sum += parseInt(digits[i], 10) * (i % 2 === 0 ? 1 : 3);
-  }
-  const check = (10 - (sum % 10)) % 10;
-  const full   = digits + check;
-  return `978-${full.slice(3)}`;
-}
-
 function normaliseIssues(raw) {
   if (!raw) return '';
-  // Strip series name prefixes like "Amazing Spider-Man #"
-  let s = raw.replace(/[A-Za-z\s]+#/g, '');
-  // Normalise en-dashes to hyphens
-  s = s.replace(/[–—]/g, '-');
-  // Remove leading #
-  s = s.replace(/#/g, '');
-  // Collapse whitespace
-  s = s.replace(/\s+/g, ' ').trim();
-  // Remove trailing punctuation
-  s = s.replace(/[;,]+$/, '').trim();
+  let s = raw
+    .replace(/[–—]/g, '-')           // en/em dash → hyphen
+    .replace(/[A-Za-z\s]+#/g, '')    // strip series prefixes e.g. "Amazing Spider-Man #"
+    .replace(/#/g, '')               // remaining #
+    .replace(/\s*,\s*/g, ', ')       // normalise commas
+    .replace(/\s*;\s*/g, '; ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[;,]+$/, '');          // trailing punctuation
   return s;
 }
 
-function normaliseText(s) {
+function normText(s) {
   return (s || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
 }
 
-// ─── PHASE 3: MATCHING ────────────────────────────────────────────────────────
+// ─── MATCHING ─────────────────────────────────────────────────────────────────
 
 /**
- * Matches a db entry to Wikipedia entries.
- * Returns the best match or null.
+ * Try to find a unique Wikipedia row for a given DB entry.
+ * Priority: series+vol exact → series+subtitle exact → series+vol fuzzy
  */
 function findMatch(dbEntry, wikiEntries) {
-  const dbSeriesNorm   = normaliseText(dbEntry.series);
-  const dbSubtitleNorm = normaliseText(dbEntry.subtitle || '');
-  const dbVol          = dbEntry.vol;
+  const dbS = normText(dbEntry.series);
+  const dbT = normText(dbEntry.subtitle || '');
+  const dbV = dbEntry.vol;
 
-  // Try exact: series + vol
-  const bySeriesVol = wikiEntries.filter(w => {
-    return normaliseText(w.series) === dbSeriesNorm && w.vol === dbVol;
-  });
-  if (bySeriesVol.length === 1) return { match: bySeriesVol[0], confidence: 'series+vol' };
+  const sameS  = e => normText(e.series) === dbS;
+  const fuzzyS = e => { const w = normText(e.series); return w.includes(dbS) || dbS.includes(w); };
 
-  // Try: series + subtitle
-  if (dbSubtitleNorm) {
-    const bySubtitle = wikiEntries.filter(w => {
-      return normaliseText(w.series) === dbSeriesNorm &&
-             normaliseText(w.subtitle) === dbSubtitleNorm;
-    });
-    if (bySubtitle.length === 1) return { match: bySubtitle[0], confidence: 'series+subtitle' };
+  // 1. Exact series + vol
+  let hits = wikiEntries.filter(e => sameS(e) && e.vol === dbV);
+  if (hits.length === 1) return { match: hits[0], confidence: 'series+vol' };
+
+  // 2. Exact series + subtitle
+  if (dbT) {
+    hits = wikiEntries.filter(e => sameS(e) && normText(e.subtitle) === dbT);
+    if (hits.length === 1) return { match: hits[0], confidence: 'series+subtitle' };
   }
 
-  // Try: series + vol (fuzzy — series contains dbSeries or vice versa)
-  if (bySeriesVol.length === 0 && dbVol) {
-    const fuzzy = wikiEntries.filter(w => {
-      const wNorm = normaliseText(w.series);
-      return (wNorm.includes(dbSeriesNorm) || dbSeriesNorm.includes(wNorm)) && w.vol === dbVol;
-    });
-    if (fuzzy.length === 1) return { match: fuzzy[0], confidence: 'fuzzy-series+vol' };
+  // 3. Fuzzy series + exact vol
+  if (dbV) {
+    hits = wikiEntries.filter(e => fuzzyS(e) && e.vol === dbV);
+    if (hits.length === 1) return { match: hits[0], confidence: 'fuzzy-series+vol' };
+  }
+
+  // 4. Fuzzy series + subtitle
+  if (dbT) {
+    hits = wikiEntries.filter(e => fuzzyS(e) && normText(e.subtitle) === dbT);
+    if (hits.length === 1) return { match: hits[0], confidence: 'fuzzy+subtitle' };
   }
 
   return null;
 }
 
-// ─── PHASE 4: PROPOSE / APPLY UPDATES ────────────────────────────────────────
+// ─── PROPOSE / APPLY ─────────────────────────────────────────────────────────
 
-function buildProposedUpdates(dbEntry, wikiEntry) {
+function buildUpdates(dbEntry, wiki) {
   const updates = [];
-  const sourceUrl = WIKI_SOURCES['Marvel Epic']; // TODO: pass actual URL
-
-  if ((!dbEntry.isbn) && wikiEntry.isbn) {
-    updates.push({
-      id:         dbEntry.id,
-      field:      'isbn',
-      old_value:  dbEntry.isbn || null,
-      new_value:  wikiEntry.isbn,
-      source_url: sourceUrl,
-    });
+  if (!dbEntry.isbn && wiki.isbn) {
+    updates.push({ id: dbEntry.id, field: 'isbn', old: dbEntry.isbn ?? null, val: wiki.isbn, source: wiki.sourceUrl, label: wiki.sourceLabel });
   }
-  if ((!dbEntry.years) && wikiEntry.years) {
-    updates.push({
-      id:         dbEntry.id,
-      field:      'years',
-      old_value:  dbEntry.years || null,
-      new_value:  wikiEntry.years,
-      source_url: sourceUrl,
-    });
+  if (!dbEntry.years && wiki.years) {
+    updates.push({ id: dbEntry.id, field: 'years', old: dbEntry.years ?? null, val: wiki.years, source: wiki.sourceUrl, label: wiki.sourceLabel });
   }
-  const normIssues = normaliseIssues(wikiEntry.issues);
-  if ((!dbEntry.issues_covered) && normIssues) {
-    updates.push({
-      id:         dbEntry.id,
-      field:      'issues_covered',
-      old_value:  dbEntry.issues_covered || null,
-      new_value:  normIssues,
-      source_url: sourceUrl,
-    });
+  const ni = normaliseIssues(wiki.rawIssues);
+  if (!dbEntry.issues_covered && ni) {
+    updates.push({ id: dbEntry.id, field: 'issues_covered', old: dbEntry.issues_covered ?? null, val: ni, source: wiki.sourceUrl, label: wiki.sourceLabel });
   }
   return updates;
 }
 
-async function applyUpdate(update) {
-  const patch = { [update.field]: update.new_value };
-  await sbRequest(
-    'PATCH',
-    `/rest/v1/comic_entries?id=eq.${update.id}`,
-    patch,
-    true
-  );
-
-  await sbRequest('POST', '/rest/v1/enrichment_log', {
-    entry_id:     update.id,
-    field:        update.field,
-    old_value:    update.old_value,
-    new_value:    update.new_value,
-    source_url:   update.source_url,
-    source_label: 'Wikipedia',
-    run_id:       RUN_ID,
-    status:       'applied',
-  }, true);
+async function applyUpdates(updates) {
+  for (const u of updates) {
+    await sbRequest('PATCH', `/rest/v1/comic_entries?id=eq.${u.id}`, { [u.field]: u.val }, true);
+    await sbRequest('POST', '/rest/v1/enrichment_log', {
+      entry_id: u.id, field: u.field, old_value: u.old, new_value: u.val,
+      source_url: u.source, source_label: u.label, run_id: RUN_ID, status: 'applied',
+    }, true);
+  }
 }
 
-async function logNoMatch(dbEntry, sourceUrl) {
+async function logNoMatch(dbEntry, sourceUrl, sourceLabel) {
   if (!SB_SERVICE) return;
+  // Only log once per entry (using isbn field as sentinel)
   await sbRequest('POST', '/rest/v1/enrichment_log', {
-    entry_id:     dbEntry.id,
-    field:        'isbn',
-    old_value:    null,
-    new_value:    'N/A',
-    source_url:   sourceUrl,
-    source_label: 'Wikipedia',
-    run_id:       RUN_ID,
-    status:       'no_match',
-    note:         `No Wikipedia match for ${dbEntry.series} vol ${dbEntry.vol}`,
+    entry_id: dbEntry.id, field: 'isbn', old_value: null, new_value: 'N/A',
+    source_url: sourceUrl, source_label: sourceLabel, run_id: RUN_ID,
+    status: 'no_match', note: `No match: ${dbEntry.series} vol ${dbEntry.vol ?? '?'} "${dbEntry.subtitle ?? ''}"`,
   }, true);
 }
 
 // ─── ROLLBACK ─────────────────────────────────────────────────────────────────
 
 async function rollback(runId) {
-  console.log(`\n=== ROLLBACK PREVIEW for run_id: ${runId} ===\n`);
-
-  const preview = await sbRequest(
-    'GET',
-    `/rest/v1/enrichment_log?run_id=eq.${encodeURIComponent(runId)}&status=eq.applied&select=entry_id,field,old_value,new_value`,
+  console.log(`\n=== ROLLBACK PREVIEW  run_id: ${runId} ===\n`);
+  const rows = await sbSelectAll(
+    `/rest/v1/enrichment_log?run_id=eq.${encodeURIComponent(runId)}&status=eq.applied&select=entry_id,field,old_value,new_value`
   );
+  if (!rows.length) { console.log('Nothing to rollback for that run_id.'); return; }
 
-  if (!preview || preview.length === 0) {
-    console.log('No applied entries found for this run_id.');
+  // Join with comic_entries for display
+  const ids = [...new Set(rows.map(r => r.entry_id))];
+  const entries = await sbSelectAll(
+    `/rest/v1/comic_entries?id=in.(${ids.join(',')})&select=id,series,vol`
+  );
+  const entryMap = Object.fromEntries(entries.map(e => [e.id, e]));
+
+  console.log('entry_id | series                    | vol | field           | was');
+  console.log('---------|---------------------------|-----|-----------------|----');
+  for (const r of rows) {
+    const e = entryMap[r.entry_id] || {};
+    console.log(
+      `${String(r.entry_id).padEnd(8)} | ${(e.series||'?').padEnd(25)} | ${String(e.vol||'').padEnd(3)} | ${r.field.padEnd(15)} | ${r.old_value ?? 'NULL'}`
+    );
+  }
+  console.log(`\nTotal: ${rows.length} field updates would be reverted.`);
+
+  if (!args.includes('--apply') || process.env.CONFIRM_ROLLBACK !== 'yes') {
+    console.log('\nTo execute: set CONFIRM_ROLLBACK=yes and add --apply');
     return;
   }
 
-  console.log('The following changes would be REVERTED:\n');
-  console.log('entry_id | field           | old_value → new_value');
-  console.log('---------|-----------------|----------------------------------------');
-  for (const row of preview) {
-    const old = row.old_value ?? 'NULL';
-    console.log(`${String(row.entry_id).padEnd(8)} | ${row.field.padEnd(15)} | ${old} → ${row.new_value}`);
-  }
-
-  console.log(`\nTotal: ${preview.length} rows would be reverted.`);
-  console.log('\nTo execute rollback, set --apply flag AND confirm by setting env var CONFIRM_ROLLBACK=yes');
-
-  if (args.includes('--apply') && process.env.CONFIRM_ROLLBACK === 'yes') {
-    console.log('\nExecuting rollback...');
-    for (const field of ['isbn', 'years', 'issues_covered']) {
-      const rows = preview.filter(r => r.field === field);
-      for (const row of rows) {
-        await sbRequest(
-          'PATCH',
-          `/rest/v1/comic_entries?id=eq.${row.entry_id}`,
-          { [field]: row.old_value },
-          true
-        );
-      }
+  console.log('\nExecuting rollback…');
+  for (const field of ['isbn', 'years', 'issues_covered']) {
+    for (const r of rows.filter(x => x.field === field)) {
+      await sbRequest('PATCH', `/rest/v1/comic_entries?id=eq.${r.entry_id}`, { [field]: r.old_value }, true);
     }
-    // Delete log entries
-    await sbRequest(
-      'DELETE',
-      `/rest/v1/enrichment_log?run_id=eq.${encodeURIComponent(runId)}`,
-      null,
-      true
-    );
-    console.log('✓ Rollback complete.');
   }
+  await sbRequest('DELETE', `/rest/v1/enrichment_log?run_id=eq.${encodeURIComponent(runId)}`, null, true);
+  console.log('✓ Rollback complete.');
 }
 
-// ─── MONITOR PROGRESS ─────────────────────────────────────────────────────────
+// ─── PROGRESS ─────────────────────────────────────────────────────────────────
 
-async function showProgress() {
+async function printProgress() {
   console.log('\n=== ENRICHMENT PROGRESS ===\n');
-
-  const summary = await sbRequest('GET', '/rest/v1/enrichment_run_summary');
-  if (summary && summary.length > 0) {
-    console.log('Run summaries:');
-    console.log('run_id                   | applied | skipped | no_match | conflict | total');
-    console.log('-------------------------|---------|---------|----------|----------|------');
-    for (const r of summary) {
-      console.log(
-        `${r.run_id.padEnd(24)} | ${String(r.applied).padEnd(7)} | ${String(r.skipped).padEnd(7)} | ` +
-        `${String(r.no_match).padEnd(8)} | ${String(r.conflict).padEnd(8)} | ${r.total}`
-      );
+  try {
+    const summary = await sbSelectAll('/rest/v1/enrichment_run_summary?select=*');
+    if (summary.length) {
+      console.log('run_id                    | applied | skipped | no_match | conflict | total');
+      console.log('--------------------------|---------|---------|----------|----------|------');
+      for (const r of summary) {
+        console.log(`${(r.run_id||'').padEnd(25)} | ${String(r.applied||0).padEnd(7)} | ${String(r.skipped||0).padEnd(7)} | ${String(r.no_match||0).padEnd(8)} | ${String(r.conflict||0).padEnd(8)} | ${r.total||0}`);
+      }
+    } else {
+      console.log('No enrichment runs yet.');
     }
-  } else {
-    console.log('No enrichment runs found yet.');
+  } catch { console.log('(enrichment_run_summary view not available)'); }
+
+  const all = await sbSelectAll('/rest/v1/comic_entries?select=pub,type,isbn,years,issues_covered');
+  const stats = {};
+  for (const r of all) {
+    const k = `${r.pub}|${r.type}`;
+    if (!stats[k]) stats[k] = { pub: r.pub, type: r.type, mi: 0, mc: 0, my: 0, t: 0 };
+    stats[k].t++;
+    if (!r.isbn)            stats[k].mi++;
+    if (!r.issues_covered)  stats[k].mc++;
+    if (!r.years)           stats[k].my++;
   }
-
-  const gaps = await sbRequest(
-    'GET',
-    '/rest/v1/comic_entries?select=pub,type,isbn,years,issues_covered'
-  );
-  if (gaps) {
-    const stats = {};
-    for (const row of gaps) {
-      const key = `${row.pub}|${row.type}`;
-      if (!stats[key]) stats[key] = { pub: row.pub, type: row.type, missingIsbn: 0, missingIssues: 0, missingYears: 0, total: 0 };
-      stats[key].total++;
-      if (!row.isbn)            stats[key].missingIsbn++;
-      if (!row.issues_covered)  stats[key].missingIssues++;
-      if (!row.years)           stats[key].missingYears++;
-    }
-    console.log('\nGap report:');
-    console.log('pub    | type            | miss.isbn | miss.issues | miss.years | total');
-    console.log('-------|-----------------|-----------|-------------|------------|------');
-    for (const k of Object.values(stats).sort((a, b) => a.pub.localeCompare(b.pub) || a.type.localeCompare(b.type))) {
-      console.log(
-        `${k.pub.padEnd(6)} | ${k.type.padEnd(15)} | ${String(k.missingIsbn).padEnd(9)} | ` +
-        `${String(k.missingIssues).padEnd(11)} | ${String(k.missingYears).padEnd(10)} | ${k.total}`
-      );
-    }
+  console.log('\npub    | type            | miss.isbn | miss.issues | miss.years | total');
+  console.log('-------|-----------------|-----------|-------------|------------|------');
+  for (const k of Object.values(stats).sort((a, b) => (a.pub+a.type).localeCompare(b.pub+b.type))) {
+    console.log(`${(k.pub||'').padEnd(6)} | ${(k.type||'').padEnd(15)} | ${String(k.mi).padEnd(9)} | ${String(k.mc).padEnd(11)} | ${String(k.my).padEnd(10)} | ${k.t}`);
   }
 }
 
 // ─── MAIN ENRICHMENT LOOP ─────────────────────────────────────────────────────
 
-async function enrichSeries(seriesName, wikiUrl, dryRun) {
-  console.log(`\n${'─'.repeat(60)}`);
-  console.log(`Series: ${seriesName}`);
-  console.log(`Source: ${wikiUrl}`);
-  console.log(`Mode:   ${dryRun ? 'DRY RUN (no DB writes)' : 'APPLY'}`);
-  console.log('─'.repeat(60));
-
-  // Fetch Wikipedia data
-  const wikiEntries = await scrapeWikiPage(wikiUrl);
-  const seriesWiki  = wikiEntries.filter(w =>
-    normaliseText(w.series).includes(normaliseText(seriesName)) ||
-    normaliseText(seriesName).includes(normaliseText(w.series))
-  );
-
-  console.log(`  Wikipedia entries found for "${seriesName}": ${seriesWiki.length}`);
-
-  if (seriesWiki.length === 0) {
-    console.log('  ⚠ No Wikipedia entries found. Check page structure or series name spelling.');
-    return { applied: 0, skipped: 0, noMatch: 0 };
-  }
-
-  // Fetch DB entries needing enrichment
-  const dbEntries = await queryAllEntries(seriesName);
-  const needing   = dbEntries.filter(e =>
-    !e.isbn || !e.years || !e.issues_covered
-  );
-  console.log(`  DB entries needing enrichment: ${needing.length}`);
-
-  let applied = 0, skipped = 0, noMatch = 0;
-  const allProposed = [];
-
-  for (const dbEntry of needing) {
-    const result = findMatch(dbEntry, seriesWiki);
-
-    if (!result) {
-      noMatch++;
-      if (!dryRun && SB_SERVICE) {
-        await logNoMatch(dbEntry, wikiUrl);
-      }
-      if (dryRun) {
-        console.log(`  NO MATCH: ${dbEntry.series} vol ${dbEntry.vol} "${dbEntry.subtitle || ''}"`);
-      }
-      continue;
-    }
-
-    const { match, confidence } = result;
-    const proposed = buildProposedUpdates(dbEntry, match);
-
-    if (proposed.length === 0) {
-      skipped++;
-      continue;
-    }
-
-    // Attach actual source URL
-    for (const u of proposed) u.source_url = wikiUrl;
-
-    allProposed.push(...proposed);
-
-    if (dryRun) {
-      console.log(`\n  MATCH [${confidence}]: ${dbEntry.series} vol ${dbEntry.vol} "${dbEntry.subtitle || ''}"`);
-      console.log(`    Wikipedia: "${match.subtitle}" | issues: ${match.issues} | years: ${match.years} | isbn: ${match.isbn}`);
-      for (const u of proposed) {
-        console.log(`    UPDATE id=${u.id}: ${u.field}  NULL → "${u.new_value}"`);
-      }
-    } else {
-      for (const u of proposed) {
-        await applyUpdate(u);
-        applied++;
-      }
-    }
-  }
-
-  if (dryRun) {
-    console.log(`\n  ── DRY RUN SUMMARY ──`);
-    console.log(`  Would apply ${allProposed.length} field update(s) across ${needing.length} entries.`);
-    console.log(`  no_match: ${noMatch} | skipped (already filled): ${skipped}`);
-    console.log(`\n  (No database changes were made. Re-run with --apply to commit.)`);
+async function run() {
+  // Determine which Wikipedia sources to process
+  let sources;
+  if (targetSeries && !isAll) {
+    // Single series: scan all sources that could contain it
+    sources = WIKI_SOURCES;
   } else {
-    console.log(`\n  ${seriesName}: ${applied} applied, ${skipped} skipped, ${noMatch} no_match`);
+    sources = WIKI_SOURCES;
   }
 
-  return { applied, skipped, noMatch };
+  // Fetch all DB entries needing enrichment
+  process.stdout.write('\nQuerying database… ');
+  let dbEntries = await sbSelectAll(
+    '/rest/v1/comic_entries?select=id,pub,type,series,vol,subtitle,isbn,years,issues_covered'
+  );
+
+  // Filter to only those missing at least one field
+  dbEntries = dbEntries.filter(e => !e.isbn || !e.years || !e.issues_covered);
+
+  // If targeting a specific series, filter further
+  if (targetSeries) {
+    dbEntries = dbEntries.filter(e => normText(e.series) === normText(targetSeries));
+  }
+  console.log(`${dbEntries.length} entries need enrichment.\n`);
+
+  if (!dbEntries.length) {
+    console.log('Nothing to do — all entries are fully populated!');
+    return;
+  }
+
+  const grandTotal = { applied: 0, skipped: 0, noMatch: 0 };
+
+  for (const src of sources) {
+    // Only scrape sources relevant to the pub/type if possible
+    const relevantDb = dbEntries.filter(e => {
+      if (src.pub && e.pub !== src.pub) return false;
+      // type matching is loose (Modern entries could be in Epic page, etc.)
+      return true;
+    });
+    if (relevantDb.length === 0) {
+      console.log(`\nSkipping ${src.label} — no matching DB entries need enrichment.`);
+      continue;
+    }
+
+    console.log(`\n${'─'.repeat(64)}`);
+    console.log(`Source:  ${src.label}`);
+    console.log(`Mode:    ${isDry ? 'DRY RUN (no writes)' : 'APPLY'}`);
+    console.log('─'.repeat(64));
+
+    let wikiEntries;
+    try {
+      wikiEntries = await scrapeWikiPage(src.label, src.url);
+    } catch (err) {
+      console.error(`  ✗ Failed to scrape ${src.url}: ${err.message}`);
+      continue;
+    }
+
+    if (!wikiEntries.length) {
+      console.warn(`  ⚠ No entries parsed — page structure may have changed.`);
+      continue;
+    }
+
+    // Group by series for summary
+    const seriesSummary = {};
+    let srcApplied = 0, srcSkipped = 0, srcNoMatch = 0;
+
+    for (const dbEntry of relevantDb) {
+      const sKey = dbEntry.series;
+      if (!seriesSummary[sKey]) seriesSummary[sKey] = { applied: 0, skipped: 0, noMatch: 0 };
+
+      const result = findMatch(dbEntry, wikiEntries);
+
+      if (!result) {
+        srcNoMatch++;
+        seriesSummary[sKey].noMatch++;
+        if (!isDry && SB_SERVICE) await logNoMatch(dbEntry, src.url, src.label);
+        continue;
+      }
+
+      const { match, confidence } = result;
+      const proposed = buildUpdates(dbEntry, match);
+
+      if (!proposed.length) {
+        srcSkipped++;
+        seriesSummary[sKey].skipped++;
+        continue;
+      }
+
+      if (isDry) {
+        console.log(`\n  [${confidence}] ${dbEntry.series} vol ${dbEntry.vol ?? '?'} "${dbEntry.subtitle ?? ''}"`);
+        console.log(`    wiki: "${match.subtitle}" | issues: ${match.rawIssues || '—'} | years: ${match.years || '—'} | isbn: ${match.isbn || '—'}`);
+        for (const u of proposed) {
+          console.log(`    UPDATE id=${u.id}  ${u.field}:  null → "${u.val}"`);
+        }
+        srcApplied += proposed.length;
+        seriesSummary[sKey].applied += proposed.length;
+      } else {
+        await applyUpdates(proposed);
+        srcApplied += proposed.length;
+        seriesSummary[sKey].applied += proposed.length;
+      }
+    }
+
+    // Per-source series summary
+    console.log(`\n  ── ${src.label} Summary ──`);
+    for (const [s, c] of Object.entries(seriesSummary).sort()) {
+      const parts = [];
+      if (c.applied)  parts.push(`${c.applied} ${isDry ? 'would update' : 'applied'}`);
+      if (c.skipped)  parts.push(`${c.skipped} skipped`);
+      if (c.noMatch)  parts.push(`${c.noMatch} no_match`);
+      if (parts.length) console.log(`  ${s}: ${parts.join(', ')}`);
+    }
+    console.log(`  Total field updates: ${srcApplied} ${isDry ? '(dry)' : 'applied'} | no_match: ${srcNoMatch}`);
+
+    grandTotal.applied  += srcApplied;
+    grandTotal.skipped  += srcSkipped;
+    grandTotal.noMatch  += srcNoMatch;
+  }
+
+  console.log('\n╔══════════════════════════════════════════════════════════════╗');
+  const verb = isDry ? 'would update' : 'applied';
+  console.log(`║  GRAND TOTAL: ${String(grandTotal.applied).padEnd(4)} fields ${verb.padEnd(12)} | ${String(grandTotal.noMatch).padEnd(4)} no_match   ║`);
+  if (isDry) console.log('║  (No database changes made — re-run with --apply to commit)  ║');
+  else       console.log(`║  Run ID: ${RUN_ID.padEnd(51)} ║`);
+  console.log('╚══════════════════════════════════════════════════════════════╝');
+
+  if (!isDry) {
+    console.log(`\nRun ID: ${RUN_ID}`);
+    console.log('Save this ID to use --rollback if needed.\n');
+  }
 }
 
 // ─── ENTRY POINT ──────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('╔══════════════════════════════════════════════════════════╗');
-  console.log('║       BCE Comics Pod — Wikipedia Enrichment Agent        ║');
-  console.log('╚══════════════════════════════════════════════════════════╝');
+  console.log('╔══════════════════════════════════════════════════════════════╗');
+  console.log('║      BCE Comics Pod — Wikipedia Enrichment Agent v2          ║');
+  console.log('╚══════════════════════════════════════════════════════════════╝');
   console.log(`Run ID:  ${RUN_ID}`);
-  console.log(`Mode:    ${isDry ? 'DRY RUN' : 'APPLY'}`);
-  if (targetSeries) console.log(`Series:  ${targetSeries}`);
+  console.log(`Mode:    ${isDry ? 'DRY RUN (no writes)' : 'APPLY'}`);
+  if (targetSeries) console.log(`Filter:  series = "${targetSeries}"`);
+  console.log('');
+
   if (!isDry && !SB_SERVICE) {
-    console.error('\n✗ SB_SERVICE_KEY is required for --apply mode.');
-    console.error('  Find it in: Supabase Dashboard → Settings → API → service_role key');
-    console.error('  Then set: export SB_SERVICE_KEY="your-key-here"');
+    console.error('✗ --apply requires SB_SERVICE_KEY env var.');
+    console.error('  Supabase Dashboard → Settings → API → service_role (secret)');
+    console.error('  export SB_SERVICE_KEY="eyJ..."');
     process.exit(1);
   }
 
-  // Rollback mode
-  if (rollbackId) {
-    await rollback(rollbackId);
-    return;
-  }
+  if (rollbackId)    { await rollback(rollbackId); return; }
+  if (showProgress)  { await printProgress();       return; }
 
-  // Setup (only needed once, skipped in dry-run)
-  if (!isDry) {
-    await setupEnrichmentLog();
-  } else {
-    console.log('\n(Skipping enrichment_log setup in dry-run mode)\n');
-  }
-
-  // Determine which series to process
-  let seriesToProcess;
-  if (targetSeries) {
-    seriesToProcess = [{ name: targetSeries, url: WIKI_SOURCES['Marvel Epic'] }];
-  } else if (isAll) {
-    seriesToProcess = [
-      { name: 'Amazing Spider-Man', url: WIKI_SOURCES['Marvel Epic'] },
-      { name: 'Avengers',           url: WIKI_SOURCES['Marvel Epic'] },
-      { name: 'X-Men',              url: WIKI_SOURCES['Marvel Epic'] },
-      // TODO: expand with remaining Marvel Epic series alphabetically
-      // Then Marvel Modern, Omnibus, DC Finest, DC Omnibus
-    ];
-  } else {
-    // Default: Amazing Spider-Man dry run
-    seriesToProcess = [{ name: 'Amazing Spider-Man', url: WIKI_SOURCES['Marvel Epic'] }];
-  }
-
-  let totalApplied = 0, totalSkipped = 0, totalNoMatch = 0;
-
-  for (const { name, url } of seriesToProcess) {
-    const { applied, skipped, noMatch } = await enrichSeries(name, url, isDry);
-    totalApplied  += applied;
-    totalSkipped  += skipped;
-    totalNoMatch  += noMatch;
-  }
-
-  console.log('\n╔══════════════════════════════════════════════════════════╗');
-  console.log(`║  TOTAL: ${String(totalApplied).padEnd(4)} applied | ${String(totalSkipped).padEnd(4)} skipped | ${String(totalNoMatch).padEnd(4)} no_match        ║`);
-  console.log('╚══════════════════════════════════════════════════════════╝');
-
-  if (!isDry) {
-    await showProgress();
-  }
+  await run();
 }
 
 main().catch(err => {
-  console.error('\n✗ Fatal error:', err.message);
+  console.error('\n✗ Fatal:', err.message);
   process.exit(1);
 });
