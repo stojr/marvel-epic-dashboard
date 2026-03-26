@@ -1,0 +1,59 @@
+name: Enrich Comics Data (Wikipedia)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run mode'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - apply
+      series:
+        description: 'Limit to one series (leave blank for all)'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  enrich:
+    name: ${{ github.event.inputs.mode == 'apply' && 'Apply enrichment' || 'Dry run' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: claude/enrich-comics-wikipedia-EYQHq
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run enrichment
+        env:
+          SB_ANON_KEY:    ${{ secrets.SB_ANON_KEY }}
+          SB_SERVICE_KEY: ${{ secrets.SB_SERVICE_KEY }}
+        run: |
+          SERIES="${{ github.event.inputs.series }}"
+          MODE="${{ github.event.inputs.mode }}"
+
+          ARGS="--all"
+          if [ -n "$SERIES" ]; then
+            ARGS="--series \"$SERIES\""
+          fi
+          if [ "$MODE" = "apply" ]; then
+            ARGS="$ARGS --apply"
+          fi
+
+          echo "Running: node enrich.mjs $ARGS"
+          eval node enrich.mjs $ARGS
+
+      - name: Show progress report
+        if: github.event.inputs.mode == 'apply'
+        env:
+          SB_ANON_KEY: ${{ secrets.SB_ANON_KEY }}
+        run: node enrich.mjs --progress
