@@ -172,26 +172,88 @@ function stripHtml(html) {
 }
 
 /**
- * Extract colspan/rowspan-aware cell text from a <table> block.
+ * Full colspan + rowspan aware table parser.
+ * Builds a 2-D grid respecting both span types, which is essential for
+ * Wikipedia tables where a series name cell may span 20–30 rows.
  * Returns { headers: string[], rows: string[][] }
  */
 function parseTable(tableHtml) {
-  const rawRows = [];
-  const rowRe   = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  // rowspanGrid[colIndex] = { value, remaining }
+  const rowspanGrid = {};
+  const grid = [];
+
+  const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
   let rowM;
   while ((rowM = rowRe.exec(tableHtml)) !== null) {
-    const cells = [];
-    const cellRe = /<t[dh][^>]*colspan="?(\d+)"?[^>]*>([\s\S]*?)<\/t[dh]>|<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    const rowHtml = rowM[1];
+    const outputRow = [];
+    let srcCol = 0; // which <td>/<th> we're reading from the HTML
+    let dstCol = 0; // which column in the output row we're writing to
+
+    // Inject any carried-over rowspan cells first
+    const injectAt = Object.keys(rowspanGrid).map(Number).sort((a, b) => a - b);
+
+    // Parse cells from HTML
+    const cellRe = /<(td|th)([^>]*)>([\s\S]*?)<\/\1>/gi;
     let cellM;
-    while ((cellM = cellRe.exec(rowM[1])) !== null) {
-      const span = parseInt(cellM[1] || '1', 10);
-      const text = stripHtml(cellM[2] ?? cellM[3] ?? '');
-      for (let i = 0; i < span; i++) cells.push(text);
+    const rawCells = [];
+    while ((cellM = cellRe.exec(rowHtml)) !== null) {
+      const attrs   = cellM[2];
+      const content = stripHtml(cellM[3]);
+      const colspanM = attrs.match(/colspan[=\s]*["']?(\d+)/i);
+      const rowspanM = attrs.match(/rowspan[=\s]*["']?(\d+)/i);
+      const colspan  = colspanM ? parseInt(colspanM[1], 10) : 1;
+      const rowspan  = rowspanM ? parseInt(rowspanM[1], 10) : 1;
+      rawCells.push({ content, colspan, rowspan });
     }
-    if (cells.length) rawRows.push(cells);
+
+    // Merge rowspan carry-ins with fresh cells into outputRow
+    let freshIdx = 0;
+    dstCol = 0;
+    // Find the max column we need
+    const maxCol = Math.max(
+      ...Object.keys(rowspanGrid).map(Number),
+      rawCells.reduce((acc, c) => acc + c.colspan, 0) +
+        Object.keys(rowspanGrid).length
+    ) + 1;
+
+    while (dstCol < maxCol || freshIdx < rawCells.length) {
+      if (rowspanGrid[dstCol]) {
+        // Insert carried rowspan value
+        const rs = rowspanGrid[dstCol];
+        outputRow[dstCol] = rs.value;
+        rs.remaining--;
+        if (rs.remaining <= 0) delete rowspanGrid[dstCol];
+        dstCol++;
+      } else if (freshIdx < rawCells.length) {
+        const cell = rawCells[freshIdx++];
+        for (let c = 0; c < cell.colspan; c++) {
+          outputRow[dstCol] = cell.content;
+          if (cell.rowspan > 1) {
+            rowspanGrid[dstCol] = { value: cell.content, remaining: cell.rowspan - 1 };
+          }
+          dstCol++;
+        }
+      } else {
+        break;
+      }
+    }
+
+    // Fill any gaps left by rowspan carry-ins beyond fresh cells
+    for (const col of Object.keys(rowspanGrid).map(Number)) {
+      if (outputRow[col] === undefined) {
+        const rs = rowspanGrid[col];
+        outputRow[col] = rs.value;
+        rs.remaining--;
+        if (rs.remaining <= 0) delete rowspanGrid[col];
+      }
+    }
+
+    if (outputRow.filter(Boolean).length > 0) grid.push(outputRow);
   }
-  if (rawRows.length < 2) return null;
-  return { headers: rawRows[0], rows: rawRows.slice(1) };
+
+  if (grid.length < 2) return null;
+  return { headers: grid[0], rows: grid.slice(1) };
 }
 
 // ─── WIKIPEDIA SCRAPER ────────────────────────────────────────────────────────
@@ -218,13 +280,13 @@ async function scrapeWikiPage(sourceLabel, url) {
     const h = parsed.headers.map(s => s.toLowerCase());
     // Only process tables that have an ISBN or Issues column
     const colIsbn   = h.findIndex(c => c.includes('isbn'));
-    const colIssues = h.findIndex(c => c.includes('issue') || c.includes('content'));
+    const colIssues = h.findIndex(c => c.includes('issue') || c.includes('content') || c.includes('collected'));
     if (colIsbn === -1 && colIssues === -1) continue;
 
-    const colSeries  = h.findIndex(c => c.includes('series') || c === 'title');
-    const colVol     = h.findIndex(c => c === 'vol' || c === 'volume' || c === '#' || c === 'no.' || c === 'no');
-    const colTitle   = h.findIndex(c => c.includes('subtitle') || c.includes('collection title') || (c.includes('title') && c !== 'series title'));
-    const colYears   = h.findIndex(c => c.includes('year') || c.includes('published') || c.includes('date'));
+    const colSeries  = h.findIndex(c => c.includes('series'));
+    const colVol     = h.findIndex(c => c === 'vol' || c === 'vol.' || c === 'volume' || c === '#' || c === 'no.' || c === 'no' || c.match(/^vol/));
+    const colTitle   = h.findIndex(c => c.includes('subtitle') || c.includes('collection title') || c.includes('collected title') || (c.includes('title') && !c.includes('series')));
+    const colYears   = h.findIndex(c => c.includes('year') || c.includes('published') || c.includes('original') || c.includes('date') || c.includes('era'));
 
     let currentSeries = '';
 
