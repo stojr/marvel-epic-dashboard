@@ -49,11 +49,11 @@ const RUN_ID     = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 
 // Wikipedia sources mapped to (pub, type) combos in the database
 const WIKI_SOURCES = [
-  { label: 'Marvel Epic',    url: 'https://en.wikipedia.org/wiki/Marvel_Epic_Collection',            pub: 'Marvel', type: 'Epic' },
-  { label: 'Marvel Modern',  url: 'https://en.wikipedia.org/wiki/List_of_Marvel_collected_editions', pub: 'Marvel', type: 'Modern' },
-  { label: 'Marvel Omnibus', url: 'https://en.wikipedia.org/wiki/Marvel_Omnibus',                    pub: 'Marvel', type: 'Omnibus' },
-  { label: 'DC Finest',      url: 'https://en.wikipedia.org/wiki/DC_Finest',                         pub: 'DC',     type: 'DC Finest' },
-  { label: 'DC Omnibus',     url: 'https://en.wikipedia.org/wiki/DC_Omnibus',                        pub: 'DC',     type: 'Omnibus' },
+  { label: 'Marvel Epic',    url: 'https://en.wikipedia.org/wiki/Marvel_Epic_Collection',  pub: 'Marvel', type: 'Epic' },
+  { label: 'Marvel Omnibus', url: 'https://en.wikipedia.org/wiki/Marvel_Omnibus',          pub: 'Marvel', type: 'Omnibus' },
+  { label: 'DC Finest',      url: 'https://en.wikipedia.org/wiki/DC_Finest',               pub: 'DC',     type: 'DC Finest' },
+  { label: 'DC Omnibus',     url: 'https://en.wikipedia.org/wiki/DC_Omnibus',              pub: 'DC',     type: 'Omnibus' },
+  // Marvel Modern Era has no single Wikipedia page — skipped
 ];
 
 // ─── CLI ARGS ─────────────────────────────────────────────────────────────────
@@ -259,6 +259,34 @@ function parseTable(tableHtml) {
 // ─── WIKIPEDIA SCRAPER ────────────────────────────────────────────────────────
 
 /**
+ * Depth-counting table extractor — correctly handles nested tables.
+ * The naive non-greedy regex approach stops at the first </table> encountered
+ * inside a cell (e.g. Wikipedia sort-key helper tables), truncating the main
+ * data table. This function tracks open/close depth to return the full content
+ * of every top-level table.
+ */
+function extractTopLevelTables(html) {
+  const tables = [];
+  const tagRe  = /<(\/?table)[\s>]/gi;
+  let depth = 0, start = -1;
+  let m;
+  while ((m = tagRe.exec(html)) !== null) {
+    if (!m[1].startsWith('/')) {        // opening <table
+      if (depth === 0) start = m.index;
+      depth++;
+    } else {                            // closing </table>
+      depth--;
+      if (depth === 0 && start !== -1) {
+        const openEnd = html.indexOf('>', start) + 1;
+        tables.push(html.slice(openEnd, m.index));
+        start = -1;
+      }
+    }
+  }
+  return tables;
+}
+
+/**
  * Scrape a Wikipedia page and return a flat array of:
  *   { series, vol, subtitle, rawIssues, years, isbn, sourceUrl, sourceLabel }
  */
@@ -269,12 +297,10 @@ async function scrapeWikiPage(sourceLabel, url) {
   if (status !== 200) return [];
 
   const results = [];
+  const tableContents = extractTopLevelTables(body);
 
-  // Find every <table> block
-  const tableRe = /<table[^>]*>([\s\S]*?)<\/table>/gi;
-  let tableM;
-  while ((tableM = tableRe.exec(body)) !== null) {
-    const parsed = parseTable(tableM[1]);
+  for (const tableContent of tableContents) {
+    const parsed = parseTable(tableContent);
     if (!parsed) continue;
 
     const h = parsed.headers.map(s => s.toLowerCase());
@@ -319,6 +345,14 @@ async function scrapeWikiPage(sourceLabel, url) {
         sourceUrl:   url,
         sourceLabel,
       });
+    }
+  }
+
+  // Debug: print sample headers + first 3 rows of the largest table found
+  if (results.length > 0 && process.env.DEBUG_SCRAPE) {
+    console.log('  [debug] sample entries:');
+    for (const e of results.slice(0, 3)) {
+      console.log(`    series="${e.series}" vol=${e.vol} subtitle="${e.subtitle}" issues="${e.rawIssues?.slice(0,40)}" isbn="${e.isbn}"`);
     }
   }
 
@@ -375,14 +409,12 @@ function normaliseIsbn(raw) {
 function normaliseIssues(raw) {
   if (!raw) return '';
   let s = raw
-    .replace(/[–—]/g, '-')           // en/em dash → hyphen
-    .replace(/[A-Za-z\s]+#/g, '')    // strip series prefixes e.g. "Amazing Spider-Man #"
-    .replace(/#/g, '')               // remaining #
-    .replace(/\s*,\s*/g, ', ')       // normalise commas
+    .replace(/[–—]/g, '-')    // en/em dash → hyphen
+    .replace(/\s*,\s*/g, ', ')
     .replace(/\s*;\s*/g, '; ')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/[;,]+$/, '');          // trailing punctuation
+    .replace(/[;,]+$/, '');
   return s;
 }
 
