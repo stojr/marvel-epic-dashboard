@@ -386,7 +386,6 @@ async function scrapeWikiPage(sourceLabel, url) {
         sourceLabel,
       });
     }
-  }
 
     // Print first 2 entries from this table as a sanity check
     const tableResults = results.slice(-Math.min(2, results.length));
