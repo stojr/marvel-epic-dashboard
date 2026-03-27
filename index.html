@@ -130,25 +130,27 @@ select:focus,input:focus{outline:none;border-color:var(--gold)}
 .card.cn .prog-bar-fill{background:var(--nick)}
 
 /* ─── CHARTS ─── */
-.charts{display:grid;grid-template-columns:1fr 300px;gap:14px;margin-bottom:16px}
+.charts{display:grid;grid-template-columns:300px 1fr;gap:14px;margin-bottom:16px}
 @media(max-width:900px){.charts{grid-template-columns:1fr}}
 .cpanel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px}
 .ctitle{font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
-.barchart{display:flex;flex-direction:column;gap:6px}
-.brow{display:flex;align-items:center;gap:8px}
-.byr{font-family:var(--cf);font-size:13px;font-weight:700;color:var(--muted);width:38px;text-align:right;flex-shrink:0}
-.btrack{flex:1;height:24px;background:var(--surface2);border-radius:2px;overflow:hidden;display:flex}
+.barchart{display:flex;flex-direction:column;gap:5px}
+.brow{display:flex;align-items:center;gap:8px;padding:1px 0}
+.brow:hover .btrack{filter:brightness(1.1)}
+.byr{font-family:var(--cf);font-size:12px;font-weight:700;color:var(--muted);width:38px;text-align:right;flex-shrink:0}
+.btrack{flex:1;height:28px;background:var(--surface2);border-radius:3px;overflow:hidden;display:flex;transition:filter .12s}
 .bfm{height:100%;background:var(--red);transition:width .5s ease}
 .bfd{height:100%;background:var(--blue);transition:width .5s ease}
-.bcnt{font-family:var(--cf);font-size:13px;color:var(--muted);width:32px}
-.bcnt b{color:var(--text)}
-.donut-wrap{display:flex;flex-direction:column;align-items:center}
-#donut{margin-bottom:12px}
-.dleg{width:100%;display:flex;flex-direction:column;gap:5px}
-.dleg-item{display:flex;align-items:center;gap:7px;font-size:13px}
-.dleg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.dleg-lbl{font-family:var(--cf);font-size:13px;color:var(--muted);flex:1}
-.dleg-val{font-family:var(--cf);font-size:14px;font-weight:700;color:var(--text)}
+.bcnt{font-family:var(--cf);font-size:12px;color:var(--muted);width:32px;text-align:right}
+.bcnt b{color:var(--text);font-size:13px}
+.donut-wrap{display:flex;flex-direction:column;align-items:center;gap:0}
+#donut{margin-bottom:14px;filter:drop-shadow(0 2px 8px rgba(0,0,0,.35))}
+.dleg{width:100%;display:flex;flex-direction:column;gap:6px}
+.dleg-item{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:4px;transition:background .12s;cursor:default}
+.dleg-item:hover{background:var(--surface2)}
+.dleg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.dleg-lbl{font-family:var(--cf);font-size:13px;color:var(--muted);flex:1;letter-spacing:.2px}
+.dleg-val{font-family:var(--cf);font-size:14px;font-weight:700;color:var(--text);min-width:28px;text-align:right}
 .chart-controls{display:flex;align-items:center;gap:4px;margin-bottom:10px;flex-wrap:wrap}
 .ctbtn{padding:3px 10px;background:transparent;border:1px solid var(--border2);border-radius:var(--r);color:var(--muted);font-family:var(--cf);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .15s}
 .ctbtn.on{background:var(--surface3);border-color:var(--gold);color:var(--gold)}
@@ -335,6 +337,8 @@ body.light{
   --bg:#f0f2f8;--surface:#ffffff;--surface2:#e8eaf2;--surface3:#dde0ee;
   --border:#c8cad8;--border2:#b0b3c8;--text:#111120;--muted:#2a2a44;--dimtext:#3d3d55;--dim:#4a4a66;
   --gold:#9c6e00; /* darken amber so it reads on white/light-grey backgrounds */
+  --green:#1a7a42; /* darken green for WCAG AA on light backgrounds */
+  --orange:#a04c00; /* darken orange for WCAG AA on light backgrounds */
 }
 body.light::before{background-image:radial-gradient(circle,#00000009 1px,transparent 1px)}
 /* Header always has a dark background — restore bright token values for its children */
@@ -652,6 +656,10 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
 .rv-card-scene:hover .rv-card-border{animation:rv-holo-border 2.2s linear infinite;box-shadow:0 12px 40px rgba(0,0,0,.8),0 0 30px rgba(180,60,255,.3)}
 .rv-card-scene.highlighted .rv-card-border{animation:rv-holo-border 1s linear infinite;box-shadow:0 0 0 3px var(--gold),0 12px 40px rgba(255,210,52,.25)}
 .rv-card-scene.placeholder-scene .rv-card-border{background:var(--border2);animation:none !important;box-shadow:none !important}
+/* Owned glow — persistent green outline on front face */
+.rv-card-scene.rv-owned .rv-card-border{box-shadow:0 0 0 2px rgba(62,255,138,.75),0 8px 28px rgba(0,0,0,.55)}
+/* Owned stamp — front-face badge */
+.rv-owned-stamp{position:absolute;bottom:48px;left:0;right:0;text-align:center;font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(62,255,138,.88);color:#000;padding:3px 0;pointer-events:none;z-index:5}
 .rv-card-border.flipped{transform:rotateY(180deg)}
 @keyframes rv-holo-border{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 /* Inner wrapper preserves 3D for front/back faces */
@@ -1054,6 +1062,13 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
   <!-- Charts -->
   <div class="charts">
     <div class="cpanel">
+      <div class="ctitle">Composition</div>
+      <div class="donut-wrap">
+        <canvas id="donut" width="180" height="180"></canvas>
+        <div class="dleg" id="donutLeg"></div>
+      </div>
+    </div>
+    <div class="cpanel">
       <div class="ctitle" id="barChartTitle">Releases Per Year</div>
       <div class="chart-controls">
         <button class="ctbtn on" data-chart-mode onclick="setChartMode('bar',this)">▮ Bar</button>
@@ -1073,13 +1088,6 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       </div>
       <div id="lineChartWrap" style="display:none">
         <canvas id="lineChart" style="width:100%"></canvas>
-      </div>
-    </div>
-    <div class="cpanel">
-      <div class="ctitle">Composition</div>
-      <div class="donut-wrap">
-        <canvas id="donut" width="180" height="180"></canvas>
-        <div class="dleg" id="donutLeg"></div>
       </div>
     </div>
   </div>
@@ -1440,6 +1448,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       <thead>
         <tr>
           <th class="bec-del">Del</th>
+          <th class="bec-isbn"    data-sort="isbn"    onclick="sortBulkBy('isbn')">ISBN<span class="be-sort-arrow" id="bsa-isbn"></span></th>
           <th class="bec-pub"     data-sort="pub"     onclick="sortBulkBy('pub')">Publisher<span class="be-sort-arrow" id="bsa-pub"></span><input class="be-col-filter" data-col-filter="pub"     placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-type"    data-sort="type"    onclick="sortBulkBy('type')">Type<span class="be-sort-arrow" id="bsa-type"></span><input class="be-col-filter" data-col-filter="type"    placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-series"  data-sort="series"  onclick="sortBulkBy('series')">Series *<span class="be-sort-arrow" id="bsa-series"></span><input class="be-col-filter" data-col-filter="series"  placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
@@ -1453,7 +1462,6 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
           <th class="bec-lic"     data-sort="licensed" onclick="sortBulkBy('licensed')">Licensed<span class="be-sort-arrow" id="bsa-licensed"></span></th>
           <th class="bec-rep"     data-sort="reprint"  onclick="sortBulkBy('reprint')">Reprint<span class="be-sort-arrow" id="bsa-reprint"></span></th>
           <th class="bec-conf"    data-sort="conf"    onclick="sortBulkBy('conf')">Confidence<span class="be-sort-arrow" id="bsa-conf"></span><input class="be-col-filter" data-col-filter="conf" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
-          <th class="bec-isbn"    data-sort="isbn"    onclick="sortBulkBy('isbn')">ISBN<span class="be-sort-arrow" id="bsa-isbn"></span></th>
           <th class="bec-writers" data-sort="writers" onclick="sortBulkBy('writers')">Writers<span class="be-sort-arrow" id="bsa-writers"></span><input class="be-col-filter" data-col-filter="writers" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-artists" data-sort="artists" onclick="sortBulkBy('artists')">Artists<span class="be-sort-arrow" id="bsa-artists"></span><input class="be-col-filter" data-col-filter="artists" placeholder="filter…" oninput="applyBulkColFilters()" onclick="event.stopPropagation()"></th>
           <th class="bec-sec-issues">Sec. Issues</th>
@@ -1607,8 +1615,8 @@ async function sbUpdate(table, match, body) {
 async function sbDelete(table, match) {
   return sbFetch(table, `?${match}`, { method:'DELETE' });
 }
-async function sbUpsert(table, body, onConflict) {
-  return sbFetch(table, '', { method:'POST', headers:{'Prefer':`resolution=merge-duplicates,return=representation`,'on-conflict':onConflict}, body: JSON.stringify(body) });
+async function sbUpsert(table, body, onConflict, resolution = 'merge-duplicates') {
+  return sbFetch(table, '', { method:'POST', headers:{'Prefer':`resolution=${resolution},return=representation`,'on-conflict':onConflict}, body: JSON.stringify(body) });
 }
 
 // ── Supabase Auth Client ──────────────────────
@@ -2218,10 +2226,11 @@ async function onAuthStateChange(event, session) {
       const colors = ['#c97fff','#2ee8d4','#ff9f2a','#3eff8a','#3aa8ff','#ff4136','#ffd234'];
       const color = colors[ALL_USERS.length % colors.length];
       try {
+        // Use ignore-duplicates so a custom display name set after first login is never overwritten
         await sbUpsert('users', {
           id: currentUser.id, email: currentUser.email,
           display_name: name, color: color, avatar_url: avatar
-        }, 'id');
+        }, 'id', 'ignore-duplicates');
         ALL_USERS.push({ id: currentUser.id, display_name: name, color, avatar_url: avatar });
       } catch(e) { console.warn('Could not create user profile:', e); }
     }
@@ -2857,21 +2866,29 @@ function buildDonut(filtered) {
   const COLORS=['#e8352a','#f0b429','#2ecc71','#1a7fd4','#c97ef5'];
   const labels=Object.keys(byType),vals=labels.map(l=>byType[l]),total=vals.reduce((a,b)=>a+b,0)||1;
   let start=-Math.PI/2;
-  const cx=90,cy=90,r=78,ir=52;
+  const cx=90,cy=90,r=80,ir=54;
+  const GAP=0.022; // gap between slices in radians
+  // First pass: draw slices with a small gap between them
   labels.forEach((lbl,i)=>{
     if(!vals[i])return;
     const slice=(vals[i]/total)*Math.PI*2;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+slice);
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start+GAP/2,start+slice-GAP/2);
     ctx.closePath();ctx.fillStyle=COLORS[i];ctx.fill();start+=slice;
   });
+  // Donut hole
   ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);
-  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#131318';ctx.fill();
-  ctx.fillStyle='#dde0f0';ctx.font=`bold 22px 'Bebas Neue',impact,sans-serif`;
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(total,cx,cy-7);
-  ctx.font=`10px 'Barlow Condensed',sans-serif`;ctx.fillStyle='#6a6a8a';ctx.fillText('UNIQUE',cx,cy+10);
+  const surfaceColor=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#131318';
+  ctx.fillStyle=surfaceColor;ctx.fill();
+  // Center text
+  const textColor=getComputedStyle(document.documentElement).getPropertyValue('--text').trim()||'#f0f3ff';
+  const mutedColor=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#6a6a8a';
+  ctx.fillStyle=textColor;ctx.font=`bold 26px 'Bebas Neue',impact,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(total,cx,cy-8);
+  ctx.font=`bold 9px 'Barlow Condensed',sans-serif`;ctx.fillStyle=mutedColor;
+  ctx.letterSpacing='2px';ctx.fillText('UNIQUE',cx,cy+10);
   document.getElementById('donutLeg').innerHTML=labels.map((l,i)=>`
     <div class="dleg-item"><div class="dleg-dot" style="background:${COLORS[i]}"></div>
-    <div class="dleg-lbl">${l}</div><div class="dleg-val">${vals[i]}</div></div>`).join('');
+    <div class="dleg-lbl">${l}</div><div class="dleg-val">${vals[i]}</div></div>`).filter((_,i)=>vals[i]>0).join('');
 }
 
 // ── Table ──────────────────────────────────────
@@ -2940,33 +2957,47 @@ function toggleExpand(id, cols) {
       <div class="cover-detail-row">
         <div class="cover-img-wrap">${coverHtml}</div>
         <div class="cover-detail-meta">
+
+          <!-- Block 1: Identity -->
           <div class="expand-meta-row">
             <div class="expand-field ef-wide"><span class="expand-label">Series</span><span class="expand-value">${escHtml(d.series||'–')}</span></div>
             <div class="expand-field"><span class="expand-label">Volume</span><span class="expand-value">${volDisplay}</span></div>
             <div class="expand-field"><span class="expand-label">Publisher</span><span class="expand-value">${escHtml(d.pub||'–')}</span></div>
             <div class="expand-field"><span class="expand-label">Type</span><span class="expand-value">${d.type||'–'}</span></div>
           </div>
+          ${d.subtitle?`<div class="expand-meta-row">
+            <div class="expand-field ef-full"><span class="expand-label">Subtitle</span><span class="expand-value">${escHtml(d.subtitle)}</span></div>
+          </div>`:''}
+
+          <!-- Block 2: Issue Coverage & Timeline -->
           <div class="expand-meta-row">
-            ${d.subtitle?`<div class="expand-field ef-wide"><span class="expand-label">Subtitle</span><span class="expand-value">${escHtml(d.subtitle)}</span></div>`:''}
-            <div class="expand-field"><span class="expand-label">Release Date</span><span class="expand-value">${d.date||'–'}</span></div>
+            ${d.issues_covered?`<div class="expand-field ef-wide"><span class="expand-label">Issues Covered</span><span class="expand-value" style="font-family:var(--cf);font-weight:700">${escHtml(d.issues_covered)}</span></div>`:''}
             ${d.years?`<div class="expand-field"><span class="expand-label">Years Covered</span><span class="expand-value">${d.years}</span></div>`:''}
-            ${d.series_group?`<div class="expand-field"><span class="expand-label">Series Group</span><span class="expand-value" style="color:var(--gold)">${escHtml(d.series_group)}</span></div>`:''}
             <div class="expand-field"><span class="expand-label">Pages</span><span class="expand-value">${d.pages?d.pages+' pages':'Unknown'}</span></div>
           </div>
+
+          <!-- Block 3: Publication Details -->
           <div class="expand-meta-row">
-            <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'⚠ Licensed':'Original IP'}</span></div>
-            <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'Contains reprints':'No reprints'}</span></div>
-            <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
-            ${d.isbn?`<div class="expand-field"><span class="expand-label">ISBN</span><span class="expand-value">${escHtml(d.isbn)}</span></div>`:''}
+            <div class="expand-field"><span class="expand-label">Release Date</span><span class="expand-value">${d.date||'–'}</span></div>
+            ${d.isbn?`<div class="expand-field"><span class="expand-label">ISBN</span><span class="expand-value" style="font-family:var(--cf);font-size:12px">${escHtml(d.isbn)}</span></div>`:''}
+            <div class="expand-field"><span class="expand-label">Licensed IP</span><span class="expand-value">${d.licensed==='Yes'?'<span style="color:var(--orange)">⚠ Licensed</span>':'Original IP'}</span></div>
+            <div class="expand-field"><span class="expand-label">Reprints</span><span class="expand-value">${d.reprint==='Yes'?'<span style="color:var(--dimtext)">Contains reprints</span>':'No reprints'}</span></div>
           </div>
+
+          <!-- Block 4: Creative Team -->
           ${(d.writers||d.artists)?`<div class="expand-meta-row">
             ${d.writers?`<div class="expand-field ef-wide"><span class="expand-label">Writers</span><span class="expand-value">${escHtml(d.writers)}</span></div>`:''}
             ${d.artists?`<div class="expand-field ef-wide"><span class="expand-label">Artists</span><span class="expand-value">${escHtml(d.artists)}</span></div>`:''}
           </div>`:''}
+
+          <!-- Block 5: Classification -->
           <div class="expand-meta-row">
-            <div class="expand-field ef-full"><span class="expand-label">Store Link</span>${prhHtml}</div>
+            ${d.series_group?`<div class="expand-field"><span class="expand-label">Series Group</span><span class="expand-value" style="color:var(--gold)">${escHtml(d.series_group)}</span></div>`:''}
+            <div class="expand-field"><span class="expand-label">Confidence</span><span class="expand-value">${d.conf||'–'}</span></div>
+            <div class="expand-field ef-wide"><span class="expand-label">Store Link</span>${prhHtml}</div>
           </div>
-          ${d.description?`<div class="expand-meta-row"><div class="expand-field ef-full"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.5">${escHtml(d.description)}</span></div></div>`:''}
+
+          ${d.description?`<div class="expand-meta-row"><div class="expand-field ef-full"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.6">${escHtml(d.description)}</span></div></div>`:''}
           ${buildSameEraSection(d)}
         </div>
       </div>
@@ -4021,6 +4052,7 @@ function makeBulkRow(d, isNew) {
 
   tr.innerHTML = `
     <td class="bec-del"><button class="be-del-btn" onclick="bulkToggleDelete(this,'${rowId}')" title="Delete row">✕</button></td>
+    <td class="bec-isbn"><input class="be-input" data-field="isbn" data-row="${rowId}" type="text" value="${escHtml(d.isbn||'')}" placeholder="978-…" oninput="markBulkDirty('${rowId}');scheduleBulkIsbn(this,'${rowId}')"></td>
     <td class="bec-pub">${selHtml('pub',[['Marvel','Marvel'],['DC','DC']],d.pub||'Marvel')}</td>
     <td class="bec-type">${selHtml('type',[['Epic','Classic Epic'],['Modern','Modern Era'],['Ultimate','Ultimate'],['DC Finest','DC Finest'],['Omnibus','Omnibus']],d.type||'Epic')}</td>
     <td class="bec-series">${inpHtml('series','text',d.series||'','placeholder="Series title *"')}</td>
@@ -4034,7 +4066,6 @@ function makeBulkRow(d, isNew) {
     <td class="bec-lic">${selHtml('licensed',[['No','No'],['Yes','Yes']],d.licensed||'No')}</td>
     <td class="bec-rep">${selHtml('reprint',[['No','No'],['Yes','Yes']],d.reprint||'No')}</td>
     <td class="bec-conf">${selHtml('conf',[['stojr verified','stojr Verified'],['verified','Verified (Wikipedia)'],['sourced','Sourced (Community)'],['estimated','Estimated']],d.conf||'sourced')}</td>
-    <td class="bec-isbn"><input class="be-input" data-field="isbn" data-row="${rowId}" type="text" value="${escHtml(d.isbn||'')}" placeholder="978-…" oninput="markBulkDirty('${rowId}');scheduleBulkIsbn(this,'${rowId}')"></td>
     <td class="bec-writers">${inpHtml('writers','text',d.writers||'','placeholder="—"')}</td>
     <td class="bec-artists">${inpHtml('artists','text',d.artists||'','placeholder="—"')}</td>
     <td class="bec-sec-issues">${inpHtml('secondary_issues_covered','text',d.secondary_issues_covered||'','placeholder="—"')}</td>`;
@@ -4615,8 +4646,9 @@ function rvRender() {
     const descText = v.description ? rvEsc(v.description) : '';
     const owned = isOwned(v.id, currentUserId() || LEGACY_STOJR_ID);
     const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
+    const ownedStamp = owned ? `<div class="rv-owned-stamp">&#9733; In My Collection</div>` : '';
     const typeLbl = RV_TYPE_LABEL[type] || type;
-    return `<div class="rv-card-scene" id="rvCard_${v.id}" data-entry-id="${v.id}"
+    return `<div class="rv-card-scene${owned ? ' rv-owned' : ''}" id="rvCard_${v.id}" data-entry-id="${v.id}"
         onmouseenter="rvHoverCard(${v.id},true)" onmouseleave="rvHoverCard(${v.id},false);rvResetTilt(this)" onmousemove="rvTiltCard(event)"
         onclick="rvCardZoneClick(event, this)">
       <div class="rv-card-border">
@@ -4635,6 +4667,7 @@ function rvRender() {
             </div>
             ${cardNum ? `<div class="rv-card-num">${cardNum}</div>` : ''}
             <div class="rv-card-holo"></div>
+            ${ownedStamp}
           </div>
           <div class="rv-card-back tc-${cls}">
             <div class="rv-card-back-header">
