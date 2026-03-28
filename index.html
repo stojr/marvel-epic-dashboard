@@ -18,6 +18,8 @@
   --hf:'Bebas Neue',impact,sans-serif;
   --cf:'Barlow Condensed',sans-serif;
   --bf:'Barlow',sans-serif;
+  --fs-xs:11px; --fs-sm:13px; --fs-md:14px; --fs-lg:16px;
+  --fs-xl:22px; --fs-2xl:36px; --fs-display:72px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
@@ -1109,7 +1111,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         <thead>
           <tr id="tableHeaderRow">
             <th id="th-owners-placeholder" colspan="2">Owners</th>
-            <th id="th-ud-label">★/✓</th>
+            <th id="th-ud-label" title="Wishlist / Read status">★/✓</th>
             <th>Pub</th>
             <th class="col-type" onclick="sortBy('type')" id="th-type">Type <span class="sort-arrow"></span></th>
             <th onclick="sortBy('vol')" id="th-vol">Vol <span class="sort-arrow"></span></th>
@@ -1117,9 +1119,9 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
             <th>Subtitle / Years</th>
             <th onclick="sortBy('years')" id="th-years">Years Covered <span class="sort-arrow"></span></th>
             <th onclick="sortBy('date')" id="th-date">Release Date <span class="sort-arrow"></span></th>
-            <th class="col-lic">Lic</th>
-            <th class="col-rep">Rpt</th>
-            <th>✓</th>
+            <th class="col-lic" title="Licensed IP">Lic</th>
+            <th class="col-rep" title="Contains Reprints">Rpt</th>
+            <th title="Confidence / Verification level">✓</th>
             <th>Edit</th>
           </tr>
         </thead>
@@ -3098,6 +3100,11 @@ function buildTable(filtered) {
     tscroll.style.maxHeight='';tscroll.style.overflowY='';
     if(_virtScroll){tscroll.removeEventListener('scroll',_virtScroll);_virtScroll=null;}
     const tbody=document.getElementById('tBody');
+    if(!filtered.length){
+      tbody.innerHTML=`<tr><td colspan="${COLS}" style="text-align:center;padding:32px;color:var(--dimtext);font-family:var(--cf)">No entries match the current filters — <span onclick="resetAll()" style="color:var(--gold);cursor:pointer;text-decoration:underline">reset filters</span></td></tr>`;
+      tscroll.scrollTop=0;
+      return;
+    }
     const frag=document.createDocumentFragment();
     rows.forEach(d=>frag.appendChild(buildRowEl(d,COLS)));
     tbody.innerHTML='';tbody.appendChild(frag);
