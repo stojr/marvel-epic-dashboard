@@ -11,6 +11,7 @@ on:
       - 'supabase-migration.sql'
       - 'supabase-migration-v5.sql'
       - 'supabase-migration-v6.sql'
+      - 'supabase-migration-v7.sql'
 
 jobs:
   migrate:
@@ -54,6 +55,7 @@ jobs:
           psql "$DB_URL" --file=supabase-migration.sql -v ON_ERROR_STOP=1
           psql "$DB_URL" --file=supabase-migration-v5.sql -v ON_ERROR_STOP=1
           psql "$DB_URL" --file=supabase-migration-v6.sql -v ON_ERROR_STOP=1
+          psql "$DB_URL" --file=supabase-migration-v7.sql -v ON_ERROR_STOP=1
 
       - name: Confirm columns exist
         run: |
