@@ -1190,7 +1190,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         <span class="rv-pill complete on" data-type="Complete" onclick="inlineRvTogglePill(this)">Complete Collection</span>
         <span class="rv-pill tpb on" data-type="TPB" onclick="inlineRvTogglePill(this)">TPB</span>
       </div>
-      <span class="rv-pill" id="inlineRvReprintToggle" style="cursor:pointer;font-size:11px" onclick="inlineRvToggleReprints(this)">Hide Reprints</span>
+      <span class="rv-pill on" id="inlineRvReprintToggle" style="cursor:pointer;font-size:11px" onclick="inlineRvToggleReprints(this)">Show Reprints</span>
       <button class="rv-mode-btn" id="inlineRvMultiBtn" onclick="inlineRvToggleMultiMode()">Multi-Series</button>
       <div class="rv-scale-wrap" id="inlineRvScaleWrap" style="display:none;margin-left:auto">
         <label>Card Size</label>
@@ -1502,7 +1502,7 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       <span class="rv-pill complete on" data-type="Complete" onclick="rvTogglePill(this)">Complete Collection</span>
       <span class="rv-pill tpb on" data-type="TPB" onclick="rvTogglePill(this)">TPB</span>
     </div>
-    <span class="rv-pill" id="rvReprintToggle" style="cursor:pointer;font-size:11px" onclick="rvToggleReprints(this)">Hide Reprints</span>
+    <span class="rv-pill on" id="rvReprintToggle" style="cursor:pointer;font-size:11px" onclick="rvToggleReprints(this)">Reprints Hidden</span>
     <button class="rv-mode-btn" id="rvMultiBtn" onclick="rvToggleMultiMode()">⊞ Multi-Series</button>
     <button class="rv-mode-btn" id="rvCenterToggle" onclick="rvToggleCenterView()" title="Centered timeline — cards above and below the timeline bar">⊟ Center Timeline</button>
     <div class="rv-scale-wrap" id="rvOverlayScaleWrap" style="display:none">
@@ -4366,7 +4366,7 @@ const RV = {
   multiMode: false,
   multiSelected: new Set(),
   groupMode: true,     // true = group by Series Group instead of Series
-  hideReprints: false, // true = exclude reprints from run views
+  hideReprints: true, // true = exclude reprints from run views (matches table default)
   centerMode: false,   // true = centered timeline view (cards above/below bar)
   // Map: entryId -> timeline segment element (for hover cross-link)
   segMap: {},
@@ -5674,7 +5674,7 @@ function rvCloseEnlarge(e) {
 // ═══════════════════════════════════════════════════
 let inlineRvInited = false;
 let inlineRvGroupMode = true;
-let inlineRvHideReprints = false;
+let inlineRvHideReprints = true;
 let inlineRvActiveTypes = new Set(['Epic', 'Modern', 'Omnibus', 'DC Finest', 'Complete', 'TPB']);
 
 function initRunsView() {
