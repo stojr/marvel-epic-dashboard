@@ -4379,7 +4379,7 @@ const RV_TYPE_LABEL  = { 'Epic':'Classic Epic', 'Modern':'Modern Era', 'Omnibus'
 // ── helpers ──
 function rvParseIssues(str) {
   if (!str) return null;
-  const m = str.trim().match(/^#?(\d+)\s*[-\u2013\u2014]\s*(\d+)$/);
+  const m = str.trim().match(/^#?(\d+)\s*[-\u2013\u2014]\s*#?(\d+)/);
   if (!m) return null;
   return { start: parseInt(m[1]), end: parseInt(m[2]) };
 }
@@ -4725,7 +4725,8 @@ function rvRender() {
           html += `<div class="rv-connector"><div class="rv-connector-line"></div><div class="rv-connector-badge">→</div></div>`;
         }
       }
-      html += rvRenderCard(v, cls, v.type || 'Epic', filtered.length);
+      const seriesTypeCount = filtered.filter(f => f.series === v.series && f.type === v.type).length;
+      html += rvRenderCard(v, cls, v.type || 'Epic', seriesTypeCount);
     });
     html += '</div>';
   } else {
@@ -5737,10 +5738,10 @@ function inlineRvSelectSeries(name) {
     document.getElementById('inlineRvTimelineWrap').style.display = 'none';
     return;
   }
-  // Filter entries matching the selected series/group
+  // Filter entries matching the selected series/group (require issues_covered for run view)
   let entries = ALL_DATA.filter(d => {
     const key = inlineRvGroupMode ? getEffectiveGroup(d) : d.series;
-    return key === name;
+    return key === name && d.issues_covered && d.issues_covered.trim();
   });
   if (inlineRvHideReprints) entries = entries.filter(d => d.reprint !== 'Yes');
   entries = entries.filter(d => inlineRvActiveTypes.has(d.type));
@@ -5761,7 +5762,9 @@ function inlineRvSelectSeries(name) {
   }
 
   if (!entries.length) {
-    document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">No matching entries for this selection</div>';
+    document.getElementById('inlineRvBody').innerHTML = '<div class="rv-empty">No <em>issues_covered</em> data for this selection — use Bulk Edit to populate it.</div>';
+    document.getElementById('inlineRvScaleWrap').style.display = 'none';
+    document.getElementById('inlineRvTimelineWrap').style.display = 'none';
     return;
   }
 
@@ -5789,7 +5792,8 @@ function inlineRvSelectSeries(name) {
     const issLabel = d.issues_covered ? escHtml(d.issues_covered) : '?';
     const owned = isOwned(d.id, currentUserId() || LEGACY_STOJR_ID);
     const ownedBadge = owned ? `<span style="color:var(--green);font-size:10px;margin-left:auto" title="Owned">&#9679; OWNED</span>` : '';
-    const cardNum = d.vol ? `${d.vol} of ${entries.length}` : '';
+    const seriesCount = inlineRvGroupMode ? entries.filter(e => e.series === d.series && e.type === d.type).length : entries.length;
+    const cardNum = d.vol ? `${d.vol} of ${seriesCount}` : '';
     const typeLbl = d.type === 'Epic' ? 'Classic Epic' : d.type === 'Modern' ? 'Modern Era' : d.type === 'Complete' ? 'Complete Collection' : d.type || '';
 
     html += `<div class="rv-card-scene" data-entry-id="${d.id}" onclick="inlineRvCardClick(event, this)">
