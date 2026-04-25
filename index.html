@@ -326,6 +326,34 @@ tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 .modal-btn.delete:hover{background:var(--red);color:#fff}
 .modal-saving{opacity:.5;pointer-events:none}
 
+/* ─── PRINTINGS SECTION (modal + expand detail) ─── */
+.printings-section{margin-top:16px;border-top:1px solid var(--border);padding-top:14px}
+.printings-section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.printings-section-title{font-family:var(--cf);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.printing-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.printing-chip{padding:4px 12px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;background:var(--surface2);transition:all .15s;white-space:nowrap}
+.printing-chip:hover{border-color:var(--gold);color:var(--gold)}
+.printing-chip.active{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.08)}
+.printing-chip.add-chip{border-style:dashed;color:var(--dimtext)}
+.printing-chip.add-chip:hover{border-color:var(--green);color:var(--green)}
+.printing-fields{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.printing-fields.hidden{display:none}
+.printing-date-row{display:flex;gap:8px;align-items:stretch}
+.printing-date-row .modal-input{flex:1}
+.pdate-mode-toggle{display:flex;gap:10px;margin-bottom:6px}
+.pdate-mode-toggle label{font-family:var(--cf);font-size:11px;font-weight:600;letter-spacing:.3px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:4px}
+.pdate-mode-toggle input[type=radio]{accent-color:var(--gold)}
+.printing-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px;padding-top:10px;border-top:1px solid var(--border)}
+.pfield-full{grid-column:1/-1}
+/* Expand detail printings display */
+.exp-printings-wrap{margin-top:10px}
+.exp-printing-sel{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:var(--cf);font-size:13px;padding:5px 10px;cursor:pointer;margin-bottom:10px}
+.exp-printing-sel:focus{outline:none;border-color:var(--gold)}
+.exp-printing-meta{display:flex;flex-wrap:wrap;gap:8px}
+.exp-pfield{display:flex;flex-direction:column;gap:2px;min-width:120px}
+.exp-plabel{font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext)}
+.exp-pvalue{font-family:var(--cf);font-size:13px;font-weight:600;color:var(--text)}
+
 /* ─── CONFIRM DELETE ─── */
 .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
 .confirm-overlay.open{display:flex}
@@ -1423,6 +1451,68 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
       </div>
 
     </div>
+
+    <!-- ═══ PRINTINGS SECTION ═══ -->
+    <div class="printings-section" id="printingsSection" style="display:none">
+      <div class="printings-section-hdr">
+        <span class="printings-section-title">Printings</span>
+      </div>
+      <!-- Edition chips — one per printing, plus an Add button -->
+      <div class="printing-chips" id="printingChips"></div>
+
+      <!-- Per-printing fields, shown when a chip is selected -->
+      <div class="printing-fields hidden" id="printingFields">
+
+        <div class="modal-field">
+          <label class="modal-label">Edition Label</label>
+          <input class="modal-input" id="pEditionLabel" type="text" placeholder="e.g. First Printing">
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">Printer</label>
+          <input class="modal-input" id="pPrinter" type="text" list="printerDatalist" placeholder="Select or type a printer name">
+          <datalist id="printerDatalist"></datalist>
+        </div>
+
+        <div class="modal-field pfield-full">
+          <label class="modal-label">Printing Date</label>
+          <div class="pdate-mode-toggle">
+            <label><input type="radio" name="pdateMode" value="single" checked onchange="onPrintingDateModeChange('single')"> Single date</label>
+            <label><input type="radio" name="pdateMode" value="range" onchange="onPrintingDateModeChange('range')"> Date range</label>
+          </div>
+          <div id="pdateSingleWrap">
+            <input class="modal-input" id="pDateSingle" type="date">
+          </div>
+          <div class="printing-date-row" id="pdateRangeWrap" style="display:none">
+            <input class="modal-input" id="pDateStart" type="date" placeholder="Start date">
+            <input class="modal-input" id="pDateEnd"   type="date" placeholder="End date">
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">Cover Price ($)</label>
+          <input class="modal-input" id="pCoverPrice" type="number" min="0" step="0.01" placeholder="e.g. 39.99">
+        </div>
+
+        <div class="modal-field">
+          <label class="modal-label">ISBN (this printing)</label>
+          <input class="modal-input" id="pIsbn" type="text" placeholder="e.g. 978-1302950682">
+        </div>
+
+        <div class="modal-field pfield-full">
+          <label class="modal-label">Errors &amp; Corrections</label>
+          <textarea class="modal-textarea" id="pErrorsCorrections" rows="3"
+            placeholder="Known printing errors, colour corrections, content changes…"></textarea>
+        </div>
+
+        <div class="printing-actions">
+          <button class="modal-btn delete" id="pDeleteBtn" onclick="deletePrinting()" style="display:none;margin-right:auto">🗑 Delete Printing</button>
+          <button class="modal-btn cancel" onclick="cancelPrinting()">Cancel</button>
+          <button class="modal-btn save" onclick="savePrinting()">Save Printing</button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-actions">
       <button class="modal-btn delete" id="modalDeleteBtn" onclick="confirmDeleteEntry()" style="display:none">🗑 Delete</button>
       <button class="modal-btn cancel" onclick="closeModal()">Cancel</button>
@@ -1634,6 +1724,11 @@ let COVER_OVERRIDES = {};     // { entryId: base64coverUrl } from legacy user_da
 let SERIES_GROUPS = [];       // series_groups reference table
 let ISBN_CACHE = {};          // isbn → cached lookup result
 let DATA_QUALITY_FLAGS = [];  // data quality issues
+let ALL_PRINTINGS = [];       // printings table rows
+let PRINTINGS_BY_ENTRY = {};  // { entryId: [printing, ...] } sorted by sort_order
+let PRINTERS_LIST = [];       // known printer names (from printers table)
+let activePrintingId = null;  // which printing is selected in the modal
+let isNewPrinting = false;    // true when adding a printing not yet saved
 let activePub = 'all';
 // Default sort: series name + vol/year — so Aliens Vol.1,2,3 group together, Batman titles group together
 let sortCol = 'series', sortDir = 1;
@@ -1770,13 +1865,15 @@ async function loadData() {
   document.getElementById('loadingMsg').textContent = 'Loading comic entries…';
   try {
     // Load all data in parallel — prefer new user_entry_data table, fall back to legacy user_data
-    const [entries, ued, users, groups, cache, legacyUd] = await Promise.all([
+    const [entries, ued, users, groups, cache, legacyUd, printingsData, printersData] = await Promise.all([
       sbSelect('comic_entries', '?limit=5000'),
       sbSelect('user_entry_data', '?limit=50000').catch(() => []),
       sbSelect('users', '?order=display_name').catch(() => []),
       sbSelect('series_groups', '?order=name').catch(() => []),
       sbSelect('isbn_cache', '?limit=10000').catch(() => []),
       sbSelect('user_data', '?limit=10000').catch(() => []),
+      sbSelect('printings', '?order=entry_id,sort_order').catch(() => []),
+      sbSelect('printers', '?order=name').catch(() => []),
     ]);
     ALL_DATA = entries || [];
     ALL_USERS = users || [];
@@ -1798,6 +1895,15 @@ async function loadData() {
     SERIES_GROUPS = groups || [];
     ISBN_CACHE = {};
     (cache || []).forEach(row => { ISBN_CACHE[row.isbn] = row; });
+
+    // Printings
+    ALL_PRINTINGS = printingsData || [];
+    PRINTINGS_BY_ENTRY = {};
+    ALL_PRINTINGS.forEach(p => {
+      if (!PRINTINGS_BY_ENTRY[p.entry_id]) PRINTINGS_BY_ENTRY[p.entry_id] = [];
+      PRINTINGS_BY_ENTRY[p.entry_id].push(p);
+    });
+    PRINTERS_LIST = (printersData || []).map(p => p.name);
 
     // Ensure structured year/issue fields are populated client-side
     ALL_DATA.forEach(d => {
@@ -2234,6 +2340,8 @@ async function onAuthStateChange(event, session) {
           display_name: name, color: color, avatar_url: avatar
         }, 'id', 'ignore-duplicates');
         ALL_USERS.push({ id: currentUser.id, display_name: name, color, avatar_url: avatar });
+        // Notify admin of new registration (fire-and-forget, non-blocking)
+        notifyAdminNewUser(name, currentUser.email);
       } catch(e) { console.warn('Could not create user profile:', e); }
     }
     updateAuthUI();
@@ -2251,6 +2359,26 @@ async function onAuthStateChange(event, session) {
     ALL_DATA = []; USER_DATA = {}; ALL_USERS = []; currentFiltered = [];
     updateAuthUI();
     showLoginWall();
+  }
+}
+
+// ── Admin notification on new user registration ───────────────
+// Calls the notify-admin Supabase Edge Function.
+// The function reads ADMIN_EMAIL + RESEND_API_KEY from its env vars.
+// If the function isn't deployed, the call fails silently.
+async function notifyAdminNewUser(username, email) {
+  const endpoint = `${SB_URL}/functions/v1/notify-admin`;
+  try {
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SB_KEY}`,
+      },
+      body: JSON.stringify({ username, email, registered_at: new Date().toISOString() }),
+    });
+  } catch(e) {
+    console.warn('Admin notification failed (non-critical):', e);
   }
 }
 
@@ -3000,6 +3128,7 @@ function toggleExpand(id, cols) {
           </div>
 
           ${d.description?`<div class="expand-meta-row"><div class="expand-field ef-full"><span class="expand-label">Description</span><span class="expand-value" style="white-space:pre-wrap;line-height:1.6">${escHtml(d.description)}</span></div></div>`:''}
+          ${buildPrintingsDetail(d.id)}
           ${buildSameEraSection(d)}
         </div>
       </div>
@@ -3774,6 +3903,11 @@ function openAddModal() {
   document.getElementById('mIssuesCovered').value = '';
   document.getElementById('mSecondaryIssuesCovered').value = '';
   updateModalCoverPreview(null);
+  // Hide printings section for new entries (need entry id first)
+  document.getElementById('printingsSection').style.display = 'none';
+  document.getElementById('printingFields').classList.add('hidden');
+  activePrintingId = null;
+  isNewPrinting = false;
   document.getElementById('entryModal').classList.add('open');
 }
 
@@ -3811,6 +3945,15 @@ function openEditModal(id) {
   document.getElementById('mCoverUrl').value = (existingCover && !existingCover.startsWith('data:')) ? existingCover : '';
   updateModalCoverPreview(existingCover);
   if (existingCover) _pendingCoverValue = existingCover; // keep it unless user changes
+
+  // Printings section
+  activePrintingId = null;
+  isNewPrinting = false;
+  document.getElementById('printingFields').classList.add('hidden');
+  document.getElementById('printingsSection').style.display = '';
+  populatePrinterDatalist();
+  renderPrintingChips(id);
+
   document.getElementById('entryModal').classList.add('open');
 }
 
@@ -3819,6 +3962,10 @@ function closeModal() {
   document.getElementById('mSeries').classList.remove('required-empty');
   editingEntryId = null;
   _pendingCoverValue = null;
+  activePrintingId = null;
+  isNewPrinting = false;
+  document.getElementById('printingFields').classList.add('hidden');
+  document.getElementById('printingsSection').style.display = 'none';
 }
 
 async function saveEntry() {
@@ -3898,7 +4045,12 @@ async function saveEntry() {
       const newEntry = Array.isArray(result) ? result[0] : result;
       ALL_DATA.push(newEntry);
       entryId = newEntry.id;
+      editingEntryId = entryId;
       showToast('✓ Entry added');
+      // Show printings section now that we have an entry id
+      document.getElementById('printingsSection').style.display = '';
+      populatePrinterDatalist();
+      renderPrintingChips(entryId);
     } else {
       const result = await sbUpdate('comic_entries', `id=eq.${editingEntryId}`, body);
       const updated = Array.isArray(result) ? result[0] : result;
@@ -3970,6 +4122,265 @@ async function doDelete() {
     showToast('Delete failed', true);
   }
   setSyncing(false);
+}
+
+// ══════════════════════════════════════════════
+// ── Printings CRUD ────────────────────────────
+// ══════════════════════════════════════════════
+
+// Populate the datalist so the printer input acts as a combobox
+function populatePrinterDatalist() {
+  const dl = document.getElementById('printerDatalist');
+  if (!dl) return;
+  // Merge known printers with any used in existing printings (not yet in reference table)
+  const used = [...new Set(ALL_PRINTINGS.map(p => p.printer).filter(Boolean))];
+  const merged = [...new Set([...PRINTERS_LIST, ...used])].sort();
+  dl.innerHTML = merged.map(n => `<option value="${escHtml(n)}">`).join('');
+}
+
+// Show/hide date range vs single date inputs
+function onPrintingDateModeChange(mode) {
+  document.getElementById('pdateSingleWrap').style.display = mode === 'single' ? '' : 'none';
+  document.getElementById('pdateRangeWrap').style.display  = mode === 'range'  ? '' : 'none';
+}
+
+// Render edition chips for the editing entry
+function renderPrintingChips(entryId) {
+  const chips = document.getElementById('printingChips');
+  if (!chips) return;
+  const printings = PRINTINGS_BY_ENTRY[entryId] || [];
+  chips.innerHTML = printings.map(p =>
+    `<span class="printing-chip${p.id === activePrintingId ? ' active' : ''}"
+       onclick="selectPrinting(${p.id})">${escHtml(p.edition_label || 'Printing')}</span>`
+  ).join('') +
+  `<span class="printing-chip add-chip" onclick="selectNewPrinting()">+ Add Printing</span>`;
+}
+
+// User clicked an existing printing chip
+function selectPrinting(printingId) {
+  activePrintingId = printingId;
+  isNewPrinting = false;
+  const p = ALL_PRINTINGS.find(x => x.id === printingId);
+  if (!p) return;
+  renderPrintingChips(editingEntryId);
+  fillPrintingFields(p);
+  document.getElementById('printingFields').classList.remove('hidden');
+  document.getElementById('pDeleteBtn').style.display = '';
+}
+
+// User clicked "+ Add Printing"
+function selectNewPrinting() {
+  activePrintingId = null;
+  isNewPrinting = true;
+  // Deactivate all chips
+  document.querySelectorAll('.printing-chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('.printing-chip.add-chip')?.classList.add('active');
+  fillPrintingFields(null);
+  document.getElementById('printingFields').classList.remove('hidden');
+  document.getElementById('pDeleteBtn').style.display = 'none';
+}
+
+// Cancel editing a printing without saving
+function cancelPrinting() {
+  activePrintingId = null;
+  isNewPrinting = false;
+  document.getElementById('printingFields').classList.add('hidden');
+  renderPrintingChips(editingEntryId);
+}
+
+// Populate printing form fields from a printing object (or blank for new)
+function fillPrintingFields(p) {
+  document.getElementById('pEditionLabel').value     = p?.edition_label       || '';
+  document.getElementById('pPrinter').value          = p?.printer             || '';
+  document.getElementById('pCoverPrice').value       = p?.cover_price         != null ? p.cover_price : '';
+  document.getElementById('pIsbn').value             = p?.isbn                || '';
+  document.getElementById('pErrorsCorrections').value = p?.errors_corrections || '';
+
+  // Date fields — detect range vs single
+  const start = p?.printing_date_start || '';
+  const end   = p?.printing_date_end   || '';
+  const isRange = start && end && start !== end;
+
+  document.querySelectorAll('input[name=pdateMode]').forEach(r => {
+    r.checked = r.value === (isRange ? 'range' : 'single');
+  });
+  onPrintingDateModeChange(isRange ? 'range' : 'single');
+  document.getElementById('pDateSingle').value = start;
+  document.getElementById('pDateStart').value  = start;
+  document.getElementById('pDateEnd').value    = end;
+}
+
+// Read printing form into a plain object
+function getPrintingFormData(entryId) {
+  const label = document.getElementById('pEditionLabel').value.trim();
+  const printer = document.getElementById('pPrinter').value.trim() || null;
+  const priceRaw = document.getElementById('pCoverPrice').value.trim();
+  const isbn = document.getElementById('pIsbn').value.trim() || null;
+  const errCorr = document.getElementById('pErrorsCorrections').value.trim() || null;
+
+  const coverPrice = priceRaw ? parseFloat(priceRaw) : null;
+  if (coverPrice !== null && isNaN(coverPrice)) {
+    showToast('Cover price must be a number', true);
+    return null;
+  }
+
+  const mode = document.querySelector('input[name=pdateMode]:checked')?.value || 'single';
+  let dateStart = null, dateEnd = null;
+  if (mode === 'single') {
+    dateStart = document.getElementById('pDateSingle').value || null;
+    dateEnd   = dateStart;
+  } else {
+    dateStart = document.getElementById('pDateStart').value || null;
+    dateEnd   = document.getElementById('pDateEnd').value   || null;
+  }
+
+  return {
+    entry_id:            entryId,
+    edition_label:       label || 'First Printing',
+    printer,
+    printing_date_start: dateStart,
+    printing_date_end:   dateEnd,
+    errors_corrections:  errCorr,
+    cover_price:         coverPrice,
+    isbn,
+  };
+}
+
+async function savePrinting() {
+  if (editingEntryId === null) {
+    showToast('Save the entry first before adding printings', true);
+    return;
+  }
+  const data = getPrintingFormData(editingEntryId);
+  if (!data) return;
+
+  setSyncing(true);
+  try {
+    if (isNewPrinting) {
+      // Determine next sort_order
+      const existing = PRINTINGS_BY_ENTRY[editingEntryId] || [];
+      data.sort_order = existing.length;
+      const result = await sbInsert('printings', data);
+      const saved = Array.isArray(result) ? result[0] : result;
+      ALL_PRINTINGS.push(saved);
+      if (!PRINTINGS_BY_ENTRY[editingEntryId]) PRINTINGS_BY_ENTRY[editingEntryId] = [];
+      PRINTINGS_BY_ENTRY[editingEntryId].push(saved);
+      activePrintingId = saved.id;
+      isNewPrinting = false;
+      // Ensure printer is added to reference list if new
+      await ensurePrinterExists(data.printer);
+      showToast('✓ Printing added');
+    } else {
+      await sbUpdate('printings', `id=eq.${activePrintingId}`, { ...data, updated_at: new Date().toISOString() });
+      const idx = ALL_PRINTINGS.findIndex(p => p.id === activePrintingId);
+      if (idx !== -1) ALL_PRINTINGS[idx] = { ...ALL_PRINTINGS[idx], ...data };
+      // Refresh PRINTINGS_BY_ENTRY for this entry
+      PRINTINGS_BY_ENTRY[editingEntryId] = ALL_PRINTINGS.filter(p => p.entry_id === editingEntryId)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      await ensurePrinterExists(data.printer);
+      showToast('✓ Printing updated');
+    }
+    renderPrintingChips(editingEntryId);
+    document.getElementById('printingFields').classList.add('hidden');
+  } catch(e) {
+    console.error('Save printing error:', e);
+    showToast('Failed to save printing', true);
+  }
+  setSyncing(false);
+}
+
+async function deletePrinting() {
+  if (!activePrintingId) return;
+  if (!confirm('Delete this printing? This cannot be undone.')) return;
+  setSyncing(true);
+  try {
+    await sbDelete('printings', `id=eq.${activePrintingId}`);
+    const idx = ALL_PRINTINGS.findIndex(p => p.id === activePrintingId);
+    if (idx !== -1) ALL_PRINTINGS.splice(idx, 1);
+    if (PRINTINGS_BY_ENTRY[editingEntryId]) {
+      PRINTINGS_BY_ENTRY[editingEntryId] = PRINTINGS_BY_ENTRY[editingEntryId]
+        .filter(p => p.id !== activePrintingId);
+    }
+    activePrintingId = null;
+    document.getElementById('printingFields').classList.add('hidden');
+    renderPrintingChips(editingEntryId);
+    showToast('✓ Printing deleted');
+  } catch(e) {
+    console.error('Delete printing error:', e);
+    showToast('Failed to delete printing', true);
+  }
+  setSyncing(false);
+}
+
+// Add a printer name to the reference table if it's new
+async function ensurePrinterExists(name) {
+  if (!name || PRINTERS_LIST.includes(name)) return;
+  try {
+    await sbInsert('printers', { name });
+    PRINTERS_LIST.push(name);
+    PRINTERS_LIST.sort();
+    populatePrinterDatalist();
+  } catch(e) {
+    // Ignore duplicate errors
+  }
+}
+
+// Build the printings display HTML for the expand-detail panel (read-only)
+function buildPrintingsDetail(entryId) {
+  const printings = PRINTINGS_BY_ENTRY[entryId] || [];
+  if (!printings.length) return '';
+
+  const opts = printings.map((p, i) =>
+    `<option value="${i}">${escHtml(p.edition_label || 'Printing ' + (i+1))}</option>`
+  ).join('');
+
+  const buildMeta = p => {
+    const rows = [];
+    if (p.printer)             rows.push(`<div class="exp-pfield"><span class="exp-plabel">Printer</span><span class="exp-pvalue">${escHtml(p.printer)}</span></div>`);
+    if (p.printing_date_start) {
+      const dateStr = p.printing_date_end && p.printing_date_end !== p.printing_date_start
+        ? `${p.printing_date_start} → ${p.printing_date_end}`
+        : p.printing_date_start;
+      rows.push(`<div class="exp-pfield"><span class="exp-plabel">Printing Date</span><span class="exp-pvalue">${escHtml(dateStr)}</span></div>`);
+    }
+    if (p.cover_price != null) rows.push(`<div class="exp-pfield"><span class="exp-plabel">Cover Price</span><span class="exp-pvalue">$${parseFloat(p.cover_price).toFixed(2)}</span></div>`);
+    if (p.isbn)                rows.push(`<div class="exp-pfield"><span class="exp-plabel">ISBN</span><span class="exp-pvalue" style="font-family:var(--cf);font-size:12px">${escHtml(p.isbn)}</span></div>`);
+    if (p.errors_corrections)  rows.push(`<div class="exp-pfield" style="flex:0 0 100%;min-width:0"><span class="exp-plabel">Errors &amp; Corrections</span><span class="exp-pvalue" style="white-space:pre-wrap;font-size:12px;color:var(--muted)">${escHtml(p.errors_corrections)}</span></div>`);
+    return rows.length ? `<div class="exp-printing-meta">${rows.join('')}</div>` : '<span style="color:var(--dimtext);font-size:12px">No details recorded</span>';
+  };
+
+  return `<div class="expand-meta-row exp-printings-wrap">
+    <div class="expand-field ef-full">
+      <span class="expand-label">Printings</span>
+      <select class="exp-printing-sel" id="expPrintingSel_${entryId}"
+        onchange="onExpPrintingSelChange(${entryId}, this.value)">
+        ${opts}
+      </select>
+      <div id="expPrintingMeta_${entryId}">
+        ${buildMeta(printings[0])}
+      </div>
+    </div>
+  </div>`;
+}
+
+function onExpPrintingSelChange(entryId, idx) {
+  const printings = PRINTINGS_BY_ENTRY[entryId] || [];
+  const p = printings[parseInt(idx)];
+  if (!p) return;
+  const wrap = document.getElementById(`expPrintingMeta_${entryId}`);
+  if (!wrap) return;
+  const rows = [];
+  if (p.printer)             rows.push(`<div class="exp-pfield"><span class="exp-plabel">Printer</span><span class="exp-pvalue">${escHtml(p.printer)}</span></div>`);
+  if (p.printing_date_start) {
+    const dateStr = p.printing_date_end && p.printing_date_end !== p.printing_date_start
+      ? `${p.printing_date_start} → ${p.printing_date_end}`
+      : p.printing_date_start;
+    rows.push(`<div class="exp-pfield"><span class="exp-plabel">Printing Date</span><span class="exp-pvalue">${escHtml(dateStr)}</span></div>`);
+  }
+  if (p.cover_price != null) rows.push(`<div class="exp-pfield"><span class="exp-plabel">Cover Price</span><span class="exp-pvalue">$${parseFloat(p.cover_price).toFixed(2)}</span></div>`);
+  if (p.isbn)                rows.push(`<div class="exp-pfield"><span class="exp-plabel">ISBN</span><span class="exp-pvalue" style="font-family:var(--cf);font-size:12px">${escHtml(p.isbn)}</span></div>`);
+  if (p.errors_corrections)  rows.push(`<div class="exp-pfield" style="flex:0 0 100%;min-width:0"><span class="exp-plabel">Errors &amp; Corrections</span><span class="exp-pvalue" style="white-space:pre-wrap;font-size:12px;color:var(--muted)">${escHtml(p.errors_corrections)}</span></div>`);
+  wrap.innerHTML = rows.length ? `<div class="exp-printing-meta">${rows.join('')}</div>` : '<span style="color:var(--dimtext);font-size:12px">No details recorded</span>';
 }
 
 // ── Export CSV ────────────────────────────────
