@@ -353,6 +353,17 @@ tbody tr.licensed-row:hover{background:rgba(255,210,52,.07)}
 .exp-pfield{display:flex;flex-direction:column;gap:2px;min-width:120px}
 .exp-plabel{font-family:var(--cf);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dimtext)}
 .exp-pvalue{font-family:var(--cf);font-size:13px;font-weight:600;color:var(--text)}
+/* Paper quality multi-select */
+.pq-options{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;margin-bottom:6px}
+.pq-chip{padding:3px 10px;border-radius:20px;font-family:var(--cf);font-size:12px;font-weight:700;letter-spacing:.5px;border:1.5px solid var(--border2);color:var(--muted);cursor:pointer;background:var(--surface2);transition:all .15s;white-space:nowrap;user-select:none;display:inline-flex;align-items:center;gap:4px}
+.pq-chip:hover{border-color:var(--gold);color:var(--gold)}
+.pq-chip.active{border-color:var(--gold);color:var(--gold);background:rgba(255,210,52,.08)}
+.pq-remove{opacity:.5;font-size:14px;line-height:1;cursor:pointer}
+.pq-remove:hover{opacity:1}
+.pq-custom-row{display:flex;gap:6px;align-items:center}
+.pq-custom-row .modal-input{flex:1;margin-bottom:0}
+.pq-add-btn{padding:5px 11px;border-radius:var(--r);border:1.5px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;font-size:16px;line-height:1;transition:all .15s;white-space:nowrap}
+.pq-add-btn:hover{border-color:var(--green);color:var(--green)}
 
 /* ─── CONFIRM DELETE ─── */
 .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
@@ -1500,6 +1511,20 @@ button,a,.rbtn,.pgbtn,.ptab,.ctbtn,.ob,.udb,.edit-btn,.own-filter-pill,.host-chi
         </div>
 
         <div class="modal-field pfield-full">
+          <label class="modal-label">Paper Quality</label>
+          <div class="pq-options" id="pqOptions">
+            <span class="pq-chip pq-preset-chip" data-pq="thick matte"    onclick="togglePqChip(this)">Thick Matte</span>
+            <span class="pq-chip pq-preset-chip" data-pq="thin glossy"    onclick="togglePqChip(this)">Thin Glossy</span>
+            <span class="pq-chip pq-preset-chip" data-pq="regular glossy" onclick="togglePqChip(this)">Regular Glossy</span>
+          </div>
+          <div class="pq-custom-row">
+            <input class="modal-input" id="pqCustom" type="text" placeholder="Add custom quality…"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addPqCustom();}">
+            <button type="button" class="pq-add-btn" onclick="addPqCustom()" title="Add custom">＋</button>
+          </div>
+        </div>
+
+        <div class="modal-field pfield-full">
           <label class="modal-label">Errors &amp; Corrections</label>
           <textarea class="modal-textarea" id="pErrorsCorrections" rows="3"
             placeholder="Known printing errors, colour corrections, content changes…"></textarea>
@@ -1729,6 +1754,7 @@ let PRINTINGS_BY_ENTRY = {};  // { entryId: [printing, ...] } sorted by sort_ord
 let PRINTERS_LIST = [];       // known printer names (from printers table)
 let activePrintingId = null;  // which printing is selected in the modal
 let isNewPrinting = false;    // true when adding a printing not yet saved
+let pqSelected = [];          // currently selected paper quality values
 let activePub = 'all';
 // Default sort: series name + vol/year — so Aliens Vol.1,2,3 group together, Batman titles group together
 let sortCol = 'series', sortDir = 1;
@@ -4188,6 +4214,62 @@ function cancelPrinting() {
   renderPrintingChips(editingEntryId);
 }
 
+// ── Paper quality multi-select ─────────────────
+const PQ_PRESETS = ['thick matte', 'thin glossy', 'regular glossy'];
+
+function setPqFromValue(csv) {
+  pqSelected = csv ? csv.split(',').map(v => v.trim()).filter(Boolean) : [];
+  renderPqChips();
+}
+
+function getPqValue() {
+  return pqSelected.length ? pqSelected.join(', ') : null;
+}
+
+function renderPqChips() {
+  const container = document.getElementById('pqOptions');
+  if (!container) return;
+  container.querySelectorAll('.pq-custom-chip').forEach(c => c.remove());
+  container.querySelectorAll('.pq-preset-chip').forEach(c => {
+    c.classList.toggle('active', pqSelected.includes(c.dataset.pq));
+  });
+  const customVals = pqSelected.filter(v => !PQ_PRESETS.includes(v));
+  customVals.forEach(v => {
+    const chip = document.createElement('span');
+    chip.className = 'pq-chip pq-custom-chip active';
+    chip.dataset.pq = v;
+    chip.innerHTML = `${escHtml(v)}<span class="pq-remove" onclick="removePqChip(this)">×</span>`;
+    container.appendChild(chip);
+  });
+}
+
+function togglePqChip(el) {
+  const val = el.dataset.pq;
+  const idx = pqSelected.indexOf(val);
+  if (idx === -1) pqSelected.push(val);
+  else pqSelected.splice(idx, 1);
+  el.classList.toggle('active', pqSelected.includes(val));
+}
+
+function addPqCustom() {
+  const input = document.getElementById('pqCustom');
+  const val = input.value.trim().toLowerCase();
+  if (!val) return;
+  if (!pqSelected.includes(val)) {
+    pqSelected.push(val);
+    renderPqChips();
+  }
+  input.value = '';
+}
+
+function removePqChip(removeBtn) {
+  const chip = removeBtn.closest('[data-pq]');
+  const val = chip?.dataset.pq;
+  if (!val) return;
+  pqSelected = pqSelected.filter(v => v !== val);
+  renderPqChips();
+}
+
 // Populate printing form fields from a printing object (or blank for new)
 function fillPrintingFields(p) {
   document.getElementById('pEditionLabel').value     = p?.edition_label       || '';
@@ -4195,6 +4277,7 @@ function fillPrintingFields(p) {
   document.getElementById('pCoverPrice').value       = p?.cover_price         != null ? p.cover_price : '';
   document.getElementById('pIsbn').value             = p?.isbn                || '';
   document.getElementById('pErrorsCorrections').value = p?.errors_corrections || '';
+  setPqFromValue(p?.paper_quality || null);
 
   // Date fields — detect range vs single
   const start = p?.printing_date_start || '';
@@ -4243,6 +4326,7 @@ function getPrintingFormData(entryId) {
     errors_corrections:  errCorr,
     cover_price:         coverPrice,
     isbn,
+    paper_quality:       getPqValue(),
   };
 }
 
@@ -4345,6 +4429,7 @@ function buildPrintingsDetail(entryId) {
     }
     if (p.cover_price != null) rows.push(`<div class="exp-pfield"><span class="exp-plabel">Cover Price</span><span class="exp-pvalue">$${parseFloat(p.cover_price).toFixed(2)}</span></div>`);
     if (p.isbn)                rows.push(`<div class="exp-pfield"><span class="exp-plabel">ISBN</span><span class="exp-pvalue" style="font-family:var(--cf);font-size:12px">${escHtml(p.isbn)}</span></div>`);
+    if (p.paper_quality)       rows.push(`<div class="exp-pfield"><span class="exp-plabel">Paper Quality</span><span class="exp-pvalue">${escHtml(p.paper_quality)}</span></div>`);
     if (p.errors_corrections)  rows.push(`<div class="exp-pfield" style="flex:0 0 100%;min-width:0"><span class="exp-plabel">Errors &amp; Corrections</span><span class="exp-pvalue" style="white-space:pre-wrap;font-size:12px;color:var(--muted)">${escHtml(p.errors_corrections)}</span></div>`);
     return rows.length ? `<div class="exp-printing-meta">${rows.join('')}</div>` : '<span style="color:var(--dimtext);font-size:12px">No details recorded</span>';
   };
@@ -4379,6 +4464,7 @@ function onExpPrintingSelChange(entryId, idx) {
   }
   if (p.cover_price != null) rows.push(`<div class="exp-pfield"><span class="exp-plabel">Cover Price</span><span class="exp-pvalue">$${parseFloat(p.cover_price).toFixed(2)}</span></div>`);
   if (p.isbn)                rows.push(`<div class="exp-pfield"><span class="exp-plabel">ISBN</span><span class="exp-pvalue" style="font-family:var(--cf);font-size:12px">${escHtml(p.isbn)}</span></div>`);
+  if (p.paper_quality)       rows.push(`<div class="exp-pfield"><span class="exp-plabel">Paper Quality</span><span class="exp-pvalue">${escHtml(p.paper_quality)}</span></div>`);
   if (p.errors_corrections)  rows.push(`<div class="exp-pfield" style="flex:0 0 100%;min-width:0"><span class="exp-plabel">Errors &amp; Corrections</span><span class="exp-pvalue" style="white-space:pre-wrap;font-size:12px;color:var(--muted)">${escHtml(p.errors_corrections)}</span></div>`);
   wrap.innerHTML = rows.length ? `<div class="exp-printing-meta">${rows.join('')}</div>` : '<span style="color:var(--dimtext);font-size:12px">No details recorded</span>';
 }
